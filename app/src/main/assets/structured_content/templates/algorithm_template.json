@@ -1,0 +1,53 @@
+{
+  "id": "algorithm_id_here",
+  "title": "Algorithm Title Here",
+  "definition": "Write a beginner-friendly definition here.",
+  "realLifeExample": "Write one simple real-life example here.",
+  "complexity": {
+    "best": "O(?)",
+    "average": "O(?)",
+    "worst": "O(?)",
+    "space": "O(?)"
+  },
+  "sampleInput": [10, 20, 30, 40],
+  "sampleTarget": 20,
+  "visualizationType": "searching",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Chapter name here",
+    "sourceReference": "Procedure / topic name here",
+    "updatedAt": "2026-04-15",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "Add iterative algorithm text here.",
+    "Functions": "Add function-style algorithm text here.",
+    "Recursion": "Add recursive algorithm text here."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "Add Java iterative code here.",
+      "Functions": "Add Java function-style code here.",
+      "Recursion": "Add Java recursive code here."
+    },
+    "C": {
+      "Iterative": "Add C iterative code here.",
+      "Functions": "Add C function-style code here.",
+      "Recursion": "Add C recursive code here."
+    },
+    "Python": {
+      "Iterative": "Add Python iterative code here.",
+      "Functions": "Add Python function-style code here.",
+      "Recursion": "Add Python recursive code here."
+    }
+  },
+  "commentedCode": {
+    "C": {
+      "Iterative": "Add detailed commented C iterative code here.",
+      "Functions": "Add detailed commented C function-style code here.",
+      "Recursion": "Add detailed commented C recursive code here."
+    }
+  }
+}

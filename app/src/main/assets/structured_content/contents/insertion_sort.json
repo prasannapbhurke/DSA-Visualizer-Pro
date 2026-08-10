@@ -1,0 +1,36 @@
+{
+  "id": "insertion_sort",
+  "title": "Insertion Sort",
+  "definition": "Insertion Sort builds the sorted part of the array one element at a time.",
+  "realLifeExample": "It is like picking one playing card at a time and inserting it into the correct place in your hand.",
+  "complexity": {
+    "best": "O(n)",
+    "average": "O(n^2)",
+    "worst": "O(n^2)",
+    "space": "O(1)"
+  },
+  "sampleInput": [9, 4, 7, 2, 8, 1],
+  "sampleTarget": 0,
+  "visualizationType": "sorting",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Sorting",
+    "sourceReference": "Insertion Sort",
+    "updatedAt": "2026-04-17",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "1. Start from the second element.\n2. Store the current key.\n3. Shift larger elements one place right.\n4. Insert the key into the gap.\n5. Repeat until the array is sorted.",
+    "Functions": "1. Use a helper function to insert one element into the sorted prefix.\n2. Call it for each new position.\n3. Return the sorted array.",
+    "Recursion": "1. Recursively sort the first n - 1 elements.\n2. Insert the nth element into the sorted part.\n3. Return when the base case is reached."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "public void insertionSort(int[] arr) {\n    for (int i = 1; i < arr.length; i++) {\n        int key = arr[i];\n        int j = i - 1;\n        while (j >= 0 && arr[j] > key) {\n            arr[j + 1] = arr[j];\n            j--;\n        }\n        arr[j + 1] = key;\n    }\n}",
+      "Functions": "public void insertionSort(int[] arr) {\n    for (int i = 1; i < arr.length; i++) {\n        insertIntoPrefix(arr, i);\n    }\n}\n\nprivate void insertIntoPrefix(int[] arr, int index) {\n    int key = arr[index];\n    int j = index - 1;\n    while (j >= 0 && arr[j] > key) {\n        arr[j + 1] = arr[j];\n        j--;\n    }\n    arr[j + 1] = key;\n}",
+      "Recursion": "public void insertionSortRecursive(int[] arr, int n) {\n    if (n <= 1) {\n        return;\n    }\n    insertionSortRecursive(arr, n - 1);\n    int key = arr[n - 1];\n    int j = n - 2;\n    while (j >= 0 && arr[j] > key) {\n        arr[j + 1] = arr[j];\n        j--;\n    }\n    arr[j + 1] = key;\n}"
+    }
+  }
+}

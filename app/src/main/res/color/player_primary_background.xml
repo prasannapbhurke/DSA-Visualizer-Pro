@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/player_control_disabled_surface" android:state_enabled="false" />
+    <item android:color="@color/player_play_pressed_surface" android:state_pressed="true" />
+    <item android:color="@color/player_play_active_surface" android:state_selected="true" />
+    <item android:color="@color/player_play_surface" />
+</selector>

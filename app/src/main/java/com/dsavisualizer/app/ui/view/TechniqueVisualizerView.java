@@ -1,0 +1,4160 @@
+package com.dsavisualizer.app.ui.view;
+
+import android.animation.ValueAnimator;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Shader;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import androidx.annotation.NonNull;
+
+import androidx.annotation.Nullable;
+
+import com.dsavisualizer.app.ui.visualization.VisualizationTechniqueRegistry;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Reusable animated visualizer for array-based algorithms, linear structures, trees, and graphs.
+ * The goal is to keep the app lightweight while still making the simulation feel alive.
+ */
+public class TechniqueVisualizerView extends View {
+    private static final String TAG = "TechniqueVisualizerView";
+
+    private static final float HORIZONTAL_PADDING = 24f;
+    private static final float MIN_CELL_WIDTH = 76f;
+    private static final float MAX_CELL_WIDTH = 182f;
+    private static final float CELL_GAP = 18f;
+
+    private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint accentPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint softGlowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF tempRect = new RectF();
+
+    private String techniqueId = "linear_search";
+    private int[] values = new int[0];
+    private int[] previousValues = new int[0];
+    private int activeIndex = -1;
+    private int secondaryIndex = -1;
+    private int foundIndex = -1;
+    private int completedStart = -1;
+    private int completedEnd = -1;
+    private int traversalStep = -1;
+    private int[] traversalOrder = new int[0];
+    private int[] mergeLeftValues = new int[0];
+    private int[] mergeRightValues = new int[0];
+    private int[] mergeOutputValues = new int[0];
+    private int mergeWriteIndex = -1;
+    private boolean mergeTransferFromLeft = true;
+    private int mergeTransferSourceIndex = -1;
+    private int mergeTransferTargetIndex = -1;
+    private int mergeTransferValue = Integer.MIN_VALUE;
+    private float mergeTransferProgress = 1f;
+    private int radixDivisor = 1;
+    private int radixActiveBucket = -1;
+    private int[][] matrixValues = new int[0][0];
+    private int matrixK = -1;
+    private int matrixRow = -1;
+    private int matrixCol = -1;
+    private int previousMatrixRow = -1;
+    private int previousMatrixCol = -1;
+    private float matrixHighlightProgress = 1f;
+    private String matrixLabel = "";
+    private String patternText = "";
+    private String patternQuery = "";
+    private String expressionInput = "";
+    private int patternWindowStart = -1;
+    private int patternMatchIndex = -1;
+    private boolean patternFound = false;
+    private int[] unionParents = new int[0];
+    private int unionFocusNode = -1;
+    private int unionRootNode = -1;
+    private int[] dijkstraDistances = new int[0];
+    private boolean[] dijkstraSettled = new boolean[0];
+    private int dijkstraCurrentNode = -1;
+    private int[] huffmanQueueWeights = new int[0];
+    private int huffmanMergedWeight = -1;
+    private String overlayBadgeText = "";
+    private String inlineTeachingMessage = "";
+    private int inlineTeachingTarget = Integer.MIN_VALUE;
+    private float inlineTeachingProgress = 1f;
+    private boolean memoryAddressModeEnabled = false;
+
+    private String primaryPointerLabel = "";
+    private int primaryPointerIndex = -1;
+    private String secondaryPointerLabel = "";
+    private int secondaryPointerIndex = -1;
+    private int previousPrimaryPointerIndex = -1;
+    private int previousSecondaryPointerIndex = -1;
+    private float pointerMotionProgress = 1f;
+    private int activeEdgeFrom = -1;
+    private int activeEdgeTo = -1;
+    private float edgeProgress = 0f;
+    private String structureOperation = "";
+    private int movingStructureIndex = -1;
+    private float structureMotionProgress = 1f;
+    private float binaryRangeFadeProgress = 1f;
+
+    private float transitionProgress = 1f;
+    private float pulseProgress = 0f;
+    private boolean swapAnimating = false;
+    private int swapFromIndex = -1;
+    private int swapToIndex = -1;
+    private float swapProgress = 1f;
+    private final java.util.List<Particle> particles = new java.util.ArrayList<>();
+    private int lastBurstIndex = -1;
+
+    // Multi-sensory: sound + haptics
+    private AlgoSoundHapticEngine soundHaptic;
+    private int lastFoundIndex = -1;
+    private int lastMaxValue = MAX_VALUE_RANGE;
+    private static final int MAX_VALUE_RANGE = 200;
+
+    private ValueAnimator transitionAnimator;
+    private ValueAnimator pulseAnimator;
+    private ValueAnimator edgeAnimator;
+    private ValueAnimator swapAnimator;
+    private ValueAnimator pointerAnimator;
+    private ValueAnimator structureAnimator;
+    private ValueAnimator binaryRangeAnimator;
+    private ValueAnimator mergeTransferAnimator;
+    private ValueAnimator inlineTeachingAnimator;
+    private ValueAnimator matrixHighlightAnimator;
+    private final List<VisualizerEngine> engines = Arrays.asList(
+        new SearchVisualizerEngine(),
+        new SortVisualizerEngine(),
+        new StructureVisualizerEngine(),
+        new TraversalVisualizerEngine()
+    );
+
+    public TechniqueVisualizerView(Context context) {
+        super(context);
+        init();
+    }
+
+    public TechniqueVisualizerView(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
+    private void init() {
+        strokePaint.setStyle(Paint.Style.STROKE);
+        strokePaint.setStrokeWidth(4f);
+        strokePaint.setColor(Color.parseColor("#334155"));
+
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTextSize(34f);
+
+        accentPaint.setStyle(Paint.Style.STROKE);
+        accentPaint.setStrokeWidth(6f);
+        accentPaint.setColor(Color.parseColor("#60A5FA"));
+
+        softGlowPaint.setStyle(Paint.Style.FILL);
+
+        pulseAnimator = ValueAnimator.ofFloat(0f, 1f);
+        pulseAnimator.setDuration(900L);
+        pulseAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        pulseAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        pulseAnimator.addUpdateListener(animation -> {
+            pulseProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        pulseAnimator.start();
+
+        // Init multi-sensory engine
+        soundHaptic = new AlgoSoundHapticEngine(getContext());
+    }
+
+    /** Toggle mute on/off. Returns the new muted state. */
+    public boolean toggleMute() {
+        boolean nowMuted = !soundHaptic.isMuted();
+        soundHaptic.setMuted(nowMuted);
+        return nowMuted;
+    }
+
+    public void setSoundMuted(boolean muted) {
+        if (soundHaptic != null) soundHaptic.setMuted(muted);
+    }
+
+    public void bindTechnique(String techniqueId) {
+        this.techniqueId = techniqueId;
+        invalidate();
+    }
+
+    public void setExpressionInput(String expressionInput) {
+        this.expressionInput = expressionInput == null ? "" : expressionInput.trim();
+        invalidate();
+    }
+
+    public void setArrayState(int[] values, int activeIndex, int secondaryIndex, int foundIndex) {
+        setArrayState(values, activeIndex, secondaryIndex, foundIndex, -1, -1);
+    }
+
+    public void setArrayState(int[] values, int activeIndex, int secondaryIndex, int foundIndex, int completedStart, int completedEnd) {
+        int[] safeValues = values == null ? new int[0] : values;
+        if (Arrays.equals(this.values, safeValues)
+            && this.activeIndex == activeIndex
+            && this.secondaryIndex == secondaryIndex
+            && this.foundIndex == foundIndex
+            && this.completedStart == completedStart
+            && this.completedEnd == completedEnd) {
+            return;
+        }
+        detectSwap(this.values, safeValues);
+        previousValues = this.values.clone();
+        this.values = safeValues.clone();
+        this.activeIndex = activeIndex;
+        this.secondaryIndex = secondaryIndex;
+        this.foundIndex = foundIndex;
+        this.completedStart = completedStart;
+        this.completedEnd = completedEnd;
+        startTransition();
+
+        // ── Multi-sensory feedback ──
+        if (soundHaptic != null && safeValues.length > 0) {
+            // Determine max value for pitch mapping
+            int maxVal = safeValues[0];
+            for (int v : safeValues) if (v > maxVal) maxVal = v;
+            if (maxVal < 1) maxVal = MAX_VALUE_RANGE;
+            lastMaxValue = maxVal;
+
+            // Compare: two elements highlighted simultaneously
+            if (activeIndex >= 0 && secondaryIndex >= 0
+                    && activeIndex < safeValues.length
+                    && secondaryIndex < safeValues.length
+                    && !swapAnimating) {
+                soundHaptic.onCompare(safeValues[activeIndex], maxVal);
+            }
+
+            // Found: foundIndex newly set
+            if (foundIndex >= 0 && foundIndex != lastFoundIndex
+                    && foundIndex < safeValues.length) {
+                soundHaptic.onFound(safeValues[foundIndex], maxVal);
+                lastFoundIndex = foundIndex;
+            } else if (foundIndex < 0) {
+                lastFoundIndex = -1;
+            }
+
+            // Complete: whole array marked sorted
+            if (completedStart == 0 && completedEnd == safeValues.length - 1
+                    && safeValues.length > 1) {
+                soundHaptic.onComplete();
+            }
+        }
+    }
+
+    public void setTraversalState(int[] values, int[] traversalOrder, int traversalStep) {
+        int[] safeValues = values == null ? new int[0] : values;
+        int[] safeOrder = traversalOrder == null ? new int[0] : traversalOrder;
+        if (Arrays.equals(this.values, safeValues)
+            && Arrays.equals(this.traversalOrder, safeOrder)
+            && this.traversalStep == traversalStep) {
+            return;
+        }
+        previousValues = this.values.clone();
+        this.values = safeValues.clone();
+        this.traversalOrder = safeOrder.clone();
+        this.traversalStep = traversalStep;
+        startTransition();
+    }
+
+    public void setPointerState(String primaryLabel, int primaryIndex, String secondaryLabel, int secondaryIndex) {
+        boolean changed = this.primaryPointerIndex != primaryIndex || this.secondaryPointerIndex != secondaryIndex;
+        previousPrimaryPointerIndex = this.primaryPointerIndex;
+        previousSecondaryPointerIndex = this.secondaryPointerIndex;
+        this.primaryPointerLabel = primaryLabel == null ? "" : primaryLabel;
+        this.primaryPointerIndex = primaryIndex;
+        this.secondaryPointerLabel = secondaryLabel == null ? "" : secondaryLabel;
+        this.secondaryPointerIndex = secondaryIndex;
+        if (changed) {
+            startPointerAnimation();
+            if ("binary_search".equals(techniqueId)
+                && "low".equalsIgnoreCase(this.primaryPointerLabel)
+                && "high".equalsIgnoreCase(this.secondaryPointerLabel)) {
+                startBinaryRangeFade();
+            }
+        } else {
+            pointerMotionProgress = 1f;
+        }
+        invalidate();
+    }
+
+    public void clearPointerState() {
+        setPointerState("", -1, "", -1);
+    }
+
+    public void setActiveNodes(int active, int secondary) {
+        this.activeIndex = active;
+        this.secondaryIndex = secondary;
+        invalidate();
+    }
+
+    public String getPrimaryPointerLabel() {
+        return primaryPointerLabel;
+    }
+
+    public int getPrimaryPointerIndex() {
+        return primaryPointerIndex;
+    }
+
+    public String getSecondaryPointerLabel() {
+        return secondaryPointerLabel;
+    }
+
+    public int getSecondaryPointerIndex() {
+        return secondaryPointerIndex;
+    }
+
+    public int getActiveEdgeFrom() {
+        return activeEdgeFrom;
+    }
+
+    public int getActiveEdgeTo() {
+        return activeEdgeTo;
+    }
+
+    public String getStructureOperation() {
+        return structureOperation;
+    }
+
+    public int getMovingStructureIndex() {
+        return movingStructureIndex;
+    }
+
+    public void setOverlayBadgeText(String badgeText) {
+        String safe = badgeText == null ? "" : badgeText;
+        if (safe.equals(overlayBadgeText)) {
+            return;
+        }
+        overlayBadgeText = safe;
+        invalidate();
+    }
+
+    public void setMemoryAddressMode(boolean enabled) {
+        if (memoryAddressModeEnabled == enabled) {
+            return;
+        }
+        memoryAddressModeEnabled = enabled;
+        invalidate();
+    }
+
+    public void setInlineTeaching(String message, int target) {
+        String safeMessage = message == null ? "" : message;
+        boolean changed = !safeMessage.equals(inlineTeachingMessage) || inlineTeachingTarget != target;
+        inlineTeachingMessage = safeMessage;
+        inlineTeachingTarget = target;
+        if (!changed) {
+            return;
+        }
+        if (inlineTeachingAnimator != null) {
+            inlineTeachingAnimator.cancel();
+        }
+        inlineTeachingAnimator = ValueAnimator.ofFloat(0f, 1f);
+        inlineTeachingAnimator.setDuration(220L);
+        inlineTeachingAnimator.setInterpolator(new DecelerateInterpolator());
+        inlineTeachingAnimator.addUpdateListener(animation -> {
+            inlineTeachingProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        inlineTeachingAnimator.start();
+    }
+
+    public void setMergeState(int[] leftValues, int[] rightValues, int[] outputValues, int writeIndex) {
+        mergeLeftValues = leftValues == null ? new int[0] : leftValues.clone();
+        mergeRightValues = rightValues == null ? new int[0] : rightValues.clone();
+        mergeOutputValues = outputValues == null ? new int[0] : outputValues.clone();
+        mergeWriteIndex = writeIndex;
+        invalidate();
+    }
+
+    public void setMergeTransfer(boolean fromLeft, int sourceIndex, int targetIndex, int value) {
+        mergeTransferFromLeft = fromLeft;
+        mergeTransferSourceIndex = sourceIndex;
+        mergeTransferTargetIndex = targetIndex;
+        mergeTransferValue = value;
+        startMergeTransferAnimation();
+    }
+
+    public void setRadixState(int divisor, int activeBucket) {
+        radixDivisor = Math.max(1, divisor);
+        radixActiveBucket = activeBucket;
+        invalidate();
+    }
+
+    public void clearCustomSortState() {
+        mergeLeftValues = new int[0];
+        mergeRightValues = new int[0];
+        mergeOutputValues = new int[0];
+        mergeWriteIndex = -1;
+        radixDivisor = 1;
+        radixActiveBucket = -1;
+        invalidate();
+    }
+
+    public void setMatrixState(int[][] values, int kIndex, int rowIndex, int colIndex, String label) {
+        String safeLabel = label == null ? "" : label;
+        if (matricesEqual(matrixValues, values)
+            && matrixK == kIndex
+            && matrixRow == rowIndex
+            && matrixCol == colIndex
+            && safeLabel.equals(matrixLabel)) {
+            return;
+        }
+        boolean focusChanged = matrixRow != rowIndex || matrixCol != colIndex;
+        previousMatrixRow = matrixRow;
+        previousMatrixCol = matrixCol;
+        if (values == null) {
+            matrixValues = new int[0][0];
+        } else {
+            matrixValues = new int[values.length][];
+            for (int i = 0; i < values.length; i++) {
+                matrixValues[i] = values[i].clone();
+            }
+        }
+        matrixK = kIndex;
+        matrixRow = rowIndex;
+        matrixCol = colIndex;
+        matrixLabel = safeLabel;
+        if (focusChanged && rowIndex >= 0 && colIndex >= 0) {
+            startMatrixHighlightAnimation();
+        } else {
+            invalidate();
+        }
+    }
+
+    public void clearMatrixState() {
+        matrixValues = new int[0][0];
+        matrixK = -1;
+        matrixRow = -1;
+        matrixCol = -1;
+        previousMatrixRow = -1;
+        previousMatrixCol = -1;
+        matrixHighlightProgress = 1f;
+        matrixLabel = "";
+        if (matrixHighlightAnimator != null) {
+            matrixHighlightAnimator.cancel();
+        }
+        invalidate();
+    }
+
+    public void setPatternState(String text, String query, int windowStart, int matchIndex, boolean found) {
+        patternText = text == null ? "" : text;
+        patternQuery = query == null ? "" : query;
+        patternWindowStart = windowStart;
+        patternMatchIndex = matchIndex;
+        patternFound = found;
+        invalidate();
+    }
+
+    public void clearPatternState() {
+        setPatternState("", "", -1, -1, false);
+    }
+
+    public void setUnionFindState(int[] parents, int focusNode, int rootNode) {
+        int[] safeParents = parents == null ? new int[0] : parents;
+        if (Arrays.equals(unionParents, safeParents)
+            && unionFocusNode == focusNode
+            && unionRootNode == rootNode) {
+            return;
+        }
+        unionParents = safeParents.clone();
+        unionFocusNode = focusNode;
+        unionRootNode = rootNode;
+        invalidate();
+    }
+
+    public void setDijkstraState(int[] distances, boolean[] settled, int currentNode) {
+        int[] safeDistances = distances == null ? new int[0] : distances;
+        boolean[] safeSettled = settled == null ? new boolean[0] : settled;
+        if (Arrays.equals(dijkstraDistances, safeDistances)
+            && Arrays.equals(dijkstraSettled, safeSettled)
+            && dijkstraCurrentNode == currentNode) {
+            return;
+        }
+        dijkstraDistances = safeDistances.clone();
+        dijkstraSettled = safeSettled.clone();
+        dijkstraCurrentNode = currentNode;
+        invalidate();
+    }
+
+    public void setHuffmanState(int[] queueWeights, int mergedWeight) {
+        int[] safeWeights = queueWeights == null ? new int[0] : queueWeights;
+        if (Arrays.equals(huffmanQueueWeights, safeWeights) && huffmanMergedWeight == mergedWeight) {
+            return;
+        }
+        huffmanQueueWeights = safeWeights.clone();
+        huffmanMergedWeight = mergedWeight;
+        invalidate();
+    }
+
+    public void setActiveEdge(int from, int to) {
+        this.activeEdgeFrom = from;
+        this.activeEdgeTo = to;
+        startEdgeAnimation();
+    }
+
+    public void clearActiveEdge() {
+        this.activeEdgeFrom = -1;
+        this.activeEdgeTo = -1;
+        this.edgeProgress = 0f;
+        invalidate();
+    }
+
+    public void setStructureMotion(String operation, int movingIndex) {
+        this.structureOperation = operation == null ? "" : operation;
+        this.movingStructureIndex = movingIndex;
+        if (this.structureOperation.isEmpty() || this.movingStructureIndex < 0) {
+            structureMotionProgress = 1f;
+        } else {
+            startStructureMotionAnimation();
+        }
+        invalidate();
+    }
+
+    public int getFocusScrollX(int index) {
+        if (values.length == 0) {
+            return 0;
+        }
+        int safeIndex = Math.max(0, Math.min(index, values.length - 1));
+        float cellWidth = resolveHorizontalCellWidth();
+        float baseWidth = cellWidth - CELL_GAP;
+        float center = HORIZONTAL_PADDING + (safeIndex * cellWidth) + (baseWidth / 2f);
+        return Math.round(center - (getWidth() / 2f));
+    }
+
+    public int getPatternFocusScrollX(int index) {
+        int safeIndex = Math.max(0, index);
+        float cellWidth = 56f;
+        float center = HORIZONTAL_PADDING + (safeIndex * cellWidth) + (cellWidth / 2f);
+        return Math.round(center - (getWidth() / 2f));
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        VisualizerEngine engine = resolveEngine();
+        int requestedWidth = engine == null ? resolveScreenWidthDesiredWidth() : engine.resolveDesiredWidth(this, techniqueId);
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int measuredWidth = resolveSize(requestedWidth, widthMeasureSpec);
+        if (isLandscapeCanvas() && widthMode != MeasureSpec.UNSPECIFIED && widthSize > 0) {
+            measuredWidth = widthSize;
+        }
+        int requestedHeight = engine == null ? resolveStandardDesiredHeight() : engine.resolveDesiredHeight(this, techniqueId);
+        int measuredHeight = resolveSize(requestedHeight, heightMeasureSpec);
+        setMeasuredDimension(measuredWidth, measuredHeight);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        try {
+            int saveCount = canvas.save();
+            canvas.clipRect(
+                getPaddingLeft(),
+                getPaddingTop(),
+                getWidth() - getPaddingRight(),
+                getHeight() - getPaddingBottom()
+            );
+            VisualizerEngine engine = resolveEngine();
+            if (engine != null) {
+                engine.draw(canvas, this, techniqueId);
+            } else {
+                drawHorizontalBoxes(canvas, false);
+            }
+            drawOverlayBadge(canvas);
+            drawParticles(canvas);
+            canvas.restoreToCount(saveCount);
+        } catch (Throwable drawError) {
+            Log.e(TAG, "Visualizer draw failed for technique " + techniqueId, drawError);
+            drawVisualizerErrorState(canvas);
+        }
+    }
+
+    private void drawVisualizerErrorState(Canvas canvas) {
+        canvas.drawColor(Color.parseColor("#020617"));
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTextSize(28f);
+        textPaint.setColor(Color.parseColor("#E2E8F0"));
+        canvas.drawText("Visualization temporarily unavailable", getWidth() / 2f, getHeight() * 0.42f, textPaint);
+        textPaint.setTextSize(18f);
+        textPaint.setColor(Color.parseColor("#94A3B8"));
+        canvas.drawText("Please restart this topic and try again.", getWidth() / 2f, getHeight() * 0.54f, textPaint);
+    }
+
+    void drawHorizontalBoxes(Canvas canvas, boolean linked) {
+        if (values.length == 0) {
+            if (isStructureTechnique()) {
+                drawEmptyStructureState(canvas, linked ? "linked" : techniqueId);
+            }
+            return;
+        }
+
+        float padding = isStructureTechnique() ? resolveStructureHorizontalPadding() : 24f;
+        float cellWidth = isStructureTechnique()
+            ? resolveHorizontalCellWidth(resolveStructureAvailableWidth(padding))
+            : resolveHorizontalCellWidth();
+        float baseWidth = cellWidth - CELL_GAP;
+        float top = isStructureTechnique() ? resolveStructureTop() : getHeight() * 0.34f;
+        float bottom = top + (isStructureTechnique() ? resolveStructureBoxHeight() : resolveBoxHeight());
+        float textSize = isStructureTechnique() ? resolveStructureValueTextSize() : resolveValueTextSize();
+
+        drawBinarySearchRange(canvas, padding, cellWidth, baseWidth, top, bottom);
+        drawJumpSearchRange(canvas, padding, cellWidth, baseWidth, top, bottom);
+
+        for (int i = 0; i < values.length; i++) {
+            if (swapAnimating && (i == swapFromIndex || i == swapToIndex)) {
+                continue;
+            }
+
+            float left = padding + (i * cellWidth)
+                + resolveStructureTranslationX(i)
+                + resolveInsertionShiftX(i, cellWidth)
+                + resolveLinkedDeletionCollapseX(i, cellWidth);
+            if (isStructureTechnique() && isLandscapeCanvas()) {
+                left = clamp(left, padding, Math.max(padding, getWidth() - padding - baseWidth));
+            }
+            float right = left + baseWidth;
+            float lift = resolveLift(i);
+            float translateY = resolveStructureTranslationY(i, false);
+            float animatedTop = top - lift + translateY;
+            float animatedBottom = bottom - lift + translateY;
+            int alpha = Math.round(255f * resolveCellAlpha(i));
+            int saveCount = canvas.saveLayerAlpha(left - 18f, animatedTop - 18f, right + 18f, animatedBottom + 18f, alpha);
+
+            applyBoxShader(left, animatedTop, right, animatedBottom, i);
+            canvas.drawRoundRect(left, animatedTop, right, animatedBottom, 24f, 24f, fillPaint);
+
+            // Neon gradient stroke configuration for the box border
+            int strokeColorA = Color.parseColor("#38BDF8"); // Cyan neon
+            int strokeColorB = Color.parseColor("#C084FC"); // Purple neon
+            if (i == activeIndex) {
+                strokeColorA = Color.parseColor("#F59E0B"); // Amber neon
+                strokeColorB = Color.parseColor("#EF4444"); // Red neon
+            } else if (i == secondaryIndex) {
+                strokeColorA = Color.parseColor("#C084FC"); // Purple neon
+                strokeColorB = Color.parseColor("#A855F7"); // Violet neon
+            } else if (i == foundIndex || isCompletedIndex(i)) {
+                strokeColorA = Color.parseColor("#34D399"); // Emerald neon
+                strokeColorB = Color.parseColor("#10B981"); // Green neon
+            }
+
+            Paint boxStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            boxStrokePaint.setStyle(Paint.Style.STROKE);
+            boxStrokePaint.setStrokeWidth(5f);
+            boxStrokePaint.setShader(new LinearGradient(left, animatedTop, right, animatedBottom, strokeColorA, strokeColorB, Shader.TileMode.CLAMP));
+            canvas.drawRoundRect(left, animatedTop, right, animatedBottom, 24f, 24f, boxStrokePaint);
+
+            drawGlow(canvas, left, animatedTop, right, animatedBottom, i);
+
+
+
+            textPaint.setColor(Color.WHITE);
+            textPaint.setFakeBoldText(true);
+            textPaint.setTextSize(textSize);
+            float boxHeight = animatedBottom - animatedTop;
+            canvas.drawText(String.valueOf(resolveAnimatedValue(i)), (left + right) / 2f, animatedTop + (boxHeight * 0.58f), textPaint);
+            drawStructureCardLabel(canvas, left, animatedTop, right, animatedBottom, i, false);
+            drawStructureArrivalEffect(canvas, (left + right) / 2f, (animatedTop + animatedBottom) / 2f, Math.min(baseWidth, boxHeight) * 0.42f, i);
+            canvas.restoreToCount(saveCount);
+
+            if (linked && i < values.length - 1) {
+                float lineY = (animatedTop + animatedBottom) / 2f;
+                drawAnimatedConnector(canvas, right + 8f, lineY, right + 32f, lineY, linked && isLinkedRelinkConnector(i));
+            }
+        }
+
+        drawComparisonBeam(canvas, padding, cellWidth, baseWidth, top, bottom);
+        drawPartitionSweep(canvas, padding, cellWidth, baseWidth, top, bottom);
+        drawCompletedPassSweep(canvas, padding, cellWidth, baseWidth, top, bottom);
+        drawSwapBoxes(canvas, padding, cellWidth, baseWidth, top, bottom);
+        drawArrayPointers(canvas, padding, cellWidth, baseWidth, top);
+        drawInlineArrayMath(canvas, padding, cellWidth, baseWidth, top, bottom);
+        drawDiscardedFlashTrails(canvas, padding, cellWidth, baseWidth, top, bottom);
+        drawArrayIndices(canvas, padding, cellWidth, baseWidth, bottom);
+        if (linked || isLinkedTechnique()) {
+            drawLinkedMemoryView(canvas, padding, cellWidth, baseWidth, bottom);
+        }
+    }
+
+    void drawVerticalStack(Canvas canvas) {
+        drawVerticalStack(canvas, false);
+    }
+
+    void drawVerticalStack(Canvas canvas, boolean linked) {
+        if (values.length == 0) {
+            drawEmptyStructureState(canvas, "stack");
+            return;
+        }
+
+        float stackWidth = resolveStackVisualWidth();
+        float left = (getWidth() - stackWidth) / 2f;
+        float right = left + stackWidth;
+        float cellHeight = resolveStackCellHeight();
+        float gap = resolveStackGap();
+        float startBottom = getHeight() - resolveStackBottomInset();
+
+        for (int i = 0; i < values.length; i++) {
+            int visualIndex = i;
+            float bottom = startBottom - (i * (cellHeight + gap));
+            float translateY = resolveStructureTranslationY(visualIndex, true);
+            float top = bottom - cellHeight - resolveLift(visualIndex) + translateY;
+            float animatedBottom = bottom - resolveLift(visualIndex) + translateY;
+            int alpha = Math.round(255f * resolveCellAlpha(visualIndex));
+            int saveCount = canvas.saveLayerAlpha(left - 18f, top - 18f, right + 18f, animatedBottom + 18f, alpha);
+
+            applyBoxShader(left, top, right, animatedBottom, visualIndex);
+            canvas.drawRoundRect(left, top, right, animatedBottom, 20f, 20f, fillPaint);
+            canvas.drawRoundRect(left, top, right, animatedBottom, 20f, 20f, strokePaint);
+            drawGlow(canvas, left, top, right, animatedBottom, visualIndex);
+            canvas.drawText(String.valueOf(resolveAnimatedValue(visualIndex)), (left + right) / 2f, top + 56f, textPaint);
+            drawStructureCardLabel(canvas, left, top, right, animatedBottom, visualIndex, true);
+            drawStructureArrivalEffect(canvas, (left + right) / 2f, (top + animatedBottom) / 2f, Math.min(right - left, animatedBottom - top) * 0.40f, visualIndex);
+            canvas.restoreToCount(saveCount);
+
+            if (i > 0) {
+                drawAnimatedConnector(
+                    canvas,
+                    (left + right) / 2f,
+                    animatedBottom + 8f,
+                    (left + right) / 2f,
+                    animatedBottom + 24f,
+                    linked
+                );
+            }
+
+            if (linked) {
+                drawLinkedStackArrow(canvas, right + 18f, top + (cellHeight * 0.5f), i == values.length - 1);
+            }
+        }
+
+        if (primaryPointerIndex >= 0 && primaryPointerIndex < values.length) {
+            float pointerCenterY = startBottom - (primaryPointerIndex * (cellHeight + gap)) - cellHeight - 22f;
+            float pointerX = clamp(right + 40f, 44f, Math.max(44f, getWidth() - 44f));
+            drawPointer(canvas, pointerX, pointerCenterY, primaryPointerLabel.isEmpty() ? "top" : primaryPointerLabel);
+        }
+
+        drawStackIndices(canvas, left, startBottom, cellHeight, gap);
+    }
+
+    void drawExpressionStackScene(Canvas canvas) {
+        boolean postfix = "postfix_evaluation".equals(techniqueId);
+        boolean prefix = "infix_to_prefix".equals(techniqueId);
+        String expression = resolveExpressionInput(postfix, prefix);
+        String sceneTitle = postfix ? "Postfix Expression" : (prefix ? "Reversed Infix Expression" : "Infix Expression");
+        String stackTitle = postfix ? "Operand Stack" : "Operator Stack";
+        String resultTitle = postfix ? "Value" : (prefix ? "Prefix Result" : "Postfix Result");
+        int tokenIndex = Math.max(0, activeIndex);
+
+        ExpressionSceneState state = postfix
+            ? buildPostfixSceneState(tokenIndex)
+            : buildConversionSceneState(expression, tokenIndex, prefix);
+
+        float width = getWidth();
+        float height = getHeight();
+        float margin = Math.max(20f, width * 0.045f);
+        float cardTop = Math.max(20f, height * 0.04f);
+        float cardBottom = height - Math.max(24f, height * 0.06f);
+        float cardLeft = margin;
+        float cardRight = width - margin;
+
+        Paint cardFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        cardFill.setStyle(Paint.Style.FILL);
+        cardFill.setColor(Color.parseColor("#0B1020"));
+        cardFill.setAlpha(238);
+        Paint cardStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        cardStroke.setStyle(Paint.Style.STROKE);
+        cardStroke.setStrokeWidth(2.4f);
+        cardStroke.setColor(Color.parseColor("#1F2937"));
+        canvas.drawRoundRect(cardLeft, cardTop, cardRight, cardBottom, 28f, 28f, cardFill);
+        canvas.drawRoundRect(cardLeft, cardTop, cardRight, cardBottom, 28f, 28f, cardStroke);
+
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        labelPaint.setColor(Color.parseColor("#F8FAFC"));
+        labelPaint.setFakeBoldText(true);
+        labelPaint.setTextSize(resolveResponsiveTextSize(24f, 30f));
+        canvas.drawText(sceneTitle, width / 2f, cardTop + 56f, labelPaint);
+
+        drawExpressionLine(canvas, expression, tokenIndex, width / 2f, cardTop + 118f, postfix);
+
+        float midY = cardTop + ((cardBottom - cardTop) * 0.56f);
+        float leftCenter = cardLeft + ((cardRight - cardLeft) * 0.31f);
+        float rightCenter = cardLeft + ((cardRight - cardLeft) * 0.70f);
+
+        labelPaint.setTextSize(resolveResponsiveTextSize(22f, 28f));
+        canvas.drawText(stackTitle, leftCenter, midY - 156f, labelPaint);
+        canvas.drawText(resultTitle, rightCenter, midY - 156f, labelPaint);
+
+        drawExpressionStackBox(canvas, state.stack, leftCenter, midY + 52f);
+
+        Paint resultPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        resultPaint.setTextAlign(Paint.Align.CENTER);
+        resultPaint.setFakeBoldText(true);
+        resultPaint.setColor(Color.parseColor("#2DD4BF"));
+        resultPaint.setTextSize(resolveResponsiveTextSize(30f, 42f));
+        String result = state.result.isEmpty() ? "[ empty ]" : state.result;
+        if (postfix && tokenIndex >= 5 && !state.result.isEmpty()) {
+            result = "VALUE = " + state.result;
+        }
+        canvas.drawText(result, rightCenter, midY - 60f, resultPaint);
+
+        if (!state.actionLine.isEmpty()) {
+            drawExpressionActionLine(canvas, state.actionLine, rightCenter, midY + 2f);
+        }
+
+        Paint hintPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        hintPaint.setTextAlign(Paint.Align.CENTER);
+        hintPaint.setColor(Color.parseColor("#CBD5E1"));
+        hintPaint.setTextSize(resolveResponsiveTextSize(18f, 22f));
+        canvas.drawText(state.note, width / 2f, cardBottom - 48f, hintPaint);
+    }
+
+    private void drawExpressionActionLine(Canvas canvas, String actionLine, float centerX, float baseline) {
+        Paint actionFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        actionFill.setStyle(Paint.Style.FILL);
+        actionFill.setColor(Color.parseColor("#172033"));
+        actionFill.setAlpha(235);
+        Paint actionStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        actionStroke.setStyle(Paint.Style.STROKE);
+        actionStroke.setStrokeWidth(2.2f);
+        actionStroke.setColor(Color.parseColor("#FACC15"));
+        actionStroke.setAlpha(190);
+        Paint actionText = new Paint(Paint.ANTI_ALIAS_FLAG);
+        actionText.setTextAlign(Paint.Align.CENTER);
+        actionText.setFakeBoldText(true);
+        actionText.setColor(Color.parseColor("#FDE68A"));
+        float pulse = "pop".equals(structureOperation) ? (1f - structureMotionProgress) : pulseProgress;
+        actionText.setTextSize(resolveResponsiveTextSize(20f, 25f) + (pulse * 4f));
+        float width = Math.min(getWidth() * 0.42f, Math.max(128f, actionText.measureText(actionLine) + 32f));
+        float height = 46f + (pulse * 6f);
+        tempRect.set(centerX - (width / 2f), baseline - height + 12f, centerX + (width / 2f), baseline + 12f);
+        canvas.drawRoundRect(tempRect, 12f, 12f, actionFill);
+        canvas.drawRoundRect(tempRect, 12f, 12f, actionStroke);
+        canvas.drawText(actionLine, centerX, baseline - 2f, actionText);
+    }
+
+    private void drawExpressionLine(Canvas canvas, String expression, int tokenIndex, float centerX, float baseline, boolean tokenized) {
+        String display = tokenized ? expression : expression;
+        Paint expressionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        expressionPaint.setTextAlign(Paint.Align.LEFT);
+        expressionPaint.setColor(Color.parseColor("#CBD5E1"));
+        expressionPaint.setTextSize(resolveResponsiveTextSize(32f, 44f));
+        expressionPaint.setFakeBoldText(false);
+
+        float totalWidth = expressionPaint.measureText(display);
+        float startX = centerX - (totalWidth / 2f);
+        int highlightCharIndex = tokenized ? postfixTokenCharIndex(expression, tokenIndex) : tokenIndex;
+        if (highlightCharIndex >= 0 && highlightCharIndex < display.length()) {
+            float highlightLeft = startX + expressionPaint.measureText(display, 0, highlightCharIndex) - 5f;
+            float highlightRight = startX + expressionPaint.measureText(display, 0, highlightCharIndex + 1) + 5f;
+            Paint highlight = new Paint(Paint.ANTI_ALIAS_FLAG);
+            highlight.setStyle(Paint.Style.FILL);
+            highlight.setColor(Color.parseColor("#FACC15"));
+            highlight.setAlpha(70);
+            canvas.drawRoundRect(highlightLeft, baseline - 42f, highlightRight, baseline + 10f, 8f, 8f, highlight);
+        }
+        canvas.drawText(display, startX, baseline, expressionPaint);
+    }
+
+    private void drawExpressionStackBox(Canvas canvas, String[] stack, float centerX, float centerY) {
+        float boxWidth = Math.min(172f, Math.max(126f, getWidth() * 0.22f));
+        float boxHeight = 238f;
+        float left = centerX - (boxWidth / 2f);
+        float top = centerY - (boxHeight / 2f);
+        float right = centerX + (boxWidth / 2f);
+        float bottom = centerY + (boxHeight / 2f);
+
+        Paint shellFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        shellFill.setStyle(Paint.Style.FILL);
+        shellFill.setColor(Color.parseColor("#0F1220"));
+        shellFill.setAlpha(220);
+        Paint shellStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        shellStroke.setStyle(Paint.Style.STROKE);
+        shellStroke.setStrokeWidth(2.2f);
+        shellStroke.setColor(Color.parseColor("#2A2F45"));
+        canvas.drawRoundRect(left, top, right, bottom, 18f, 18f, shellFill);
+        canvas.drawRoundRect(left, top, right, bottom, 18f, 18f, shellStroke);
+
+        Paint boxStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        boxStroke.setStyle(Paint.Style.STROKE);
+        boxStroke.setStrokeWidth(4f);
+        boxStroke.setColor(Color.parseColor("#2DD4BF"));
+        Paint boxFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        boxFill.setStyle(Paint.Style.FILL);
+        boxFill.setColor(Color.parseColor("#111827"));
+        Paint itemText = new Paint(Paint.ANTI_ALIAS_FLAG);
+        itemText.setColor(Color.parseColor("#F8FAFC"));
+        itemText.setTextAlign(Paint.Align.CENTER);
+        itemText.setFakeBoldText(true);
+        itemText.setTextSize(resolveResponsiveTextSize(24f, 30f));
+
+        if (stack.length == 0) {
+            Paint emptyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            emptyPaint.setColor(Color.parseColor("#94A3B8"));
+            emptyPaint.setTextAlign(Paint.Align.CENTER);
+            emptyPaint.setTextSize(resolveResponsiveTextSize(20f, 24f));
+            emptyPaint.setTextSkewX(-0.18f);
+            canvas.drawText("[ empty ]", centerX, centerY + 8f, emptyPaint);
+            return;
+        }
+
+        float itemHeight = 64f;
+        float gap = 12f;
+        float currentBottom = bottom - 24f;
+        for (int i = 0; i < stack.length; i++) {
+            int visualIndex = i;
+            float itemBottom = currentBottom - (i * (itemHeight + gap));
+            float itemTop = itemBottom - itemHeight;
+            float itemLeft = left + 28f;
+            float itemRight = right - 28f;
+            canvas.drawRoundRect(itemLeft, itemTop, itemRight, itemBottom, 9f, 9f, boxFill);
+            canvas.drawRoundRect(itemLeft, itemTop, itemRight, itemBottom, 9f, 9f, boxStroke);
+            canvas.drawText(stack[visualIndex], centerX, itemTop + 42f, itemText);
+        }
+    }
+
+    private ExpressionSceneState buildPostfixSceneState(int tokenIndex) {
+        String[] tokens = tokenizePostfix(resolveExpressionInput(true, false));
+        int safeIndex = Math.min(Math.max(0, tokenIndex), tokens.length - 1);
+        int[] temp = new int[tokens.length];
+        int top = -1;
+        String note = "";
+        String actionLine = "";
+        for (int i = 0; i <= safeIndex; i++) {
+            String token = tokens[i];
+            if (")".equals(token)) {
+                note = "Sentinel reached. The top of STACK is the final value.";
+                break;
+            }
+            if (isNumericToken(token)) {
+                temp[++top] = Integer.parseInt(token);
+                note = "Scanning token '" + token + "'. Operand is pushed on STACK.";
+            } else if (top >= 1) {
+                int a = temp[top--];
+                int b = temp[top--];
+                int result = applyExpressionOperator(b, token.charAt(0), a);
+                temp[++top] = result;
+                note = "Scanning token '" + token + "'. Pop A and B, evaluate B " + token + " A, push result.";
+                actionLine = b + " " + token + " " + a + " = " + result;
+            }
+        }
+        String[] stack = new String[top + 1];
+        for (int i = 0; i <= top; i++) {
+            stack[i] = String.valueOf(temp[i]);
+        }
+        return new ExpressionSceneState(stack, top >= 0 ? String.valueOf(temp[top]) : "", note, actionLine);
+    }
+
+    private ExpressionSceneState buildConversionSceneState(String expression, int tokenIndex, boolean prefixMode) {
+        int safeIndex = Math.min(Math.max(0, tokenIndex), expression.length());
+        char[] stackTemp = new char[expression.length() + 1];
+        int top = -1;
+        StringBuilder output = new StringBuilder();
+        String note = "";
+        for (int i = 0; i < safeIndex && i < expression.length(); i++) {
+            char token = expression.charAt(i);
+            if (Character.isLetterOrDigit(token)) {
+                output.append(token);
+                note = "Scanning token '" + token + "'. Operand goes directly to result.";
+            } else if (token == '(') {
+                stackTemp[++top] = token;
+                note = "Scanning token '('. Push it on the operator stack.";
+            } else if (token == ')') {
+                while (top >= 0 && stackTemp[top] != '(') {
+                    output.append(stackTemp[top--]);
+                }
+                if (top >= 0 && stackTemp[top] == '(') {
+                    top--;
+                }
+                note = "Scanning token ')'. Pop until '(' is removed.";
+            } else if (isExpressionOperator(token)) {
+                while (top >= 0
+                    && stackTemp[top] != '('
+                    && (prefixMode
+                        ? expressionPrecedence(stackTemp[top]) > expressionPrecedence(token)
+                        : expressionPrecedence(stackTemp[top]) >= expressionPrecedence(token))) {
+                    output.append(stackTemp[top--]);
+                }
+                stackTemp[++top] = token;
+                note = "Scanning token '" + token + "'. Compare precedence and push operator.";
+            }
+        }
+        if (safeIndex >= expression.length()) {
+            while (top >= 0) {
+                if (stackTemp[top] != '(') {
+                    output.append(stackTemp[top]);
+                }
+                top--;
+            }
+            note = prefixMode
+                ? "Conversion complete. Reverse the temporary result to get prefix."
+                : "Conversion complete. Remaining operators are popped from STACK.";
+        }
+        String[] stack = new String[top + 1];
+        for (int i = 0; i <= top; i++) {
+            stack[i] = String.valueOf(stackTemp[i]);
+        }
+        String result = prefixMode ? new StringBuilder(output).reverse().toString() : output.toString();
+        return new ExpressionSceneState(stack, result, note, resolveConversionActionLine(stack, result, prefixMode));
+    }
+
+    private String resolveConversionActionLine(String[] stack, String result, boolean prefixMode) {
+        if (result == null || result.isEmpty()) {
+            return stack.length == 0 ? "" : "Stack top: " + stack[stack.length - 1];
+        }
+        if (stack.length == 0) {
+            return prefixMode ? "Reverse result: " + result : "Output: " + result;
+        }
+        return "Output: " + result + "   Top: " + stack[stack.length - 1];
+    }
+
+    private int postfixTokenCharIndex(String expression, int tokenIndex) {
+        if (tokenIndex < 0 || expression == null || expression.isEmpty()) {
+            return -1;
+        }
+        String[] tokens = tokenizePostfix(expression);
+        if (tokenIndex >= tokens.length) {
+            return -1;
+        }
+        if (expression.indexOf(' ') >= 0) {
+            int searchFrom = 0;
+            for (int i = 0; i <= tokenIndex && i < tokens.length; i++) {
+                if (")".equals(tokens[i])) {
+                    return -1;
+                }
+                int foundAt = expression.indexOf(tokens[i], searchFrom);
+                if (foundAt < 0) {
+                    return -1;
+                }
+                if (i == tokenIndex) {
+                    return foundAt;
+                }
+                searchFrom = foundAt + tokens[i].length();
+            }
+            return -1;
+        }
+        return tokenIndex < expression.length() ? tokenIndex : -1;
+    }
+
+    private String resolveExpressionInput(boolean postfix, boolean prefix) {
+        if (expressionInput != null && !expressionInput.trim().isEmpty()) {
+            return expressionInput.trim();
+        }
+        if (postfix) {
+            return "2 3 4 * +";
+        }
+        return prefix ? "(e-d^c)*b+a" : "a+b*(c^d-e)";
+    }
+
+    private String[] tokenizePostfix(String expression) {
+        String safe = expression == null ? "" : expression.trim();
+        if (safe.isEmpty()) {
+            return new String[] {"2", "3", "4", "*", "+", ")"};
+        }
+        if (safe.contains(" ")) {
+            String[] parts = safe.split("\\s+");
+            if (parts.length == 0) {
+                return new String[] {"2", "3", "4", "*", "+", ")"};
+            }
+            if (!")".equals(parts[parts.length - 1])) {
+                String[] withSentinel = new String[parts.length + 1];
+                System.arraycopy(parts, 0, withSentinel, 0, parts.length);
+                withSentinel[parts.length] = ")";
+                return withSentinel;
+            }
+            return parts;
+        }
+        String[] tokens = new String[safe.length() + (safe.endsWith(")") ? 0 : 1)];
+        for (int i = 0; i < safe.length(); i++) {
+            tokens[i] = String.valueOf(safe.charAt(i));
+        }
+        if (!safe.endsWith(")")) {
+            tokens[tokens.length - 1] = ")";
+        }
+        return tokens;
+    }
+
+    private boolean isExpressionOperator(char token) {
+        return token == '+' || token == '-' || token == '*' || token == '/' || token == '^';
+    }
+
+    private boolean isNumericToken(String token) {
+        if (token == null || token.isEmpty()) {
+            return false;
+        }
+        int start = token.charAt(0) == '-' && token.length() > 1 ? 1 : 0;
+        for (int i = start; i < token.length(); i++) {
+            if (!Character.isDigit(token.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private int expressionPrecedence(char operator) {
+        if (operator == '+' || operator == '-') {
+            return 1;
+        }
+        if (operator == '*' || operator == '/') {
+            return 2;
+        }
+        if (operator == '^') {
+            return 3;
+        }
+        return 0;
+    }
+
+    private int applyExpressionOperator(int b, char operator, int a) {
+        if (operator == '+') {
+            return b + a;
+        }
+        if (operator == '-') {
+            return b - a;
+        }
+        if (operator == '*') {
+            return b * a;
+        }
+        if (operator == '/' && a != 0) {
+            return b / a;
+        }
+        if (operator == '^') {
+            return (int) Math.pow(b, a);
+        }
+        return 0;
+    }
+
+    private float resolveResponsiveTextSize(float phoneSize, float tabletSize) {
+        return getWidth() >= 760f ? tabletSize : phoneSize;
+    }
+
+    private static final class ExpressionSceneState {
+        final String[] stack;
+        final String result;
+        final String note;
+        final String actionLine;
+
+        ExpressionSceneState(String[] stack, String result, String note, String actionLine) {
+            this.stack = stack;
+            this.result = result == null ? "" : result;
+            this.note = note == null ? "" : note;
+            this.actionLine = actionLine == null ? "" : actionLine;
+        }
+    }
+
+    void drawCircularStructure(Canvas canvas, boolean headerNode) {
+        if (values.length == 0) {
+            drawEmptyStructureState(canvas, headerNode ? "circular_header" : "circular");
+            return;
+        }
+
+        float centerX = getWidth() / 2f;
+        float centerY = getHeight() * 0.50f;
+        int ringCount = values.length + (headerNode ? 1 : 0);
+        float shortestSide = Math.min(getWidth(), getHeight());
+        float radius = shortestSide * (ringCount >= 8 ? 0.20f : 0.23f);
+        radius = Math.max(92f, Math.min(radius, 190f));
+        float circumference = (float) (2d * Math.PI * radius);
+        float spacingLimitedRadius = Math.max(18f, Math.min(34f, (circumference / Math.max(1, ringCount)) * 0.24f));
+        float nodeRadius = Math.min(34f, Math.max(20f, spacingLimitedRadius));
+        float angleStep = (float) ((Math.PI * 2d) / Math.max(1, ringCount));
+        float startAngle = (float) (-Math.PI / 2d);
+        float[][] centers = new float[ringCount][2];
+
+        for (int i = 0; i < ringCount; i++) {
+            float angle = startAngle + (i * angleStep);
+            centers[i][0] = centerX + ((float) Math.cos(angle) * radius);
+            centers[i][1] = centerY + ((float) Math.sin(angle) * radius);
+        }
+
+        for (int i = 0; i < ringCount; i++) {
+            int next = (i + 1) % ringCount;
+            boolean relink = isCircularRelinkConnector(i, headerNode);
+            drawAnimatedConnector(
+                canvas,
+                centers[i][0],
+                centers[i][1],
+                centers[next][0],
+                centers[next][1],
+                relink
+            );
+        }
+
+        for (int i = 0; i < ringCount; i++) {
+            boolean isHeader = headerNode && i == 0;
+            int valueIndex = headerNode ? i - 1 : i;
+            int renderIndex = isHeader ? -1 : valueIndex;
+            int fillColor = isHeader ? resolveCircularHeaderColor() : resolveFill(valueIndex);
+            float cx = centers[i][0];
+            float cy = centers[i][1];
+            applyNodeShader(cx, cy, fillColor);
+            float radiusBoost = (!isHeader && (valueIndex == activeIndex || valueIndex == secondaryIndex || valueIndex == foundIndex))
+                ? pulseProgress * 4f : 0f;
+            canvas.drawCircle(cx, cy, nodeRadius + radiusBoost, fillPaint);
+            canvas.drawCircle(cx, cy, nodeRadius + radiusBoost, strokePaint);
+            if (!isHeader) {
+                drawNodeHalo(canvas, cx, cy, nodeRadius, renderIndex);
+            }
+            textPaint.setTextSize(isHeader ? 18f : (nodeRadius <= 24f ? 20f : 24f));
+            canvas.drawText(isHeader ? "H" : String.valueOf(resolveAnimatedValue(valueIndex)), cx, cy + 8f, textPaint);
+        }
+
+        if ("circular_queue".equals(techniqueId) && values.length > 0) {
+            drawCircularBadge(canvas, centers[0][0], centers[0][1] - nodeRadius - 26f, "Front", "#2563EB");
+            drawCircularBadge(canvas, centers[values.length - 1][0], centers[values.length - 1][1] + nodeRadius + 26f, "Rear", "#0F766E");
+        }
+
+        if (headerNode) {
+            drawCircularBadge(canvas, centers[0][0], centers[0][1] - nodeRadius - 26f, "Head", "#0F766E");
+        }
+    }
+
+    void drawTree(Canvas canvas) {
+        if (values.length == 0) {
+            return;
+        }
+
+        float[][] points = resolveTreeLayout(0.22f, 0.42f, 0.66f);
+
+        int[][] edges = {{0, 1}, {0, 2}, {1, 3}, {1, 4}, {2, 5}, {2, 6}};
+        for (int[] edge : edges) {
+            Paint linePaint = new Paint(strokePaint);
+            if (isTraversalEdgeActive(edge[0], edge[1])) {
+                linePaint.setColor(Color.parseColor("#38BDF8"));
+                linePaint.setStrokeWidth(8f);
+            }
+            canvas.drawLine(points[edge[0]][0], points[edge[0]][1], points[edge[1]][0], points[edge[1]][1], linePaint);
+        }
+        drawTraversalTravelTrail(canvas, points);
+
+        for (int i = 0; i < Math.min(values.length, points.length); i++) {
+            applyNodeShader(points[i][0], points[i][1], resolveTraversalFill(i));
+            float radius = resolveNodeRadius(i, resolveTreeNodeRadius());
+            canvas.drawCircle(points[i][0], points[i][1], radius, fillPaint);
+            canvas.drawCircle(points[i][0], points[i][1], radius, strokePaint);
+            drawNodeHalo(canvas, points[i][0], points[i][1], radius, i);
+            drawNodeArrivalEffect(canvas, points[i][0], points[i][1], radius, i, false);
+            textPaint.setTextSize(resolveTreeTextSize());
+            canvas.drawText(String.valueOf(resolveAnimatedValue(i)), points[i][0], points[i][1] + 10f, textPaint);
+        }
+        drawTreeTeachingOverlays(canvas, points, Math.min(values.length, points.length), false, false);
+        drawTreeMemoryOverlay(canvas, points, Math.min(values.length, points.length), false);
+        drawGraphOrTreeWhyBubble(canvas, points, false);
+    }
+
+    void drawGraph(Canvas canvas) {
+        int nodeCount = Math.max(1, Math.min(values.length == 0 ? 5 : values.length, 6));
+        float[][] points = resolveGraphLayout(nodeCount);
+        int[][] edges = resolveGraphEdges(nodeCount);
+        for (int[] edge : edges) {
+            drawGraphEdge(canvas, points, edge[0], edge[1]);
+        }
+        drawTraversalTravelTrail(canvas, points);
+
+        for (int i = 0; i < nodeCount; i++) {
+            applyNodeShader(points[i][0], points[i][1], resolveTraversalFill(i));
+            float radius = resolveNodeRadius(i, isCompactGraphLayout() ? 34f : 42f);
+            canvas.drawCircle(points[i][0], points[i][1], radius, fillPaint);
+            canvas.drawCircle(points[i][0], points[i][1], radius, strokePaint);
+            drawNodeHalo(canvas, points[i][0], points[i][1], radius, i);
+            drawNodeArrivalEffect(canvas, points[i][0], points[i][1], radius, i, true);
+            textPaint.setTextSize(isCompactGraphLayout() ? 22f : 24f);
+            int label = values.length > i ? values[i] : i;
+            canvas.drawText(String.valueOf(label), points[i][0], points[i][1] + 8f, textPaint);
+        }
+
+        drawGraphOperationStage(canvas, points);
+        drawGraphMemoryOverlay(canvas, points, nodeCount);
+        drawGraphOrTreeWhyBubble(canvas, points, true);
+
+        if ("delete_edge_graph".equals(techniqueId) && activeEdgeFrom >= 0 && activeEdgeTo >= 0
+            && activeEdgeFrom < points.length && activeEdgeTo < points.length) {
+            drawInlineMathBadge(
+                canvas,
+                (points[activeEdgeFrom][0] + points[activeEdgeTo][0]) / 2f,
+                (points[activeEdgeFrom][1] + points[activeEdgeTo][1]) / 2f - 22f,
+                "edge removed",
+                "#DC2626"
+            );
+        } else if ("insert_edge_graph".equals(techniqueId) && activeEdgeFrom >= 0 && activeEdgeTo >= 0
+            && activeEdgeFrom < points.length && activeEdgeTo < points.length) {
+            drawInlineMathBadge(
+                canvas,
+                (points[activeEdgeFrom][0] + points[activeEdgeTo][0]) / 2f,
+                (points[activeEdgeFrom][1] + points[activeEdgeTo][1]) / 2f - 22f,
+                "edge added",
+                "#16A34A"
+            );
+        }
+    }
+
+    void drawHeapTree(Canvas canvas) {
+        if (values.length == 0) {
+            return;
+        }
+
+        float[][] points = resolveTreeLayout(0.20f, 0.40f, 0.64f);
+
+        for (int parent = 0; parent < Math.min(values.length, points.length); parent++) {
+            int left = (2 * parent) + 1;
+            int right = (2 * parent) + 2;
+            if (left < values.length && left < points.length) {
+                drawHeapEdge(canvas, points, parent, left);
+            }
+            if (right < values.length && right < points.length) {
+                drawHeapEdge(canvas, points, parent, right);
+            }
+        }
+
+        for (int i = 0; i < Math.min(values.length, points.length); i++) {
+            applyNodeShader(points[i][0], points[i][1], resolveFill(i));
+            float radius = resolveHeapNodeRadius() + ((i == activeIndex || i == secondaryIndex) ? pulseProgress * 6f : 0f);
+            canvas.drawCircle(points[i][0], points[i][1], radius, fillPaint);
+            canvas.drawCircle(points[i][0], points[i][1], radius, strokePaint);
+            drawNodeHalo(canvas, points[i][0], points[i][1], radius, i);
+            textPaint.setTextSize(resolveTreeTextSize());
+            canvas.drawText(String.valueOf(values[i]), points[i][0], points[i][1] + 10f, textPaint);
+        }
+
+        drawTreeTeachingOverlays(canvas, points, Math.min(values.length, points.length), true, false);
+        drawHeapRelationshipBadges(canvas, points);
+        drawTreeMemoryOverlay(canvas, points, Math.min(values.length, points.length), true);
+
+        drawHeapArrayStrip(canvas);
+    }
+
+    void drawMatrixScene(Canvas canvas) {
+        if (matrixValues.length == 0) {
+            return;
+        }
+
+        float top = 90f;
+        float startX = 90f;
+        float size = Math.min((getWidth() - 120f) / Math.max(1, matrixValues.length), 108f);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setTextSize(28f);
+        canvas.drawText(matrixLabel.isEmpty() ? "Matrix" : matrixLabel, 24f, 44f, textPaint);
+        canvas.drawText(matrixK >= 0 ? "k = " + matrixK : "", 24f, 76f, textPaint);
+
+        for (int row = 0; row < matrixValues.length; row++) {
+            for (int col = 0; col < matrixValues[row].length; col++) {
+                float left = startX + (col * size);
+                float right = left + size - 8f;
+                float cellTop = top + (row * size);
+                float bottom = cellTop + size - 8f;
+                int baseColor = resolveMatrixColor(row, col);
+                if (row == matrixRow && col == matrixCol) {
+                    baseColor = blendColors(Color.parseColor("#1E293B"), baseColor, matrixHighlightProgress);
+                }
+                drawMatrixCellPulse(canvas, left, cellTop, right, bottom, row, col);
+                int brighter = lightenColor(baseColor, 0.18f);
+                fillPaint.setShader(new LinearGradient(left, cellTop, right, bottom, brighter, baseColor, Shader.TileMode.CLAMP));
+                canvas.drawRoundRect(left, cellTop, right, bottom, 16f, 16f, fillPaint);
+                canvas.drawRoundRect(left, cellTop, right, bottom, 16f, 16f, strokePaint);
+                textPaint.setTextAlign(Paint.Align.CENTER);
+                textPaint.setTextSize(24f);
+                String value = matrixValues[row][col] >= 9999 ? "INF" : String.valueOf(matrixValues[row][col]);
+                canvas.drawText(value, (left + right) / 2f, cellTop + ((bottom - cellTop) * 0.60f), textPaint);
+            }
+        }
+
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTextSize(22f);
+        for (int i = 0; i < matrixValues.length; i++) {
+            canvas.drawText(String.valueOf(i), startX - 34f, top + (i * size) + (size * 0.55f), textPaint);
+            canvas.drawText(String.valueOf(i), startX + (i * size) + (size * 0.45f), top - 18f, textPaint);
+        }
+    }
+
+    void drawPatternScene(Canvas canvas) {
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setTextSize(28f);
+        canvas.drawText("Text", 24f, 56f, textPaint);
+        drawStringRow(canvas, patternText, 24f, 86f, true);
+        canvas.drawText("Pattern", 24f, 196f, textPaint);
+        drawStringRow(canvas, patternQuery, 24f + Math.max(0, patternWindowStart) * 56f, 226f, false);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    void drawUnionFindScene(Canvas canvas) {
+        if (unionParents.length == 0) {
+            return;
+        }
+        float topY = getHeight() * 0.30f;
+        float bottomY = getHeight() * 0.68f;
+        float gap = Math.min(120f, (getWidth() - 120f) / Math.max(1, unionParents.length - 1));
+        float startX = (getWidth() - ((unionParents.length - 1) * gap)) / 2f;
+        for (int i = 0; i < unionParents.length; i++) {
+            float x = startX + (i * gap);
+            if (unionParents[i] != i && unionParents[i] < unionParents.length) {
+                float parentX = startX + (unionParents[i] * gap);
+                Paint linePaint = new Paint(strokePaint);
+                if (i == unionFocusNode) {
+                    linePaint.setColor(Color.parseColor("#38BDF8"));
+                    linePaint.setStrokeWidth(8f);
+                }
+                canvas.drawLine(x, bottomY, parentX, topY, linePaint);
+                drawUnionCompressionTravel(canvas, x, bottomY, parentX, topY, i);
+            }
+        }
+        for (int i = 0; i < unionParents.length; i++) {
+            float x = startX + (i * gap);
+            float y = unionParents[i] == i ? topY : bottomY;
+            applyNodeShader(x, y, i == unionRootNode ? Color.parseColor("#22C55E") : resolveFill(i));
+            canvas.drawCircle(x, y, 34f, fillPaint);
+            canvas.drawCircle(x, y, 34f, strokePaint);
+            canvas.drawText(String.valueOf(i), x, y + 10f, textPaint);
+        }
+    }
+
+    void drawDijkstraScene(Canvas canvas) {
+        float[][] points = resolveGraphLayout();
+        int[][] edges = {{0, 1}, {1, 2}, {0, 3}, {1, 3}, {1, 4}, {2, 4}, {3, 4}};
+        for (int[] edge : edges) {
+            drawGraphEdge(canvas, points, edge[0], edge[1]);
+        }
+
+        for (int i = 0; i < points.length; i++) {
+            applyNodeShader(points[i][0], points[i][1], resolveTraversalFill(i));
+            float radius = isCompactGraphLayout() ? 34f : 42f;
+            radius = resolveNodeRadius(i, radius);
+            canvas.drawCircle(points[i][0], points[i][1], radius, fillPaint);
+            canvas.drawCircle(points[i][0], points[i][1], radius, strokePaint);
+            drawNodeHalo(canvas, points[i][0], points[i][1], radius, i);
+            drawSettledFeedback(canvas, points[i][0], points[i][1], radius, i);
+            textPaint.setTextSize(isCompactGraphLayout() ? 22f : 24f);
+            canvas.drawText(String.valueOf(i), points[i][0], points[i][1] + 8f, textPaint);
+        }
+
+        drawUpdatedEdgeTrail(canvas, points);
+
+        if (dijkstraDistances.length == 0) {
+            return;
+        }
+        boolean compact = isCompactGraphLayout();
+        float top = getHeight() * (compact ? 0.73f : 0.78f);
+        float startX = compact ? 12f : 20f;
+        float cellWidth = Math.min(compact ? 82f : 100f, (getWidth() - (compact ? 24f : 40f)) / Math.max(1, dijkstraDistances.length));
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setTextSize(compact ? 20f : 24f);
+        canvas.drawText("Distances", startX, top - 22f, textPaint);
+        for (int i = 0; i < dijkstraDistances.length; i++) {
+            float left = startX + (i * cellWidth);
+            float right = left + cellWidth - 10f;
+            int baseColor = dijkstraSettled.length > i && dijkstraSettled[i]
+                ? Color.parseColor("#16A34A")
+                : i == dijkstraCurrentNode ? Color.parseColor("#F59E0B") : Color.parseColor("#1E293B");
+            int bright = lightenColor(baseColor, 0.18f);
+            float boxHeight = compact ? 56f : 64f;
+            fillPaint.setShader(new LinearGradient(left, top, right, top + boxHeight, bright, baseColor, Shader.TileMode.CLAMP));
+            canvas.drawRoundRect(left, top, right, top + boxHeight, 18f, 18f, fillPaint);
+            canvas.drawRoundRect(left, top, right, top + boxHeight, 18f, 18f, strokePaint);
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(compact ? 18f : 20f);
+            canvas.drawText(String.valueOf(i), (left + right) / 2f, top - 10f, textPaint);
+            String value = dijkstraDistances[i] >= 9999 ? "INF" : String.valueOf(dijkstraDistances[i]);
+            canvas.drawText(value, (left + right) / 2f, top + (compact ? 35f : 40f), textPaint);
+        }
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        drawTreeRoleBadge(canvas, getWidth() - (compact ? 56f : 72f), top - 24f, compact ? "Now" : "Current", "#D97706");
+        drawInlineDijkstraMath(canvas, points, compact, top);
+    }
+
+    void drawHuffmanScene(Canvas canvas) {
+        boolean compact = isCompactTreeLayout();
+        float y = getHeight() * (compact ? 0.22f : 0.26f);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setTextSize(compact ? 22f : 28f);
+        float startX = compact ? 16f : 24f;
+        canvas.drawText("Priority Queue", startX, compact ? 38f : 44f, textPaint);
+        float x = startX;
+        float boxWidth = compact ? 54f : 64f;
+        float boxHeight = compact ? 48f : 56f;
+        float gap = compact ? 64f : 78f;
+        for (int i = 0; i < huffmanQueueWeights.length; i++) {
+            drawMiniValueBox(canvas, huffmanQueueWeights[i], x, y, x + boxWidth, y + boxHeight, i == 0 || i == 1);
+            x += gap;
+        }
+        if (huffmanQueueWeights.length > 0) {
+            drawTreeRoleBadge(canvas, startX + 46f, y - 24f, compact ? "Pick 2" : "Pick Min 2", "#2563EB");
+        }
+        if (huffmanMergedWeight >= 0) {
+            float centerX = getWidth() / 2f;
+            float centerY = getHeight() * (compact ? 0.56f : 0.64f);
+            drawAnimatedConnector(canvas, getWidth() * 0.34f, y + (compact ? 58f : 72f), centerX - 24f, centerY - 30f, false);
+            drawAnimatedConnector(canvas, getWidth() * 0.66f, y + (compact ? 58f : 72f), centerX + 24f, centerY - 30f, false);
+            applyNodeShader(centerX, centerY, Color.parseColor("#22C55E"));
+            float mergedRadius = compact ? 36f : 44f;
+            canvas.drawCircle(centerX, centerY, mergedRadius, fillPaint);
+            canvas.drawCircle(centerX, centerY, mergedRadius, strokePaint);
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(compact ? 22f : 24f);
+            canvas.drawText(String.valueOf(huffmanMergedWeight), centerX, centerY + 8f, textPaint);
+            drawTreeRoleBadge(canvas, centerX, centerY + (compact ? 56f : 66f), compact ? "Merge" : "Merged Node", "#16A34A");
+            if (huffmanQueueWeights.length >= 1) {
+                int mergedSource = huffmanMergedWeight - huffmanQueueWeights[0];
+                if (mergedSource >= 0) {
+                    drawInlineMathBadge(
+                        canvas,
+                        centerX,
+                        centerY - (compact ? 62f : 76f),
+                        mergedSource + " + " + huffmanQueueWeights[0] + " = " + huffmanMergedWeight,
+                        "#16A34A"
+                    );
+                }
+            }
+        }
+        textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    void drawTrieScene(Canvas canvas) {
+        float rootX = getWidth() / 2f;
+        float rootY = getHeight() * 0.18f;
+        drawLabeledNode(canvas, rootX, rootY, "Root", activeIndex == 0);
+        char[] letters = {'c', 'a', 't'};
+        for (int i = 0; i < letters.length; i++) {
+            float x = rootX;
+            float y = rootY + ((i + 1) * 110f);
+            boolean revealed = activeIndex >= i + 1;
+            drawTrieConnectorReveal(canvas, x, y - 72f, x, y - 34f, i);
+            drawTrieLetterReveal(canvas, x, y, String.valueOf(letters[i]), revealed, i);
+        }
+    }
+
+    void drawAvlScene(Canvas canvas) {
+        float[][] basePoints = resolveTreeLayout(0.22f, 0.46f, 0.70f);
+        float[][] points = {
+            {basePoints[0][0], basePoints[0][1]},
+            {basePoints[1][0], basePoints[1][1]},
+            {basePoints[2][0], basePoints[2][1]},
+            {basePoints[3][0], basePoints[3][1]},
+            {basePoints[4][0], basePoints[4][1]}
+        };
+        float rotationShift = (activeIndex >= 0 && secondaryIndex >= 0)
+            ? (1f - Math.abs((pulseProgress * 2f) - 1f)) * (isCompactTreeLayout() ? 20f : 28f)
+            : 0f;
+        if (activeIndex == 1 || secondaryIndex == 1) {
+            points[1][0] += rotationShift;
+            points[3][0] += rotationShift * 0.6f;
+            points[4][0] += rotationShift * 0.4f;
+        }
+        if (activeIndex == 0 || secondaryIndex == 0) {
+            points[0][0] -= rotationShift * 0.45f;
+        }
+        int[][] edges = {{0,1},{0,2},{1,3},{1,4}};
+        for (int[] edge : edges) {
+            Paint linePaint = new Paint(strokePaint);
+            if ((edge[0] == activeIndex && edge[1] == secondaryIndex) || (edge[0] == secondaryIndex && edge[1] == activeIndex)) {
+                linePaint.setColor(Color.parseColor("#38BDF8"));
+                linePaint.setStrokeWidth(8f);
+            }
+            canvas.drawLine(points[edge[0]][0], points[edge[0]][1], points[edge[1]][0], points[edge[1]][1], linePaint);
+        }
+        String[] labels = {"30", "20", "40", "10", "25"};
+        for (int i = 0; i < labels.length; i++) {
+            drawLabeledNode(canvas, points[i][0], points[i][1], labels[i], i == activeIndex || i == secondaryIndex);
+        }
+        drawTreeTeachingOverlays(canvas, points, labels.length, false, true);
+        if (activeIndex >= 0 && activeIndex < labels.length) {
+            drawTreeRoleBadge(canvas, points[activeIndex][0], points[activeIndex][1] + (isCompactTreeLayout() ? 48f : 58f), isCompactTreeLayout() ? "Rebal." : "Rebalancing", "#D97706");
+        }
+    }
+
+    void drawMergeScene(Canvas canvas) {
+        float leftPadding = 24f;
+        float topRowY = getHeight() * 0.16f;
+        float bottomRowY = getHeight() * 0.60f;
+        float cellHeight = 96f;
+        drawMergeRow(canvas, mergeLeftValues, leftPadding, topRowY, "Left");
+        float rightStart = leftPadding + (Math.max(mergeLeftValues.length, 1) * 74f) + 64f;
+        drawMergeRow(canvas, mergeRightValues, rightStart, topRowY, "Right");
+        drawMergeOutput(canvas, mergeOutputValues.length == 0 ? values : mergeOutputValues, leftPadding, bottomRowY, cellHeight);
+        drawMergeRunBraces(canvas, leftPadding, rightStart, topRowY);
+    }
+
+    void drawRadixScene(Canvas canvas) {
+        drawHorizontalBoxes(canvas, false);
+        float baseY = getHeight() * 0.56f;
+        textPaint.setTextSize(26f);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        canvas.drawText("Buckets (" + resolveDigitLabel() + ")", 24f, baseY - 20f, textPaint);
+        int[][] bucketValues = new int[10][values.length];
+        int[] bucketCounts = new int[10];
+        for (int value : values) {
+            int digit = Math.abs(value / radixDivisor) % 10;
+            bucketValues[digit][bucketCounts[digit]++] = value;
+        }
+        for (int bucket = 0; bucket < 10; bucket++) {
+            float rowY = baseY + (bucket * 42f);
+            Paint bucketPaint = new Paint(strokePaint);
+            bucketPaint.setColor(Color.parseColor("#64748B"));
+            canvas.drawRoundRect(18f, rowY - 26f, getWidth() - 18f, rowY + 10f, 18f, 18f, bucketPaint);
+            textPaint.setTextSize(22f);
+            canvas.drawText(bucket + ":", 30f, rowY, textPaint);
+            float x = 76f;
+            for (int i = 0; i < bucketCounts[bucket]; i++) {
+                float dropOffset = resolveRadixDropOffset(bucket, i);
+                drawMiniValueBox(
+                    canvas,
+                    bucketValues[bucket][i],
+                    x,
+                    rowY - 30f - dropOffset,
+                    x + 56f,
+                    rowY + 6f - dropOffset,
+                    bucket == radixActiveBucket
+                );
+                x += 66f;
+            }
+        }
+        textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    private String resolveDigitLabel() {
+        if (radixDivisor == 1) {
+            return "ones digit";
+        }
+        if (radixDivisor == 10) {
+            return "tens digit";
+        }
+        if (radixDivisor == 100) {
+            return "hundreds digit";
+        }
+        return radixDivisor + "s place";
+    }
+
+    private void drawGraphEdge(Canvas canvas, float[][] points, int from, int to) {
+        boolean directed = isDirectedGraphMode();
+        boolean isActive = directed
+            ? (from == activeEdgeFrom && to == activeEdgeTo)
+            : ((from == activeEdgeFrom && to == activeEdgeTo) || (from == activeEdgeTo && to == activeEdgeFrom));
+        Paint linePaint = isActive ? new Paint(accentPaint) : strokePaint;
+        if (isActive) {
+            linePaint.setColor(Color.parseColor("#38BDF8"));
+            linePaint.setStrokeWidth(8f);
+        } else if ("dijkstra_algorithm".equals(techniqueId) && isDijkstraGlowEdge(from, to)) {
+            linePaint = new Paint(strokePaint);
+            linePaint.setColor(Color.parseColor("#34D399"));
+            linePaint.setStrokeWidth(6f);
+            linePaint.setAlpha(170);
+        }
+        float startX = points[from][0];
+        float startY = points[from][1];
+        float endX = points[to][0];
+        float endY = points[to][1];
+        canvas.drawLine(startX, startY, endX, endY, linePaint);
+        if (directed) {
+            drawArrowHead(canvas, startX, startY, endX, endY, linePaint);
+        }
+        drawGraphEdgeWeight(canvas, points, from, to, isActive);
+
+        if (isActive) {
+            Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            glowPaint.setStyle(Paint.Style.STROKE);
+            glowPaint.setStrokeWidth(16f);
+            glowPaint.setColor(Color.parseColor("#38BDF8"));
+            glowPaint.setAlpha(60);
+            canvas.drawLine(startX, startY, endX, endY, glowPaint);
+            float dotX = lerp(startX, endX, edgeProgress);
+            float dotY = lerp(startY, endY, edgeProgress);
+            Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            dotPaint.setColor(Color.parseColor("#FCD34D"));
+            canvas.drawCircle(dotX, dotY, 10f + (pulseProgress * 4f), dotPaint);
+        }
+    }
+
+    private void applyBoxShader(float left, float top, float right, float bottom, int index) {
+        int baseColor = resolveFill(index);
+        int fillA, fillB;
+        if (index != activeIndex && index != secondaryIndex && index != foundIndex && !isCompletedIndex(index)) {
+            // Dark glassmorphic background: translucent dark slate-blue
+            fillA = Color.argb(190, 15, 23, 42); // slate-900 transparent
+            fillB = Color.argb(190, 30, 41, 59); // slate-800 transparent
+        } else {
+            // Highlighted gradient fill
+            fillA = lightenColor(baseColor, 0.16f);
+            fillB = baseColor;
+            // Retain subtle transparency for high-tech glow card feel
+            fillA = Color.argb(220, Color.red(fillA), Color.green(fillA), Color.blue(fillA));
+            fillB = Color.argb(220, Color.red(fillB), Color.green(fillB), Color.blue(fillB));
+        }
+        fillPaint.setShader(new LinearGradient(left, top, right, bottom, fillA, fillB, Shader.TileMode.CLAMP));
+    }
+
+    private void applyNodeShader(float centerX, float centerY, int baseColor) {
+        int brighter = lightenColor(baseColor, 0.22f);
+        fillPaint.setShader(new LinearGradient(
+            centerX - 42f,
+            centerY - 42f,
+            centerX + 42f,
+            centerY + 42f,
+            brighter,
+            baseColor,
+            Shader.TileMode.CLAMP
+        ));
+    }
+
+    private void drawGlow(Canvas canvas, float left, float top, float right, float bottom, int index) {
+        if (index != activeIndex && index != secondaryIndex && index != foundIndex) {
+            return;
+        }
+
+        int glowColor;
+        if (index == foundIndex) {
+            glowColor = Color.parseColor("#22C55E");
+        } else if (index == secondaryIndex) {
+            glowColor = isSortingTechnique() ? Color.parseColor("#A855F7") : Color.parseColor("#38BDF8");
+        } else {
+            glowColor = isSearchingTechnique() ? Color.parseColor("#38BDF8") : Color.parseColor("#F59E0B");
+        }
+
+        softGlowPaint.setShader(null);
+        softGlowPaint.setColor(glowColor);
+        softGlowPaint.setAlpha(index == foundIndex ? (int) (42 + (pulseProgress * 52)) : (int) (24 + (pulseProgress * 36)));
+        tempRect.set(left - 16f, top - 16f, right + 16f, bottom + 16f);
+        canvas.drawRoundRect(tempRect, 34f, 34f, softGlowPaint);
+
+        if (index == foundIndex) {
+            Paint spotlight = new Paint(Paint.ANTI_ALIAS_FLAG);
+            spotlight.setShader(new LinearGradient(
+                (left + right) / 2f,
+                top - 84f,
+                (left + right) / 2f,
+                bottom,
+                Color.argb(110, 134, 239, 172),
+                Color.argb(0, 134, 239, 172),
+                Shader.TileMode.CLAMP
+            ));
+            canvas.drawRoundRect(left - 8f, top - 80f, right + 8f, bottom + 8f, 28f, 28f, spotlight);
+        }
+
+        Paint glowStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        glowStroke.setStyle(Paint.Style.STROKE);
+        glowStroke.setStrokeWidth(index == foundIndex ? 12f : 10f);
+        glowStroke.setColor(lightenColor(glowColor, 0.18f));
+        glowStroke.setAlpha((int) (70 + (pulseProgress * 80)));
+        canvas.drawRoundRect(left - 6f, top - 6f, right + 6f, bottom + 6f, 28f, 28f, glowStroke);
+    }
+
+    private void drawMergeRow(Canvas canvas, int[] rowValues, float startX, float topY, String label) {
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setTextSize(26f);
+        canvas.drawText(label, startX, topY - 18f, textPaint);
+        for (int i = 0; i < rowValues.length; i++) {
+            float left = startX + (i * 74f);
+            drawMiniValueBox(canvas, rowValues[i], left, topY, left + 60f, topY + 54f, false);
+        }
+        textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    private void drawHeapEdge(Canvas canvas, float[][] points, int from, int to) {
+        Paint edgePaint = new Paint(strokePaint);
+        if ((from == activeIndex && to == secondaryIndex) || (from == secondaryIndex && to == activeIndex) || isTraversalEdgeActive(from, to)) {
+            edgePaint.setColor(Color.parseColor("#38BDF8"));
+            edgePaint.setStrokeWidth(8f);
+        }
+        canvas.drawLine(points[from][0], points[from][1], points[to][0], points[to][1], edgePaint);
+        if ((from == activeIndex && to == secondaryIndex) || (from == secondaryIndex && to == activeIndex)) {
+            Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            dotPaint.setColor(Color.parseColor("#FCD34D"));
+            float dotX = lerp(points[from][0], points[to][0], pulseProgress);
+            float dotY = lerp(points[from][1], points[to][1], pulseProgress);
+            canvas.drawCircle(dotX, dotY, 9f + (pulseProgress * 2f), dotPaint);
+        }
+    }
+
+    private void drawStringRow(Canvas canvas, String value, float startX, float topY, boolean useWindow) {
+        for (int i = 0; i < value.length(); i++) {
+            float left = startX + (i * 56f);
+            float right = left + 46f;
+            boolean active = useWindow && i == patternWindowStart + patternMatchIndex;
+            boolean inWindow = useWindow && patternWindowStart >= 0 && i >= patternWindowStart && i < patternWindowStart + patternQuery.length();
+            int baseColor = patternFound && inWindow ? Color.parseColor("#16A34A") : active ? Color.parseColor("#F59E0B") : inWindow ? Color.parseColor("#0EA5E9") : Color.parseColor("#1E293B");
+            int bright = lightenColor(baseColor, 0.18f);
+            fillPaint.setShader(new LinearGradient(left, topY, right, topY + 52f, bright, baseColor, Shader.TileMode.CLAMP));
+            canvas.drawRoundRect(left, topY, right, topY + 52f, 14f, 14f, fillPaint);
+            canvas.drawRoundRect(left, topY, right, topY + 52f, 14f, 14f, strokePaint);
+            textPaint.setTextSize(24f);
+            canvas.drawText(String.valueOf(value.charAt(i)), (left + right) / 2f, topY + 34f, textPaint);
+        }
+    }
+
+    private void drawLabeledNode(Canvas canvas, float centerX, float centerY, String label, boolean active) {
+        applyNodeShader(centerX, centerY, active ? Color.parseColor("#F59E0B") : Color.parseColor("#1E293B"));
+        canvas.drawCircle(centerX, centerY, 38f, fillPaint);
+        canvas.drawCircle(centerX, centerY, 38f, strokePaint);
+        textPaint.setTextSize(24f);
+        canvas.drawText(label, centerX, centerY + 8f, textPaint);
+    }
+
+    private void drawLinkedStackArrow(Canvas canvas, float baseX, float centerY, boolean topNode) {
+        Paint arrowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        arrowPaint.setStyle(Paint.Style.STROKE);
+        arrowPaint.setStrokeWidth(4f);
+        arrowPaint.setColor(topNode ? Color.parseColor("#FCD34D") : Color.parseColor("#7DD3FC"));
+        arrowPaint.setAlpha(topNode ? 220 : 170);
+        float arrowEndX = baseX + 22f;
+        canvas.drawLine(baseX, centerY, arrowEndX, centerY, arrowPaint);
+        canvas.drawLine(arrowEndX - 8f, centerY - 7f, arrowEndX, centerY, arrowPaint);
+        canvas.drawLine(arrowEndX - 8f, centerY + 7f, arrowEndX, centerY, arrowPaint);
+    }
+
+    private void drawCircularBadge(Canvas canvas, float centerX, float centerY, String label, String colorHex) {
+        Paint badgeFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        badgeFill.setStyle(Paint.Style.FILL);
+        badgeFill.setColor(Color.parseColor(colorHex));
+        badgeFill.setAlpha(215);
+        Paint badgeStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        badgeStroke.setStyle(Paint.Style.STROKE);
+        badgeStroke.setStrokeWidth(3f);
+        badgeStroke.setColor(lightenColor(Color.parseColor(colorHex), 0.18f));
+        float halfWidth = 38f;
+        float halfHeight = 16f;
+        canvas.drawRoundRect(centerX - halfWidth, centerY - halfHeight, centerX + halfWidth, centerY + halfHeight, 16f, 16f, badgeFill);
+        canvas.drawRoundRect(centerX - halfWidth, centerY - halfHeight, centerX + halfWidth, centerY + halfHeight, 16f, 16f, badgeStroke);
+
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.WHITE);
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        labelPaint.setTextSize(20f);
+        canvas.drawText(label, centerX, centerY + 6f, labelPaint);
+    }
+
+    private void drawTreeTeachingOverlays(Canvas canvas, float[][] points, int count, boolean heapMode, boolean avlMode) {
+        if (count <= 0) {
+            return;
+        }
+        boolean compact = isCompactTreeLayout();
+        drawTreeRoleBadge(canvas, points[0][0], points[0][1] - (compact ? 46f : 54f), heapMode ? "ROOT" : "Root", "#2563EB");
+        if (count > 1) {
+            drawTreeRoleBadge(canvas, points[1][0], points[1][1] - (compact ? 42f : 50f), compact ? "L" : "Left", "#0F766E");
+        }
+        if (count > 2) {
+            drawTreeRoleBadge(canvas, points[2][0], points[2][1] - (compact ? 42f : 50f), compact ? "R" : "Right", "#9333EA");
+        }
+        if (!heapMode && activeIndex > 0 && activeIndex < count) {
+            int parentIndex = (activeIndex - 1) / 2;
+            if (parentIndex >= 0 && parentIndex < count) {
+                drawTreeRoleBadge(canvas, points[parentIndex][0], points[parentIndex][1] + (compact ? 44f : 52f), compact ? "P" : "Parent", "#0EA5E9");
+            }
+        }
+        int leafLimit = compact ? Math.min(count, 5) : count;
+        for (int i = 3; i < leafLimit; i++) {
+            drawTreeRoleBadge(canvas, points[i][0], points[i][1] + (compact ? 44f : 52f), compact ? "Leaf" : "Leaf", "#475569");
+        }
+        if (!heapMode && secondaryIndex >= 0 && secondaryIndex < count) {
+            drawTreeRoleBadge(canvas, points[secondaryIndex][0], points[secondaryIndex][1] - (compact ? 70f : 82f), compact ? "Succ" : "Successor", "#16A34A");
+        }
+        if (avlMode && activeIndex >= 0 && secondaryIndex >= 0 && activeIndex < count) {
+            drawTreeRoleBadge(canvas, points[activeIndex][0], points[activeIndex][1] - (compact ? 70f : 82f), compact ? "Height" : "Height Shift", "#D97706");
+            drawTreeRoleBadge(canvas, points[activeIndex][0], points[activeIndex][1] + (compact ? 48f : 58f), compact ? "BF" : "Balance", "#F59E0B");
+        }
+    }
+
+    private void drawTreeRoleBadge(Canvas canvas, float centerX, float centerY, String label, String colorHex) {
+        boolean compact = isCompactTreeLayout();
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(Color.parseColor(colorHex));
+        fill.setAlpha(205);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(2f);
+        stroke.setColor(lightenColor(Color.parseColor(colorHex), 0.16f));
+        float halfWidth = compact
+            ? Math.max(26f, Math.min(48f, label.length() * 4.4f))
+            : Math.max(32f, Math.min(62f, label.length() * 4.9f));
+        float halfHeight = compact ? 12f : 14f;
+        canvas.drawRoundRect(centerX - halfWidth, centerY - halfHeight, centerX + halfWidth, centerY + halfHeight, 12f, 12f, fill);
+        canvas.drawRoundRect(centerX - halfWidth, centerY - halfHeight, centerX + halfWidth, centerY + halfHeight, 12f, 12f, stroke);
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.WHITE);
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setTextSize(compact ? 15f : 17f);
+        canvas.drawText(label, centerX, centerY + 5f, text);
+    }
+
+    private void drawTraversalTravelTrail(Canvas canvas, float[][] points) {
+        if (traversalStep <= 0 || traversalStep >= traversalOrder.length) {
+            return;
+        }
+        int from = traversalOrder[traversalStep - 1];
+        int to = traversalOrder[traversalStep];
+        if (from < 0 || to < 0 || from >= points.length || to >= points.length) {
+            return;
+        }
+        Paint trailPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        trailPaint.setStyle(Paint.Style.STROKE);
+        trailPaint.setStrokeWidth(isCompactGraphLayout() ? 8f : 10f);
+        trailPaint.setStrokeCap(Paint.Cap.ROUND);
+        trailPaint.setShader(new LinearGradient(
+            points[from][0],
+            points[from][1],
+            points[to][0],
+            points[to][1],
+            Color.argb(40, 56, 189, 248),
+            Color.argb(180, 56, 189, 248),
+            Shader.TileMode.CLAMP
+        ));
+        canvas.drawLine(points[from][0], points[from][1], points[to][0], points[to][1], trailPaint);
+
+        Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        dotPaint.setColor(Color.parseColor("#FCD34D"));
+        float dotX = lerp(points[from][0], points[to][0], pulseProgress);
+        float dotY = lerp(points[from][1], points[to][1], pulseProgress);
+        canvas.drawCircle(dotX, dotY, 7f + (pulseProgress * 3f), dotPaint);
+    }
+
+    private void drawNodeArrivalEffect(Canvas canvas, float centerX, float centerY, float radius, int nodeIndex, boolean graphMode) {
+        if (!isInsertionFocusNode(nodeIndex, graphMode)) {
+            return;
+        }
+        Paint haloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        haloPaint.setStyle(Paint.Style.STROKE);
+        haloPaint.setStrokeWidth(graphMode ? 8f : 9f);
+        haloPaint.setColor(graphMode ? Color.parseColor("#22C55E") : Color.parseColor("#38BDF8"));
+        haloPaint.setAlpha(130);
+        float arrivalRadius = radius + 12f + ((1f - structureMotionProgress) * 22f) + (pulseProgress * 8f);
+        canvas.drawCircle(centerX, centerY, arrivalRadius, haloPaint);
+
+        Paint sparkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        sparkPaint.setColor(Color.parseColor("#FCD34D"));
+        float orbit = radius + 18f + (pulseProgress * 8f);
+        canvas.drawCircle(centerX + orbit, centerY - 6f, 4f, sparkPaint);
+        canvas.drawCircle(centerX - orbit * 0.72f, centerY - orbit * 0.34f, 3.5f, sparkPaint);
+    }
+
+    private void drawStructureArrivalEffect(Canvas canvas, float centerX, float centerY, float radius, int index) {
+        if (index != movingStructureIndex) {
+            return;
+        }
+        if (isStructureExitOperation()) {
+            Paint particlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            particlePaint.setStyle(Paint.Style.FILL);
+            particlePaint.setColor(Color.parseColor("#EF4444")); // Coral Red explosion
+            particlePaint.setAlpha((int) ((1f - structureMotionProgress) * 255));
+            float distance = radius + (structureMotionProgress * 70f);
+            for (int angle = 0; angle < 360; angle += 45) {
+                float rad = (float) Math.toRadians(angle);
+                float px = centerX + (float) Math.cos(rad) * distance;
+                float py = centerY + (float) Math.sin(rad) * distance;
+                canvas.drawCircle(px, py, 6f * (1f - structureMotionProgress), particlePaint);
+            }
+            return;
+        }
+        if (!isStructureEntryOperation()) {
+            return;
+        }
+        Paint haloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        haloPaint.setStyle(Paint.Style.STROKE);
+        haloPaint.setStrokeWidth(8f);
+        haloPaint.setColor(Color.parseColor("#38BDF8"));
+        haloPaint.setAlpha(125);
+        float haloRadius = radius + 10f + ((1f - structureMotionProgress) * 26f);
+        canvas.drawCircle(centerX, centerY, haloRadius, haloPaint);
+
+        Paint sparkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        sparkPaint.setColor(Color.parseColor("#FCD34D"));
+        float sparkOffset = radius + 18f + ((1f - structureMotionProgress) * 10f);
+        canvas.drawCircle(centerX - sparkOffset, centerY, 4f + (pulseProgress * 1.5f), sparkPaint);
+        canvas.drawCircle(centerX + (sparkOffset * 0.72f), centerY - (sparkOffset * 0.36f), 3.5f, sparkPaint);
+    }
+
+    private void drawGraphEdgeWeight(Canvas canvas, float[][] points, int from, int to, boolean active) {
+        int weight = resolveGraphEdgeWeight(from, to);
+        if (weight <= 0) {
+            return;
+        }
+        float midX = (points[from][0] + points[to][0]) / 2f;
+        float midY = (points[from][1] + points[to][1]) / 2f;
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(active ? Color.parseColor("#1D4ED8") : Color.parseColor("#0F172A"));
+        fill.setAlpha(active ? 235 : 205);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(2f);
+        stroke.setColor(active ? Color.parseColor("#93C5FD") : Color.parseColor("#64748B"));
+        canvas.drawRoundRect(midX - 18f, midY - 14f, midX + 18f, midY + 14f, 12f, 12f, fill);
+        canvas.drawRoundRect(midX - 18f, midY - 14f, midX + 18f, midY + 14f, 12f, 12f, stroke);
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.WHITE);
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setTextSize(16f);
+        canvas.drawText(String.valueOf(weight), midX, midY + 5f, text);
+    }
+
+    private void drawLinkedMemoryView(Canvas canvas, float padding, float cellWidth, float baseWidth, float bottom) {
+        float startY = Math.min(getHeight() - 82f, bottom + 34f);
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.parseColor("#CBD5E1"));
+        labelPaint.setTextAlign(Paint.Align.LEFT);
+        labelPaint.setTextSize(18f);
+        canvas.drawText(memoryAddressModeEnabled ? "Memory Address View" : "Memory View", padding, startY - 12f, labelPaint);
+        float laneHeight = memoryAddressModeEnabled ? 42f : 26f;
+        for (int i = 0; i < values.length; i++) {
+            float left = padding + (i * cellWidth);
+            float split = left + (baseWidth * 0.58f);
+            float right = left + baseWidth;
+            Paint infoFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+            infoFill.setColor(Color.parseColor("#334155"));
+            Paint linkFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+            linkFill.setColor(Color.parseColor("#1E3A8A"));
+            canvas.drawRoundRect(left, startY, split, startY + laneHeight, 12f, 12f, infoFill);
+            canvas.drawRoundRect(split + 4f, startY, right, startY + laneHeight, 12f, 12f, linkFill);
+            Paint tiny = new Paint(Paint.ANTI_ALIAS_FLAG);
+            tiny.setColor(Color.WHITE);
+            tiny.setTextAlign(Paint.Align.CENTER);
+            tiny.setTextSize(memoryAddressModeEnabled ? 12f : 14f);
+            if (memoryAddressModeEnabled) {
+                canvas.drawText(resolveMemoryAddress(i), (left + split) / 2f, startY + 15f, tiny);
+                canvas.drawText("val=" + values[i], (left + split) / 2f, startY + 31f, tiny);
+                String nextLabel = i == values.length - 1 ? "next=NULL" : "next=" + resolveMemoryAddress(i + 1);
+                canvas.drawText(nextLabel, (split + 4f + right) / 2f, startY + 24f, tiny);
+            } else {
+                canvas.drawText("INFO", (left + split) / 2f, startY + 17f, tiny);
+                canvas.drawText(i == values.length - 1 ? "NULL" : "LINK", (split + 4f + right) / 2f, startY + 17f, tiny);
+            }
+        }
+    }
+
+    private void drawTreeMemoryOverlay(Canvas canvas, float[][] points, int count, boolean heapMode) {
+        if (!memoryAddressModeEnabled || count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            drawAddressBadge(canvas, points[i][0], points[i][1] - (heapMode ? 78f : 72f), resolveMemoryAddress(i));
+            int left = (2 * i) + 1;
+            int right = (2 * i) + 2;
+            if (left < count) {
+                drawMemoryPointerLabel(canvas, (points[i][0] + points[left][0]) / 2f - 18f, (points[i][1] + points[left][1]) / 2f, "L->" + resolveMemoryAddress(left));
+            }
+            if (right < count) {
+                drawMemoryPointerLabel(canvas, (points[i][0] + points[right][0]) / 2f + 18f, (points[i][1] + points[right][1]) / 2f, "R->" + resolveMemoryAddress(right));
+            }
+        }
+    }
+
+    private void drawGraphMemoryOverlay(Canvas canvas, float[][] points, int count) {
+        if (!memoryAddressModeEnabled || count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            drawAddressBadge(canvas, points[i][0], points[i][1] - 68f, resolveMemoryAddress(i));
+        }
+        int[][] edges = resolveGraphEdges(count);
+        for (int[] edge : edges) {
+            float x = (points[edge[0]][0] + points[edge[1]][0]) / 2f;
+            float y = (points[edge[0]][1] + points[edge[1]][1]) / 2f + 22f;
+            drawMemoryPointerLabel(canvas, x, y, resolveMemoryAddress(edge[0]) + " -> " + resolveMemoryAddress(edge[1]));
+        }
+    }
+
+    private void drawAddressBadge(Canvas canvas, float centerX, float centerY, String label) {
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(Color.parseColor("#0F172A"));
+        fill.setAlpha(225);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(2f);
+        stroke.setColor(Color.parseColor("#60A5FA"));
+        float halfWidth = Math.max(46f, Math.min(72f, label.length() * 5.1f));
+        float halfHeight = 13f;
+        canvas.drawRoundRect(centerX - halfWidth, centerY - halfHeight, centerX + halfWidth, centerY + halfHeight, 12f, 12f, fill);
+        canvas.drawRoundRect(centerX - halfWidth, centerY - halfHeight, centerX + halfWidth, centerY + halfHeight, 12f, 12f, stroke);
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.parseColor("#DBEAFE"));
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setTextSize(14f);
+        canvas.drawText(label, centerX, centerY + 5f, text);
+    }
+
+    private void drawMemoryPointerLabel(Canvas canvas, float centerX, float centerY, String label) {
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.parseColor("#BFDBFE"));
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setTextSize(12f);
+        canvas.drawText(label, centerX, centerY, text);
+    }
+
+    private String resolveMemoryAddress(int index) {
+        return String.format("0x%04X", 0x1200 + (index * 0x20));
+    }
+
+    private boolean isDirectedGraphMode() {
+        return "topological_sort".equals(techniqueId)
+            || "warshall_algorithm".equals(techniqueId)
+            || "floyd_algorithm".equals(techniqueId)
+            || "shortest_paths".equals(techniqueId)
+            || "dijkstra_algorithm".equals(techniqueId)
+            || "insert_edge_graph".equals(techniqueId)
+            || "delete_edge_graph".equals(techniqueId)
+            || "find_edge_graph".equals(techniqueId);
+    }
+
+    private void drawArrowHead(Canvas canvas, float startX, float startY, float endX, float endY, Paint sourcePaint) {
+        float angle = (float) Math.atan2(endY - startY, endX - startX);
+        float radius = isCompactGraphLayout() ? 34f : 42f;
+        float tipX = endX - ((float) Math.cos(angle) * radius * 0.92f);
+        float tipY = endY - ((float) Math.sin(angle) * radius * 0.92f);
+        float arrowSize = 16f;
+        Paint arrowPaint = new Paint(sourcePaint);
+        arrowPaint.setStyle(Paint.Style.STROKE);
+        arrowPaint.setStrokeCap(Paint.Cap.ROUND);
+        float leftX = tipX - ((float) Math.cos(angle - Math.PI / 6f) * arrowSize);
+        float leftY = tipY - ((float) Math.sin(angle - Math.PI / 6f) * arrowSize);
+        float rightX = tipX - ((float) Math.cos(angle + Math.PI / 6f) * arrowSize);
+        float rightY = tipY - ((float) Math.sin(angle + Math.PI / 6f) * arrowSize);
+        canvas.drawLine(tipX, tipY, leftX, leftY, arrowPaint);
+        canvas.drawLine(tipX, tipY, rightX, rightY, arrowPaint);
+    }
+
+    private void drawHeapRelationshipBadges(Canvas canvas, float[][] points) {
+        if (activeIndex < 0 || activeIndex >= values.length || activeIndex >= points.length) {
+            return;
+        }
+        int parent = activeIndex == 0 ? -1 : (activeIndex - 1) / 2;
+        int left = (2 * activeIndex) + 1;
+        int right = (2 * activeIndex) + 2;
+        float cx = points[activeIndex][0];
+        float cy = points[activeIndex][1];
+        if (parent >= 0 && parent < points.length) {
+            drawTreeRoleBadge(canvas, (cx + points[parent][0]) / 2f, (cy + points[parent][1]) / 2f, "P", "#2563EB");
+        }
+        if (left < values.length && left < points.length) {
+            drawTreeRoleBadge(canvas, (cx + points[left][0]) / 2f - 16f, (cy + points[left][1]) / 2f, "L", "#0F766E");
+        }
+        if (right < values.length && right < points.length) {
+            drawTreeRoleBadge(canvas, (cx + points[right][0]) / 2f + 16f, (cy + points[right][1]) / 2f, "R", "#9333EA");
+        }
+    }
+
+    private void drawGraphOperationStage(Canvas canvas, float[][] points) {
+        String lower = inlineTeachingMessage == null ? "" : inlineTeachingMessage.toLowerCase();
+        if ("insert_node_graph".equals(techniqueId) && values.length > 0) {
+            int nodeIndex = Math.min(values.length - 1, points.length - 1);
+            String label = lower.contains("scanning") ? "Create" : lower.contains("inserted") ? "Settle" : "Connect";
+            drawTreeRoleBadge(canvas, points[nodeIndex][0], points[nodeIndex][1] - 56f, label, "#16A34A");
+        } else if ("delete_vertex_graph".equals(techniqueId) && activeIndex >= 0 && activeIndex < points.length) {
+            String label = lower.contains("remove") ? "Delete" : "Locate";
+            drawTreeRoleBadge(canvas, points[activeIndex][0], points[activeIndex][1] - 56f, label, "#DC2626");
+        }
+    }
+
+    private void drawGraphOrTreeWhyBubble(Canvas canvas, float[][] points, boolean graphMode) {
+        if (inlineTeachingMessage == null || inlineTeachingMessage.trim().isEmpty()) {
+            return;
+        }
+        String why = resolveInlineWhyBubble();
+        if (why.isEmpty()) {
+            return;
+        }
+        float x;
+        float y;
+        if (graphMode && activeEdgeFrom >= 0 && activeEdgeTo >= 0 && activeEdgeFrom < points.length && activeEdgeTo < points.length) {
+            x = (points[activeEdgeFrom][0] + points[activeEdgeTo][0]) / 2f;
+            y = (points[activeEdgeFrom][1] + points[activeEdgeTo][1]) / 2f - 48f;
+        } else {
+            int focus = activeIndex >= 0 && activeIndex < points.length ? activeIndex : (secondaryIndex >= 0 && secondaryIndex < points.length ? secondaryIndex : 0);
+            x = points[focus][0];
+            y = points[focus][1] - 62f;
+        }
+        drawInlineMathBadge(canvas, x, y, why, graphMode ? "#7C3AED" : "#0F766E");
+    }
+
+    private String resolveInlineWhyBubble() {
+        String safe = inlineTeachingMessage.toLowerCase();
+        if (safe.contains("because")) {
+            return inlineTeachingMessage.substring(safe.indexOf("because"));
+        }
+        if (safe.contains("settled")) {
+            return "final shortest";
+        }
+        if (safe.contains("cycle-free")) {
+            return "avoid cycle";
+        }
+        if (safe.contains("prerequisite")) {
+            return "incoming done";
+        }
+        if (safe.contains("heap")) {
+            return "restore order";
+        }
+        if (safe.contains("remove")) {
+            return "disconnect links";
+        }
+        return "";
+    }
+
+    private boolean isLinkedTechnique() {
+        return "linked_queue".equals(techniqueId)
+            || techniqueId.contains("linked_list")
+            || "linked_stack_push".equals(techniqueId)
+            || "linked_stack_pop".equals(techniqueId);
+    }
+
+    private void drawEmptyStructureState(Canvas canvas, String mode) {
+        float centerX = getWidth() / 2f;
+        float centerY = getHeight() * 0.48f;
+        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setStyle(Paint.Style.STROKE);
+        linePaint.setStrokeWidth(8f);
+        linePaint.setColor(lightenColor(resolveTechniqueBaseColor(), 0.22f));
+        linePaint.setAlpha(190);
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setStyle(Paint.Style.FILL);
+        fill.setColor(resolveTechniqueBaseColor());
+        fill.setAlpha(55);
+
+        if ("stack".equals(mode)) {
+            canvas.drawRoundRect(centerX - 86f, centerY - 120f, centerX + 86f, centerY + 96f, 26f, 26f, fill);
+            canvas.drawRoundRect(centerX - 86f, centerY - 120f, centerX + 86f, centerY + 96f, 26f, 26f, linePaint);
+            drawTreeRoleBadge(canvas, centerX, centerY - 144f, "Empty Stack", "#64748B");
+        } else if ("circular".equals(mode) || "circular_header".equals(mode)) {
+            canvas.drawCircle(centerX, centerY, 104f, linePaint);
+            drawTreeRoleBadge(canvas, centerX, centerY - 134f, "Empty Ring", "#0F766E");
+        } else {
+            canvas.drawRoundRect(centerX - 160f, centerY - 44f, centerX + 160f, centerY + 44f, 30f, 30f, fill);
+            canvas.drawRoundRect(centerX - 160f, centerY - 44f, centerX + 160f, centerY + 44f, 30f, 30f, linePaint);
+            if ("linked".equals(mode)) {
+                drawAnimatedConnector(canvas, centerX - 94f, centerY, centerX + 94f, centerY, true);
+                drawTreeRoleBadge(canvas, centerX, centerY - 74f, "Empty Linked", "#9333EA");
+            } else {
+                drawTreeRoleBadge(canvas, centerX, centerY - 74f, "Empty Queue", "#2563EB");
+            }
+        }
+    }
+
+    private void drawHeapArrayStrip(Canvas canvas) {
+        boolean compact = isCompactTreeLayout();
+        float top = getHeight() * (compact ? 0.76f : 0.80f);
+        float cellWidth = compact
+            ? resolveHorizontalCellWidth(Math.max(0f, getWidth() - 24f))
+            : resolveHorizontalCellWidth();
+        float boxWidth = compact ? Math.max(44f, cellWidth - 14f) : cellWidth - CELL_GAP;
+        float boxHeight = compact ? 58f : 66f;
+        for (int i = 0; i < values.length; i++) {
+            float left = (compact ? 12f : 24f) + (i * cellWidth);
+            float right = left + boxWidth;
+            applyBoxShader(left, top, right, top + boxHeight, i);
+            canvas.drawRoundRect(left, top, right, top + boxHeight, 18f, 18f, fillPaint);
+            canvas.drawRoundRect(left, top, right, top + boxHeight, 18f, 18f, strokePaint);
+            textPaint.setTextSize(compact ? 18f : 22f);
+            canvas.drawText(String.valueOf(values[i]), (left + right) / 2f, top + (compact ? 35f : 40f), textPaint);
+        }
+        drawHeapIndices(canvas, compact ? 12f : 24f, cellWidth, boxWidth, top, boxHeight, compact);
+    }
+
+    private int resolveMatrixColor(int row, int col) {
+        if (row == matrixRow && col == matrixCol) {
+            return Color.parseColor("#F59E0B");
+        }
+        if (row == matrixK || col == matrixK) {
+            return Color.parseColor("#0EA5E9");
+        }
+        return Color.parseColor("#1E293B");
+    }
+
+    private void drawMergeOutput(Canvas canvas, int[] outputValues, float startX, float topY, float cellHeight) {
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setTextSize(28f);
+        canvas.drawText("Merged Output", startX, topY - 20f, textPaint);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        for (int i = 0; i < outputValues.length; i++) {
+            float left = startX + (i * 74f);
+            float right = left + 60f;
+            int baseColor = i <= mergeWriteIndex ? Color.parseColor("#16A34A") : Color.parseColor("#334155");
+            int bright = lightenColor(baseColor, 0.20f);
+            float animatedTop = topY;
+            if ("merge_sort".equals(techniqueId) && i <= mergeWriteIndex) {
+                animatedTop = topY - ((1f - transitionProgress) * 56f);
+            }
+            fillPaint.setShader(new LinearGradient(left, animatedTop, right, animatedTop + cellHeight, bright, baseColor, Shader.TileMode.CLAMP));
+            canvas.drawRoundRect(left, animatedTop, right, animatedTop + 64f, 18f, 18f, fillPaint);
+            canvas.drawRoundRect(left, animatedTop, right, animatedTop + 64f, 18f, 18f, strokePaint);
+            textPaint.setTextSize(24f);
+            if (i <= mergeWriteIndex && outputValues[i] != Integer.MIN_VALUE) {
+                canvas.drawText(String.valueOf(outputValues[i]), (left + right) / 2f, animatedTop + 40f, textPaint);
+            } else {
+                canvas.drawText("_", (left + right) / 2f, animatedTop + 40f, textPaint);
+            }
+        }
+        drawMergeTransferOverlay(canvas, startX, topY);
+    }
+
+    private void drawMiniValueBox(Canvas canvas, int value, float left, float top, float right, float bottom, boolean active) {
+        int baseColor = active ? Color.parseColor("#F59E0B") : Color.parseColor("#1E3A5F");
+        int brighter = lightenColor(baseColor, 0.24f);
+        fillPaint.setShader(new LinearGradient(left, top, right, bottom, brighter, baseColor, Shader.TileMode.CLAMP));
+        canvas.drawRoundRect(left, top, right, bottom, 14f, 14f, fillPaint);
+        canvas.drawRoundRect(left, top, right, bottom, 14f, 14f, strokePaint);
+        textPaint.setTextSize(20f);
+        canvas.drawText(String.valueOf(value), (left + right) / 2f, top + ((bottom - top) * 0.62f), textPaint);
+    }
+
+    private float resolveRadixDropOffset(int bucket, int position) {
+        if (bucket != radixActiveBucket) {
+            return 0f;
+        }
+        float stagger = Math.max(0f, pulseProgress - (position * 0.08f));
+        float normalized = Math.min(1f, stagger / 0.92f);
+        float eased = 1f - ((1f - normalized) * (1f - normalized));
+        return (1f - eased) * 64f;
+    }
+
+    private void drawUnionCompressionTravel(Canvas canvas, float startX, float startY, float endX, float endY, int node) {
+        boolean onCompressionPath = unionFocusNode == node || unionParents[node] == unionRootNode;
+        if (!onCompressionPath) {
+            return;
+        }
+        Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        glowPaint.setColor(Color.parseColor("#FCD34D"));
+        glowPaint.setAlpha(180);
+        float t = 0.12f + (pulseProgress * 0.76f);
+        float dotX = lerp(startX, endX, t);
+        float dotY = lerp(startY, endY, t);
+        canvas.drawCircle(dotX, dotY, 8f + (pulseProgress * 4f), glowPaint);
+    }
+
+    private void drawTrieConnectorReveal(Canvas canvas, float startX, float startY, float endX, float endY, int level) {
+        boolean revealed = activeIndex >= level + 1;
+        Paint pathPaint = new Paint(strokePaint);
+        if (revealed) {
+            pathPaint.setColor(Color.parseColor("#38BDF8"));
+            pathPaint.setStrokeWidth(7f);
+            float revealProgress = activeIndex == level + 1 ? pulseProgress : 1f;
+            float currentY = lerp(startY, endY, revealProgress);
+            canvas.drawLine(startX, startY, endX, currentY, pathPaint);
+            Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            dotPaint.setColor(Color.parseColor("#FCD34D"));
+            canvas.drawCircle(endX, currentY, 7f + (pulseProgress * 3f), dotPaint);
+            return;
+        }
+        drawAnimatedConnector(canvas, startX, startY, endX, endY, false);
+    }
+
+    private void drawTrieLetterReveal(Canvas canvas, float x, float y, String label, boolean revealed, int level) {
+        if (!revealed) {
+            drawLabeledNode(canvas, x, y, label, false);
+            return;
+        }
+        float revealScale = activeIndex == level + 1 ? 0.92f + (pulseProgress * 0.12f) : 1f;
+        int saveCount = canvas.save();
+        canvas.scale(revealScale, revealScale, x, y);
+        drawLabeledNode(canvas, x, y, label, activeIndex == level + 1);
+        canvas.restoreToCount(saveCount);
+    }
+
+    private void drawMatrixCellPulse(Canvas canvas, float left, float top, float right, float bottom, int row, int col) {
+        if (row != matrixRow || col != matrixCol) {
+            return;
+        }
+        Paint pulsePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pulsePaint.setStyle(Paint.Style.FILL);
+        pulsePaint.setColor(Color.parseColor("#FCD34D"));
+        pulsePaint.setAlpha((int) (76f * (1f - matrixHighlightProgress)));
+        float inset = 18f * (1f - matrixHighlightProgress);
+        canvas.drawRoundRect(left - inset, top - inset, right + inset, bottom + inset, 24f, 24f, pulsePaint);
+    }
+
+    private void drawCompletedPassSweep(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if (!"bubble_sort".equals(techniqueId) && !"selection_sort".equals(techniqueId) && !"insertion_sort".equals(techniqueId)) {
+            return;
+        }
+        if (completedStart < 0 || completedEnd < completedStart) {
+            return;
+        }
+        float left = padding + (completedStart * cellWidth) - 4f;
+        float right = padding + (completedEnd * cellWidth) + baseWidth + 4f;
+        float sweepX = lerp(left, right, pulseProgress);
+        Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        glowPaint.setShader(new LinearGradient(
+            sweepX - 36f,
+            top,
+            sweepX + 36f,
+            bottom,
+            Color.argb(0, 134, 239, 172),
+            Color.argb(165, 134, 239, 172),
+            Shader.TileMode.CLAMP
+        ));
+        canvas.drawRoundRect(left, top - 8f, right, bottom + 8f, 28f, 28f, glowPaint);
+        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setColor(Color.parseColor("#86EFAC"));
+        linePaint.setAlpha(150);
+        linePaint.setStrokeWidth(5f);
+        canvas.drawLine(sweepX, top - 6f, sweepX, bottom + 6f, linePaint);
+    }
+
+    private void drawMergeTransferOverlay(Canvas canvas, float outputStartX, float outputTopY) {
+        if (mergeTransferTargetIndex < 0 || mergeTransferValue == Integer.MIN_VALUE) {
+            return;
+        }
+        float leftRowStart = 24f;
+        float leftSourceX = leftRowStart + (Math.max(0, mergeTransferSourceIndex) * 74f) + 30f;
+        float rightRowStart = leftRowStart + (Math.max(mergeLeftValues.length, 1) * 74f) + 64f;
+        float sourceX = (mergeTransferFromLeft ? leftSourceX : rightRowStart + (Math.max(0, mergeTransferSourceIndex) * 74f) + 30f);
+        float sourceY = getHeight() * 0.16f + 27f;
+        float targetX = outputStartX + (mergeTransferTargetIndex * 74f) + 30f;
+        float targetY = outputTopY + 32f;
+        float currentX = lerp(sourceX, targetX, mergeTransferProgress);
+        float currentY = lerp(sourceY, targetY, mergeTransferProgress);
+        float width = 60f;
+        float height = 54f;
+        float left = currentX - (width / 2f);
+        float top = currentY - (height / 2f);
+        int baseColor = mergeTransferFromLeft ? Color.parseColor("#0EA5E9") : Color.parseColor("#8B5CF6");
+        int bright = lightenColor(baseColor, 0.24f);
+        softGlowPaint.setShader(null);
+        softGlowPaint.setColor(baseColor);
+        softGlowPaint.setAlpha(Math.round(70f * (1f - Math.abs((mergeTransferProgress * 2f) - 1f))));
+        canvas.drawRoundRect(left - 10f, top - 10f, left + width + 10f, top + height + 10f, 22f, 22f, softGlowPaint);
+        fillPaint.setShader(new LinearGradient(left, top, left + width, top + height, bright, baseColor, Shader.TileMode.CLAMP));
+        canvas.drawRoundRect(left, top, left + width, top + height, 18f, 18f, fillPaint);
+        canvas.drawRoundRect(left, top, left + width, top + height, 18f, 18f, strokePaint);
+        textPaint.setTextSize(22f);
+        canvas.drawText(String.valueOf(mergeTransferValue), currentX, top + 34f, textPaint);
+    }
+
+    private void drawSwapBoxes(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if (!swapAnimating || swapFromIndex < 0 || swapToIndex < 0 || previousValues.length != values.length) {
+            return;
+        }
+
+        float fromLeft = padding + (swapFromIndex * cellWidth);
+        float toLeft = padding + (swapToIndex * cellWidth);
+        float currentLeftA = lerp(fromLeft, toLeft, swapProgress);
+        float currentLeftB = lerp(toLeft, fromLeft, swapProgress);
+        float archA = (float) Math.sin(Math.PI * swapProgress) * 55f;
+        float archB = (float) Math.sin(Math.PI * swapProgress) * 40f;
+
+        // Draw curved neon arch swap trail path (glowing trajectory)
+        Paint archPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        archPaint.setStyle(Paint.Style.STROKE);
+        archPaint.setStrokeWidth(6f);
+        archPaint.setShader(new LinearGradient(fromLeft, top, toLeft, top, Color.parseColor("#38BDF8"), Color.parseColor("#C084FC"), Shader.TileMode.CLAMP));
+        
+        android.graphics.Path arcPath = new android.graphics.Path();
+        float midX = (fromLeft + toLeft + baseWidth) / 2f;
+        float peakY = top - 110f;
+        arcPath.moveTo(fromLeft + baseWidth / 2f, top - 20f);
+        arcPath.quadTo(midX, peakY, toLeft + baseWidth / 2f, top - 20f);
+        canvas.drawPath(arcPath, archPaint);
+
+        // Draw glowing wave pulse/ripples at the top peak of the arc
+        Paint pulseTrailPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pulseTrailPaint.setStyle(Paint.Style.STROKE);
+        pulseTrailPaint.setStrokeWidth(3f);
+        pulseTrailPaint.setColor(Color.parseColor("#38BDF8"));
+        pulseTrailPaint.setAlpha((int) ((1f - swapProgress) * 140));
+        canvas.drawCircle(midX, peakY + 10f, 12f + swapProgress * 22f, pulseTrailPaint);
+
+        // Draw Box A (with tilt and scale pop)
+        canvas.save();
+        float centerX_A = currentLeftA + baseWidth / 2f;
+        float centerY_A = (top - archA + bottom - archA) / 2f;
+        float angleA = (float) Math.sin(Math.PI * swapProgress) * -12f;
+        canvas.rotate(angleA, centerX_A, centerY_A);
+        float scaleA = 1f + (float) Math.sin(Math.PI * swapProgress) * 0.08f;
+        canvas.scale(scaleA, scaleA, centerX_A, centerY_A);
+        drawSwapBox(canvas, previousValues[swapFromIndex], currentLeftA, top - archA, currentLeftA + baseWidth, bottom - archA, Color.parseColor("#C084FC")); // Purple neon box
+        canvas.restore();
+
+        // Draw Box B (with tilt and scale pop)
+        canvas.save();
+        float centerX_B = currentLeftB + baseWidth / 2f;
+        float centerY_B = (top - archB + bottom - archB) / 2f;
+        float angleB = (float) Math.sin(Math.PI * swapProgress) * 12f;
+        canvas.rotate(angleB, centerX_B, centerY_B);
+        float scaleB = 1f + (float) Math.sin(Math.PI * swapProgress) * 0.08f;
+        canvas.scale(scaleB, scaleB, centerX_B, centerY_B);
+        drawSwapBox(canvas, previousValues[swapToIndex], currentLeftB, top - archB, currentLeftB + baseWidth, bottom - archB, Color.parseColor("#38BDF8")); // Cyan neon box
+        canvas.restore();
+    }
+
+    private void drawSwapBox(Canvas canvas, int value, float left, float top, float right, float bottom, int baseColor) {
+        // Dark glass background
+        int fillA = Color.argb(200, 15, 23, 42);
+        int fillB = Color.argb(200, 30, 41, 59);
+        fillPaint.setShader(new LinearGradient(left, top, right, bottom, fillA, fillB, Shader.TileMode.CLAMP));
+
+        // Soft outer glow of matching color
+        softGlowPaint.setShader(null);
+        softGlowPaint.setColor(baseColor);
+        softGlowPaint.setAlpha(110);
+        canvas.drawRoundRect(left - 12f, top - 12f, right + 12f, bottom + 12f, 30f, 30f, softGlowPaint);
+        
+        // Draw Glass background
+        canvas.drawRoundRect(left, top, right, bottom, 24f, 24f, fillPaint);
+        
+        // Draw Glowing Neon outline
+        Paint swapStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        swapStrokePaint.setStyle(Paint.Style.STROKE);
+        swapStrokePaint.setStrokeWidth(6f);
+        swapStrokePaint.setShader(new LinearGradient(left, top, right, bottom, baseColor, lightenColor(baseColor, 0.35f), Shader.TileMode.CLAMP));
+        canvas.drawRoundRect(left, top, right, bottom, 24f, 24f, swapStrokePaint);
+
+        // Draw Value text
+        textPaint.setColor(Color.WHITE);
+        textPaint.setFakeBoldText(true);
+        textPaint.setTextSize(resolveValueTextSize());
+        canvas.drawText(String.valueOf(value), (left + right) / 2f, top + (((bottom - top)) * 0.58f), textPaint);
+    }
+
+    private void drawComparisonBeam(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if (activeIndex < 0 || secondaryIndex < 0 || activeIndex >= values.length || secondaryIndex >= values.length) {
+            return;
+        }
+
+        float firstX = padding + (activeIndex * cellWidth) + (baseWidth / 2f);
+        float secondX = padding + (secondaryIndex * cellWidth) + (baseWidth / 2f);
+        float beamY = bottom + 22f + (pulseProgress * 6f);
+
+        Paint beamPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        beamPaint.setStyle(Paint.Style.STROKE);
+        beamPaint.setStrokeWidth(7f);
+        beamPaint.setShader(new LinearGradient(
+            firstX,
+            beamY,
+            secondX,
+            beamY,
+            Color.parseColor("#F59E0B"),
+            Color.parseColor("#A855F7"),
+            Shader.TileMode.CLAMP
+        ));
+
+        canvas.drawLine(firstX, beamY, secondX, beamY, beamPaint);
+
+        Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        dotPaint.setColor(Color.parseColor("#E2E8F0"));
+        float travel = lerp(firstX, secondX, pulseProgress);
+        canvas.drawCircle(travel, beamY, 8f, dotPaint);
+    }
+
+    private void drawPartitionSweep(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if (!"quicksort".equals(techniqueId) || activeIndex < 0 || secondaryIndex < 0 || activeIndex >= values.length || secondaryIndex >= values.length) {
+            return;
+        }
+
+        float leftIndex = Math.min(activeIndex, secondaryIndex);
+        float rightIndex = Math.max(activeIndex, secondaryIndex);
+        float sweepLeft = padding + (leftIndex * cellWidth) - 6f;
+        float sweepRight = padding + (rightIndex * cellWidth) + baseWidth + 6f;
+        float sweepY = bottom + 34f;
+
+        Paint sweepPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        sweepPaint.setStrokeWidth(10f);
+        sweepPaint.setShader(new LinearGradient(
+            sweepLeft,
+            sweepY,
+            sweepRight,
+            sweepY,
+            Color.parseColor("#F59E0B"),
+            Color.parseColor("#38BDF8"),
+            Shader.TileMode.CLAMP
+        ));
+        sweepPaint.setAlpha(150);
+        canvas.drawLine(sweepLeft, sweepY, sweepRight, sweepY, sweepPaint);
+
+        Paint sweepDot = new Paint(Paint.ANTI_ALIAS_FLAG);
+        sweepDot.setColor(Color.parseColor("#F8FAFC"));
+        float sweepX = lerp(sweepLeft, sweepRight, pulseProgress);
+        canvas.drawCircle(sweepX, sweepY, 8f + (pulseProgress * 3f), sweepDot);
+    }
+
+    private void drawBinarySearchRange(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if (!"binary_search".equals(techniqueId)) {
+            return;
+        }
+        if (!"low".equalsIgnoreCase(primaryPointerLabel) || primaryPointerIndex < 0 || secondaryPointerIndex < 0) {
+            return;
+        }
+
+        int lowIndex = Math.min(primaryPointerIndex, secondaryPointerIndex);
+        int highIndex = Math.max(primaryPointerIndex, secondaryPointerIndex);
+        if (lowIndex >= values.length || highIndex >= values.length) {
+            return;
+        }
+
+        float animatedLow = resolveAnimatedPointerIndex(lowIndex, true);
+        float animatedHigh = resolveAnimatedPointerIndex(highIndex, false);
+        float left = padding + (animatedLow * cellWidth) - 10f;
+        float right = padding + (animatedHigh * cellWidth) + baseWidth + 10f;
+        float fullLeft = padding - 10f;
+        float fullRight = padding + ((values.length - 1) * cellWidth) + baseWidth + 10f;
+
+        Paint rangeFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rangeFill.setColor(Color.parseColor("#0EA5E9"));
+        rangeFill.setAlpha(32);
+        canvas.drawRoundRect(left, top - 22f, right, bottom + 26f, 30f, 30f, rangeFill);
+
+        Paint rangeStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rangeStroke.setStyle(Paint.Style.STROKE);
+        rangeStroke.setStrokeWidth(6f);
+        rangeStroke.setColor(Color.parseColor("#38BDF8"));
+        rangeStroke.setAlpha(140);
+        canvas.drawRoundRect(left, top - 22f, right, bottom + 26f, 30f, 30f, rangeStroke);
+
+        Paint discardedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        discardedPaint.setColor(Color.parseColor("#020617"));
+        discardedPaint.setAlpha(Math.round(90f * binaryRangeFadeProgress));
+        if (left > fullLeft + 4f) {
+            canvas.drawRoundRect(fullLeft, top - 18f, left - 6f, bottom + 22f, 24f, 24f, discardedPaint);
+        }
+        if (right < fullRight - 4f) {
+            canvas.drawRoundRect(right + 6f, top - 18f, fullRight, bottom + 22f, 24f, 24f, discardedPaint);
+        }
+
+        if (activeIndex >= 0 && activeIndex < values.length) {
+            float midCenter = padding + (resolveAnimatedMidIndex() * cellWidth) + (baseWidth / 2f);
+            Paint midBeam = new Paint(Paint.ANTI_ALIAS_FLAG);
+            midBeam.setStrokeWidth(8f);
+            midBeam.setColor(Color.parseColor("#FCD34D"));
+            midBeam.setAlpha(180);
+            canvas.drawLine(midCenter, top - 40f, midCenter, bottom + 18f, midBeam);
+        }
+
+        drawRangeBrace(canvas, left + 10f, right - 10f, bottom + 30f, "search range");
+    }
+
+    private void drawJumpSearchRange(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if (!"jump_search".equals(techniqueId)) {
+            return;
+        }
+        if (values.length == 0 || primaryPointerIndex < 0) {
+            return;
+        }
+        int startIndex = secondaryPointerIndex >= 0 ? secondaryPointerIndex : Math.max(0, primaryPointerIndex);
+        int endIndex = Math.max(startIndex, Math.min(values.length - 1, primaryPointerIndex));
+        float left = padding + (startIndex * cellWidth) - 8f;
+        float right = padding + (endIndex * cellWidth) + baseWidth + 8f;
+        Paint blockFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        blockFill.setColor(Color.parseColor("#2563EB"));
+        blockFill.setAlpha(24);
+        canvas.drawRoundRect(left, top - 12f, right, bottom + 12f, 24f, 24f, blockFill);
+        drawRangeBrace(canvas, left + 8f, right - 8f, bottom + 30f, "jump block");
+    }
+
+    private void drawMergeRunBraces(Canvas canvas, float leftStart, float rightStart, float topRowY) {
+        if (mergeLeftValues.length > 0) {
+            float leftEnd = leftStart + ((mergeLeftValues.length - 1) * 74f) + 60f;
+            drawRangeBrace(canvas, leftStart, leftEnd, topRowY + 72f, "left run");
+        }
+        if (mergeRightValues.length > 0) {
+            float rightEnd = rightStart + ((mergeRightValues.length - 1) * 74f) + 60f;
+            drawRangeBrace(canvas, rightStart, rightEnd, topRowY + 72f, "right run");
+        }
+    }
+
+    private void drawRangeBrace(Canvas canvas, float left, float right, float y, String label) {
+        if (right <= left) {
+            return;
+        }
+        Paint bracePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bracePaint.setColor(Color.parseColor("#93C5FD"));
+        bracePaint.setStrokeWidth(4f);
+        bracePaint.setStyle(Paint.Style.STROKE);
+        float notch = Math.min(18f, (right - left) * 0.16f);
+        canvas.drawLine(left, y, left, y + 12f, bracePaint);
+        canvas.drawLine(left, y + 12f, left + notch, y + 12f, bracePaint);
+        canvas.drawLine(left + notch, y + 12f, right - notch, y + 12f, bracePaint);
+        canvas.drawLine(right - notch, y + 12f, right, y + 12f, bracePaint);
+        canvas.drawLine(right, y + 12f, right, y, bracePaint);
+
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.parseColor("#DBEAFE"));
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        labelPaint.setTextSize(18f);
+        canvas.drawText(label, (left + right) / 2f, y + 30f, labelPaint);
+    }
+
+    private void drawInlineArrayMath(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if ("linear_search".equals(techniqueId) && activeIndex >= 0 && activeIndex < values.length) {
+            float centerX = padding + (activeIndex * cellWidth) + (baseWidth / 2f);
+            drawInlineMathBadge(
+                canvas,
+                centerX,
+                top - 88f,
+                "arr[" + activeIndex + "] = " + values[activeIndex],
+                "#2563EB"
+            );
+            if (inlineTeachingTarget != Integer.MIN_VALUE && inlineTeachingMessage.toLowerCase().contains("compar")) {
+                drawInlineMathBadge(
+                    canvas,
+                    centerX,
+                    top - 58f,
+                    "item " + inlineTeachingTarget + " ? " + values[activeIndex],
+                    "#0F766E"
+                );
+            }
+            return;
+        }
+        if ("binary_search".equals(techniqueId)
+            && primaryPointerIndex >= 0
+            && secondaryPointerIndex >= 0
+            && activeIndex >= 0
+            && activeIndex < values.length) {
+            float centerX = padding + (resolveAnimatedMidIndex() * cellWidth) + (baseWidth / 2f);
+            int low = Math.min(primaryPointerIndex, secondaryPointerIndex);
+            int high = Math.max(primaryPointerIndex, secondaryPointerIndex);
+            String safe = inlineTeachingMessage == null ? "" : inlineTeachingMessage.toLowerCase();
+            drawInlineMathBadge(canvas, centerX, top - 98f, "(" + low + " + " + high + ") / 2 = " + activeIndex, "#2563EB");
+            if (safe.contains("middle value")) {
+                drawInlineMathBadge(canvas, centerX, top - 68f, "data = arr[mid] = " + values[activeIndex], "#0F766E");
+            } else if (safe.contains("target is greater")) {
+                drawInlineMathBadge(canvas, centerX, top - 68f, "item " + inlineTeachingTarget + " > data " + values[activeIndex], "#0F766E");
+                drawInlineMathBadge(canvas, centerX, top - 38f, "beg = mid + 1 = " + low, "#D97706");
+            } else if (safe.contains("target is smaller")) {
+                drawInlineMathBadge(canvas, centerX, top - 68f, "item " + inlineTeachingTarget + " < data " + values[activeIndex], "#0F766E");
+                drawInlineMathBadge(canvas, centerX, top - 38f, "end = mid - 1 = " + high, "#D97706");
+            } else if (safe.contains("found")) {
+                drawInlineMathBadge(canvas, centerX, top - 68f, "item = data = " + inlineTeachingTarget, "#16A34A");
+            }
+            return;
+        }
+        if ("jump_search".equals(techniqueId) && values.length > 0 && primaryPointerIndex >= 0) {
+            int startIndex = secondaryPointerIndex >= 0 ? secondaryPointerIndex : Math.max(0, primaryPointerIndex);
+            int endIndex = Math.max(startIndex, Math.min(values.length - 1, primaryPointerIndex));
+            float centerX = padding + (((startIndex + endIndex) / 2f) * cellWidth) + (baseWidth / 2f);
+            int block = Math.max(1, (int) Math.floor(Math.sqrt(values.length)));
+            drawInlineMathBadge(
+                canvas,
+                centerX,
+                top - 88f,
+                "sqrt(" + values.length + ") -> " + block,
+                "#2563EB"
+            );
+        }
+    }
+
+    private void drawInlineDijkstraMath(Canvas canvas, float[][] points, boolean compact, float distanceTop) {
+        if (!("dijkstra_algorithm".equals(techniqueId) || "shortest_paths".equals(techniqueId))) {
+            return;
+        }
+        if (activeEdgeFrom < 0 || activeEdgeTo < 0 || activeEdgeFrom >= points.length || activeEdgeTo >= points.length) {
+            return;
+        }
+        if (dijkstraDistances.length <= activeEdgeFrom) {
+            return;
+        }
+        int fromDist = dijkstraDistances[activeEdgeFrom];
+        if (fromDist >= 9999) {
+            return;
+        }
+        int weight = resolveGraphEdgeWeight(activeEdgeFrom, activeEdgeTo);
+        if (weight <= 0) {
+            return;
+        }
+        float midX = (points[activeEdgeFrom][0] + points[activeEdgeTo][0]) / 2f;
+        float midY = (points[activeEdgeFrom][1] + points[activeEdgeTo][1]) / 2f;
+        float badgeY = Math.min(distanceTop - (compact ? 42f : 48f), midY - 18f);
+        drawInlineMathBadge(
+            canvas,
+            midX,
+            badgeY,
+            fromDist + " + " + weight + " = " + (fromDist + weight),
+            "#0F766E"
+        );
+    }
+
+    private int resolveGraphEdgeWeight(int from, int to) {
+        if ((from == 0 && to == 1) || (from == 1 && to == 0)) return 4;
+        if ((from == 1 && to == 2) || (from == 2 && to == 1)) return 3;
+        if ((from == 0 && to == 3) || (from == 3 && to == 0)) return 2;
+        if ((from == 1 && to == 3) || (from == 3 && to == 1)) return 1;
+        if ((from == 1 && to == 4) || (from == 4 && to == 1)) return 5;
+        if ((from == 2 && to == 4) || (from == 4 && to == 2)) return 2;
+        if ((from == 3 && to == 4) || (from == 4 && to == 3)) return 7;
+        return -1;
+    }
+
+    private void drawInlineMathBadge(Canvas canvas, float centerX, float centerY, String label, String colorHex) {
+        if (label == null || label.trim().isEmpty()) {
+            return;
+        }
+        float eased = inlineTeachingProgress <= 0f ? 1f : inlineTeachingProgress;
+        float animatedY = centerY + ((1f - eased) * 12f);
+        int alpha = Math.max(0, Math.min(255, Math.round(235f * eased)));
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(Color.parseColor(colorHex));
+        fill.setAlpha(alpha);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(2f);
+        stroke.setColor(lightenColor(Color.parseColor(colorHex), 0.18f));
+        stroke.setAlpha(alpha);
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.WHITE);
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setTextSize(20f);
+        text.setAlpha(alpha);
+
+        float halfWidth = Math.max(54f, Math.min(156f, label.length() * 5.6f));
+        float halfHeight = 18f;
+        canvas.drawRoundRect(centerX - halfWidth, animatedY - halfHeight, centerX + halfWidth, animatedY + halfHeight, 14f, 14f, fill);
+        canvas.drawRoundRect(centerX - halfWidth, animatedY - halfHeight, centerX + halfWidth, animatedY + halfHeight, 14f, 14f, stroke);
+        canvas.drawText(label, centerX, animatedY + 5f, text);
+    }
+
+    private void drawDiscardedFlashTrails(Canvas canvas, float padding, float cellWidth, float baseWidth, float top, float bottom) {
+        if (!isSearchingTechnique()) {
+            return;
+        }
+        Paint trailPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        for (int i = 0; i < values.length; i++) {
+            if (!isBinaryDiscardedIndex(i) && !isJumpDiscardedIndex(i) && !isLinearDiscardedIndex(i)) {
+                continue;
+            }
+            float left = padding + (i * cellWidth);
+            float right = left + baseWidth;
+            float sweep = lerp(left - 18f, right + 18f, pulseProgress);
+            trailPaint.setShader(new LinearGradient(
+                sweep - 28f,
+                top,
+                sweep + 28f,
+                bottom,
+                Color.argb(0, 96, 165, 250),
+                Color.argb(82, 96, 165, 250),
+                Shader.TileMode.CLAMP
+            ));
+            canvas.drawRoundRect(left - 6f, top - 4f, right + 6f, bottom + 4f, 22f, 22f, trailPaint);
+        }
+        trailPaint.setShader(null);
+    }
+
+    private void drawUpdatedEdgeTrail(Canvas canvas, float[][] points) {
+        if (!("dijkstra_algorithm".equals(techniqueId) || "shortest_paths".equals(techniqueId))) {
+            return;
+        }
+        if (activeEdgeFrom < 0 || activeEdgeTo < 0 || activeEdgeFrom >= points.length || activeEdgeTo >= points.length) {
+            return;
+        }
+        Paint trailPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        trailPaint.setStyle(Paint.Style.STROKE);
+        trailPaint.setStrokeWidth(10f);
+        trailPaint.setShader(new LinearGradient(
+            points[activeEdgeFrom][0],
+            points[activeEdgeFrom][1],
+            points[activeEdgeTo][0],
+            points[activeEdgeTo][1],
+            Color.argb(0, 56, 189, 248),
+            Color.argb(150, 56, 189, 248),
+            Shader.TileMode.CLAMP
+        ));
+        canvas.drawLine(points[activeEdgeFrom][0], points[activeEdgeFrom][1], points[activeEdgeTo][0], points[activeEdgeTo][1], trailPaint);
+
+        Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        dotPaint.setColor(Color.parseColor("#FCD34D"));
+        float dotX = lerp(points[activeEdgeFrom][0], points[activeEdgeTo][0], pulseProgress);
+        float dotY = lerp(points[activeEdgeFrom][1], points[activeEdgeTo][1], pulseProgress);
+        canvas.drawCircle(dotX, dotY, 7f + (pulseProgress * 3f), dotPaint);
+    }
+
+    private void drawSettledFeedback(Canvas canvas, float centerX, float centerY, float radius, int index) {
+        if (!("dijkstra_algorithm".equals(techniqueId) || "shortest_paths".equals(techniqueId))) {
+            return;
+        }
+        if (dijkstraSettled.length <= index || !dijkstraSettled[index]) {
+            return;
+        }
+        Paint settledPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        settledPaint.setStyle(Paint.Style.STROKE);
+        settledPaint.setStrokeWidth(5f);
+        settledPaint.setColor(Color.parseColor("#4ADE80"));
+        settledPaint.setAlpha(90);
+        float haloRadius = radius + 10f + (pulseProgress * 8f);
+        canvas.drawCircle(centerX, centerY, haloRadius, settledPaint);
+    }
+
+    private void drawAnimatedConnector(Canvas canvas, float startX, float startY, float endX, float endY, boolean relink) {
+        Paint connectorPaint = new Paint(accentPaint);
+        connectorPaint.setStrokeWidth(relink ? 7f : 5f);
+        connectorPaint.setAlpha(relink ? Math.round(130f + (pulseProgress * 90f)) : 180);
+        if (relink) {
+            connectorPaint.setColor(Color.parseColor("#60A5FA"));
+        }
+        canvas.drawLine(startX, startY, endX, endY, connectorPaint);
+
+        Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        dotPaint.setColor(relink ? Color.parseColor("#FCD34D") : Color.parseColor("#7DD3FC"));
+        float dotX = lerp(startX, endX, pulseProgress);
+        float dotY = lerp(startY, endY, pulseProgress);
+        canvas.drawCircle(dotX, dotY, (relink ? 8f : 6f) + (pulseProgress * 2f), dotPaint);
+    }
+
+    private void drawNodeHalo(Canvas canvas, float centerX, float centerY, float radius, int nodeIndex) {
+        if (!isTraversalNodeActive(nodeIndex) && !isTraversalNodeVisited(nodeIndex) && !isTraversalFrontierNode(nodeIndex)) {
+            return;
+        }
+
+        Paint haloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        haloPaint.setStyle(Paint.Style.STROKE);
+        boolean active = isTraversalNodeActive(nodeIndex);
+        boolean frontier = isTraversalFrontierNode(nodeIndex);
+        haloPaint.setStrokeWidth(active ? 10f : frontier ? 8f : 6f);
+        haloPaint.setColor(active ? Color.parseColor("#FCD34D") : frontier ? Color.parseColor("#60A5FA") : Color.parseColor("#4ADE80"));
+        haloPaint.setAlpha(active
+            ? Math.round(150f + (pulseProgress * 70f))
+            : frontier ? Math.round(120f + (pulseProgress * 50f)) : Math.round(90f + (pulseProgress * 24f)));
+        float haloRadius = radius + 12f + (active ? pulseProgress * 10f : frontier ? pulseProgress * 16f : 0f);
+        canvas.drawCircle(centerX, centerY, haloRadius, haloPaint);
+    }
+
+    private void drawArrayPointers(Canvas canvas, float padding, float cellWidth, float baseWidth, float top) {
+        if (primaryPointerIndex >= 0 && primaryPointerIndex < values.length) {
+            float previousX = previousPrimaryPointerIndex >= 0 && previousPrimaryPointerIndex < values.length
+                ? padding + (previousPrimaryPointerIndex * cellWidth) + (baseWidth / 2f)
+                : Float.NaN;
+            float x = padding + (resolveAnimatedPointerIndex(primaryPointerIndex, true) * cellWidth) + (baseWidth / 2f);
+            drawPointerTrail(canvas, previousX, x, top - 34f, true);
+            drawPointer(canvas, x, top - 34f, primaryPointerLabel);
+        }
+
+        if (secondaryPointerIndex >= 0 && secondaryPointerIndex < values.length) {
+            float previousX = previousSecondaryPointerIndex >= 0 && previousSecondaryPointerIndex < values.length
+                ? padding + (previousSecondaryPointerIndex * cellWidth) + (baseWidth / 2f)
+                : Float.NaN;
+            float x = padding + (resolveAnimatedPointerIndex(secondaryPointerIndex, false) * cellWidth) + (baseWidth / 2f);
+            drawPointerTrail(canvas, previousX, x, top - 72f, false);
+            drawPointer(canvas, x, top - 72f, secondaryPointerLabel);
+        }
+    }
+
+    private void drawArrayIndices(Canvas canvas, float padding, float cellWidth, float baseWidth, float bottom) {
+        if (!shouldDrawArrayIndices()) {
+            return;
+        }
+        Paint indexPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        indexPaint.setColor(Color.parseColor("#94A3B8"));
+        indexPaint.setTextAlign(Paint.Align.CENTER);
+        indexPaint.setTextSize(isStructureTechnique() ? 20f : 22f);
+        float baseline = bottom + (isStructureTechnique() ? 24f : 28f);
+        for (int i = 0; i < values.length; i++) {
+            float x = padding + (i * cellWidth) + (baseWidth / 2f);
+            canvas.drawText(String.valueOf(i), x, baseline, indexPaint);
+        }
+    }
+
+    private void drawStackIndices(Canvas canvas, float left, float startBottom, float cellHeight, float gap) {
+        if (!shouldDrawStackIndices()) {
+            return;
+        }
+        Paint indexPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        indexPaint.setColor(Color.parseColor("#94A3B8"));
+        indexPaint.setTextAlign(Paint.Align.RIGHT);
+        indexPaint.setTextSize(20f);
+        float labelX = left - 18f;
+        for (int i = 0; i < values.length; i++) {
+            float bottom = startBottom - (i * (cellHeight + gap));
+            float centerY = bottom - (cellHeight / 2f) + 7f;
+            canvas.drawText(String.valueOf(i), labelX, centerY, indexPaint);
+        }
+    }
+
+    private void drawHeapIndices(Canvas canvas, float startX, float cellWidth, float boxWidth, float top, float boxHeight, boolean compact) {
+        Paint indexPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        indexPaint.setColor(Color.parseColor("#94A3B8"));
+        indexPaint.setTextAlign(Paint.Align.CENTER);
+        indexPaint.setTextSize(compact ? 18f : 20f);
+        float baseline = top + boxHeight + (compact ? 18f : 20f);
+        for (int i = 0; i < values.length; i++) {
+            float left = startX + (i * cellWidth);
+            canvas.drawText(String.valueOf(i), left + (boxWidth / 2f), baseline, indexPaint);
+        }
+    }
+
+    private void drawPointer(Canvas canvas, float centerX, float baselineY, String label) {
+        Paint pointerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pointerPaint.setColor(Color.parseColor("#E2E8F0"));
+        pointerPaint.setStrokeWidth(5f);
+        canvas.drawLine(centerX, baselineY, centerX, baselineY + 18f, pointerPaint);
+        canvas.drawCircle(centerX, baselineY + 20f, 6f, pointerPaint);
+
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.parseColor("#F8FAFC"));
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        labelPaint.setTextSize(24f);
+        canvas.drawText(label == null || label.isEmpty() ? "ptr" : label, centerX, baselineY - 8f, labelPaint);
+    }
+
+    private void drawPointerTrail(Canvas canvas, float startX, float endX, float baselineY, boolean primary) {
+        if (Float.isNaN(startX) || Math.abs(endX - startX) < 10f || pointerMotionProgress >= 0.995f) {
+            return;
+        }
+        Paint trailPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        trailPaint.setStyle(Paint.Style.STROKE);
+        trailPaint.setStrokeWidth(primary ? 8f : 6f);
+        trailPaint.setStrokeCap(Paint.Cap.ROUND);
+        int trailColor = primary ? Color.parseColor("#60A5FA") : Color.parseColor("#A78BFA");
+        trailPaint.setShader(new LinearGradient(startX, baselineY, endX, baselineY, Color.argb(30, Color.red(trailColor), Color.green(trailColor), Color.blue(trailColor)), Color.argb(180, Color.red(trailColor), Color.green(trailColor), Color.blue(trailColor)), Shader.TileMode.CLAMP));
+        canvas.drawLine(startX, baselineY + 20f, endX, baselineY + 20f, trailPaint);
+
+        Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        dotPaint.setColor(primary ? Color.parseColor("#FCD34D") : Color.parseColor("#C4B5FD"));
+        float dotX = lerp(startX, endX, pointerMotionProgress);
+        canvas.drawCircle(dotX, baselineY + 20f, (primary ? 7f : 6f) + ((1f - pointerMotionProgress) * 3f), dotPaint);
+    }
+
+    private void drawOverlayBadge(Canvas canvas) {
+        if (overlayBadgeText == null || overlayBadgeText.trim().isEmpty()) {
+            return;
+        }
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(resolveTechniqueBaseColor());
+        fill.setAlpha(230);
+        Paint outline = new Paint(Paint.ANTI_ALIAS_FLAG);
+        outline.setStyle(Paint.Style.STROKE);
+        outline.setStrokeWidth(2f);
+        outline.setColor(lightenColor(resolveTechniqueBaseColor(), 0.20f));
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.parseColor("#F8FAFC"));
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        labelPaint.setTextSize(20f);
+
+        float width = Math.min(getWidth() * 0.52f, Math.max(148f, overlayBadgeText.length() * 10.3f));
+        float left = getWidth() - width - 20f;
+        float top = 18f;
+        float right = getWidth() - 20f;
+        float bottom = top + 40f;
+        canvas.drawRoundRect(left, top, right, bottom, 18f, 18f, fill);
+        canvas.drawRoundRect(left, top, right, bottom, 18f, 18f, outline);
+        canvas.drawText(overlayBadgeText, (left + right) / 2f, top + 26f, labelPaint);
+    }
+
+    private void drawStructureCardLabel(Canvas canvas, float left, float top, float right, float bottom, int index, boolean verticalStack) {
+        String label = resolveStructureCardLabel(index, verticalStack);
+        if (label == null) {
+            return;
+        }
+
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setStyle(Paint.Style.FILL);
+        fill.setColor(Color.parseColor("#0F172A"));
+        fill.setAlpha(170);
+        Paint outline = new Paint(Paint.ANTI_ALIAS_FLAG);
+        outline.setStyle(Paint.Style.STROKE);
+        outline.setStrokeWidth(2f);
+        outline.setColor(lightenColor(resolveTechniqueBaseColor(), 0.36f));
+
+        float badgeLeft = left + 8f;
+        float badgeTop = top + 8f;
+        float badgeWidth = label.length() <= 3 ? 48f : 64f;
+        float badgeHeight = 24f;
+        canvas.drawRoundRect(badgeLeft, badgeTop, badgeLeft + badgeWidth, badgeTop + badgeHeight, 10f, 10f, fill);
+        canvas.drawRoundRect(badgeLeft, badgeTop, badgeLeft + badgeWidth, badgeTop + badgeHeight, 10f, 10f, outline);
+
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.parseColor("#E2E8F0"));
+        text.setTextSize(16f);
+        text.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText(label, badgeLeft + (badgeWidth / 2f), badgeTop + 17f, text);
+    }
+
+    private float resolveLift(int index) {
+        if (index == activeIndex || index == secondaryIndex) {
+            return 16f + (pulseProgress * 10f);
+        }
+        if (index == foundIndex) {
+            return 10f + (pulseProgress * 6f);
+        }
+        return 0f;
+    }
+
+    private float resolveStructureTranslationX(int index) {
+        if (index != movingStructureIndex) {
+            return 0f;
+        }
+
+        float eased = resolveStructureEaseProgress();
+        float amplitude = 56f;
+        if ("enqueue".equals(structureOperation) || "enqueue_right".equals(structureOperation) || "rear_in".equals(structureOperation)) {
+            return amplitude * (1f - eased);
+        }
+        if ("front_in".equals(structureOperation)) {
+            return -amplitude * (1f - eased);
+        }
+        if ("dequeue".equals(structureOperation) || "dequeue_left".equals(structureOperation) || "front_out".equals(structureOperation)) {
+            return -amplitude * eased;
+        }
+        if ("rear_out".equals(structureOperation)) {
+            return amplitude * eased;
+        }
+        return 0f;
+    }
+
+    private float resolveStructureTranslationY(int index, boolean verticalMode) {
+        if (index != movingStructureIndex) {
+            return 0f;
+        }
+
+        float eased = resolveStructureEaseProgress();
+        float amplitude = 30f;
+        if ("push".equals(structureOperation)) {
+            float entry = amplitude * (1f - eased);
+            return verticalMode ? entry : -entry;
+        }
+        if ("pop".equals(structureOperation)) {
+            float exit = amplitude * eased;
+            return verticalMode ? -exit : exit;
+        }
+        if ("visit".equals(structureOperation) || "link".equals(structureOperation)) {
+            return -8f - ((1f - Math.abs((eased * 2f) - 1f)) * 12f);
+        }
+        return 0f;
+    }
+
+    private float resolveCellAlpha(int index) {
+        float alpha = 1f;
+        if ("binary_search".equals(techniqueId) && isBinaryDiscardedIndex(index)) {
+            alpha *= 1f - (0.52f * binaryRangeFadeProgress);
+        }
+        if (index == movingStructureIndex) {
+            if (isStructureEntryOperation()) {
+                alpha *= 0.38f + (0.62f * structureMotionProgress);
+            } else if (isStructureExitOperation()) {
+                alpha *= 1f - (0.62f * structureMotionProgress);
+            }
+        }
+        return Math.max(0.18f, Math.min(1f, alpha));
+    }
+
+    private float resolveInsertionShiftX(int index, float cellWidth) {
+        if (!"insertion_sort".equals(techniqueId) || activeIndex <= 0 || secondaryIndex < 0 || activeIndex <= secondaryIndex) {
+            return 0f;
+        }
+        float strength = 1f - transitionProgress;
+        if (index == activeIndex) {
+            float distance = Math.min((activeIndex - secondaryIndex) * cellWidth, cellWidth * 1.1f);
+            return -distance * strength;
+        }
+        if (index >= secondaryIndex && index < activeIndex) {
+            return (cellWidth * 0.55f) * strength;
+        }
+        return 0f;
+    }
+
+    private float resolveLinkedDeletionCollapseX(int index, float cellWidth) {
+        if (!techniqueId.contains("delete") || !techniqueId.contains("linked_list") || activeIndex < 0) {
+            return 0f;
+        }
+        if (index > activeIndex) {
+            return -(cellWidth * 0.42f) * (1f - transitionProgress);
+        }
+        return 0f;
+    }
+
+    private boolean isLinkedRelinkConnector(int connectorIndex) {
+        if (!techniqueId.contains("linked_list")
+            && !"linked_queue".equals(techniqueId)
+            && !techniqueId.contains("circular_header_list")
+            && !"linked_stack_push".equals(techniqueId)
+            && !"linked_stack_pop".equals(techniqueId)) {
+            return false;
+        }
+        if (!(techniqueId.contains("insert") || techniqueId.contains("delete"))) {
+            return false;
+        }
+        return connectorIndex == activeIndex || connectorIndex + 1 == activeIndex || connectorIndex == secondaryIndex;
+    }
+
+    private boolean isCircularRelinkConnector(int connectorIndex, boolean headerNode) {
+        if ("circular_queue".equals(techniqueId)) {
+            return connectorIndex == movingStructureIndex
+                || ((connectorIndex + 1) % Math.max(1, values.length)) == movingStructureIndex;
+        }
+        if (!headerNode) {
+            return false;
+        }
+        int activeRingIndex = activeIndex < 0 ? -1 : activeIndex + 1;
+        int secondaryRingIndex = secondaryIndex < 0 ? -1 : secondaryIndex + 1;
+        return connectorIndex == 0
+            || connectorIndex == activeRingIndex
+            || ((connectorIndex + 1) % Math.max(1, values.length + 1)) == activeRingIndex
+            || connectorIndex == secondaryRingIndex;
+    }
+
+    private boolean isStructureEntryOperation() {
+        return "push".equals(structureOperation)
+            || "enqueue".equals(structureOperation)
+            || "enqueue_right".equals(structureOperation)
+            || "front_in".equals(structureOperation)
+            || "rear_in".equals(structureOperation);
+    }
+
+    private boolean isStructureExitOperation() {
+        return "pop".equals(structureOperation)
+            || "dequeue".equals(structureOperation)
+            || "dequeue_left".equals(structureOperation)
+            || "front_out".equals(structureOperation)
+            || "rear_out".equals(structureOperation);
+    }
+
+    private boolean isInsertionFocusNode(int nodeIndex, boolean graphMode) {
+        String lower = inlineTeachingMessage == null ? "" : inlineTeachingMessage.toLowerCase();
+        boolean insertionScene = techniqueId.contains("insert")
+            || lower.contains("insert")
+            || lower.contains("added")
+            || lower.contains("pushed")
+            || lower.contains("enqueued");
+        if (!insertionScene || nodeIndex < 0) {
+            return false;
+        }
+        if (graphMode && "insert_node_graph".equals(techniqueId)) {
+            return nodeIndex == Math.min(Math.max(0, values.length - 1), 5);
+        }
+        if (activeIndex >= 0) {
+            return nodeIndex == activeIndex;
+        }
+        return nodeIndex == Math.max(0, values.length - 1);
+    }
+
+    private float resolveAnimatedPointerIndex(int targetIndex, boolean primary) {
+        int previous = primary ? previousPrimaryPointerIndex : previousSecondaryPointerIndex;
+        if (targetIndex < 0) {
+            return 0f;
+        }
+        if (previous < 0) {
+            return targetIndex;
+        }
+        return lerp(previous, targetIndex, pointerMotionProgress);
+    }
+
+    private float resolveAnimatedMidIndex() {
+        if (activeIndex < 0) {
+            return 0f;
+        }
+        if (!"binary_search".equals(techniqueId) || previousPrimaryPointerIndex < 0 || previousSecondaryPointerIndex < 0) {
+            return activeIndex;
+        }
+        float previousMid = (previousPrimaryPointerIndex + previousSecondaryPointerIndex) / 2f;
+        return lerp(previousMid, activeIndex, pointerMotionProgress);
+    }
+
+    private float resolveNodeRadius(int nodeIndex, float baseRadius) {
+        if (isTraversalNodeActive(nodeIndex)) {
+            return baseRadius + (pulseProgress * 8f);
+        }
+        if (isTraversalFrontierNode(nodeIndex)) {
+            return baseRadius + (pulseProgress * 5f);
+        }
+        return baseRadius;
+    }
+
+    private boolean isTraversalFrontierNode(int nodeIndex) {
+        int nextIndex = traversalStep + 1;
+        return nextIndex >= 0 && nextIndex < traversalOrder.length && traversalOrder[nextIndex] == nodeIndex;
+    }
+
+    private boolean isTraversalNodeActive(int nodeIndex) {
+        return traversalStep >= 0 && traversalStep < traversalOrder.length && traversalOrder[traversalStep] == nodeIndex;
+    }
+
+    private boolean isTraversalNodeVisited(int nodeIndex) {
+        if (traversalStep < 0) {
+            return false;
+        }
+        for (int i = 0; i < Math.min(traversalStep, traversalOrder.length); i++) {
+            if (traversalOrder[i] == nodeIndex) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isTraversalEdgeActive(int from, int to) {
+        if (traversalStep <= 0 || traversalStep >= traversalOrder.length) {
+            return false;
+        }
+        int previous = traversalOrder[traversalStep - 1];
+        int current = traversalOrder[traversalStep];
+        return (from == previous && to == current) || (from == current && to == previous);
+    }
+
+    private boolean isDijkstraGlowEdge(int from, int to) {
+        if (dijkstraSettled.length == 0) {
+            return false;
+        }
+        boolean fromSettled = from < dijkstraSettled.length && dijkstraSettled[from];
+        boolean toSettled = to < dijkstraSettled.length && dijkstraSettled[to];
+        return (fromSettled && to == dijkstraCurrentNode) || (toSettled && from == dijkstraCurrentNode);
+    }
+
+    private int resolveFill(int index) {
+        if (index == foundIndex) {
+            return Color.parseColor("#22C55E");
+        }
+        if (isCompletedIndex(index)) {
+            return Color.parseColor("#16A34A");
+        }
+        if (isDiscardedIndex(index)) {
+            return Color.parseColor("#475569");
+        }
+        if (index == secondaryIndex) {
+            return Color.parseColor("#A855F7");
+        }
+        if (index == activeIndex) {
+            return isSearchingTechnique() ? Color.parseColor("#38BDF8") : Color.parseColor("#F59E0B");
+        }
+        if (isSearchingTechnique()) {
+            return Color.parseColor("#1E3A5F");
+        }
+        if (isSortingTechnique()) {
+            return Color.parseColor("#3A2A1B");
+        }
+        return resolveTechniqueBaseColor();
+    }
+
+    private int resolveTraversalFill(int nodeIndex) {
+        if (traversalStep >= 0 && traversalStep < traversalOrder.length && traversalOrder[traversalStep] == nodeIndex) {
+            return VisualizationTechniqueRegistry.isTree(techniqueId)
+                ? Color.parseColor("#10B981")
+                : Color.parseColor("#F59E0B");
+        }
+        if (traversalStep >= 0) {
+            for (int i = 0; i < Math.min(traversalStep, traversalOrder.length); i++) {
+                if (traversalOrder[i] == nodeIndex) {
+                    return VisualizationTechniqueRegistry.isTree(techniqueId)
+                        ? Color.parseColor("#2563EB")
+                        : Color.parseColor("#22C55E");
+                }
+            }
+        }
+        return VisualizationTechniqueRegistry.isTree(techniqueId)
+            ? Color.parseColor("#183A31")
+            : Color.parseColor("#1E293B");
+    }
+
+    private boolean isCompletedIndex(int index) {
+        return completedStart >= 0 && completedEnd >= completedStart && index >= completedStart && index <= completedEnd;
+    }
+
+    private boolean isDiscardedIndex(int index) {
+        return isBinaryDiscardedIndex(index) || isJumpDiscardedIndex(index) || isLinearDiscardedIndex(index);
+    }
+
+    private int resolveTechniqueBaseColor() {
+        if ("stack_basics".equals(techniqueId)
+            || "linked_stack_push".equals(techniqueId)
+            || "linked_stack_pop".equals(techniqueId)) {
+            return Color.parseColor("#23324A");
+        }
+        if ("queue_basics".equals(techniqueId) || "priority_queue_array".equals(techniqueId) || "priority_queue_2d".equals(techniqueId)) {
+            return Color.parseColor("#1E3A5F");
+        }
+        if ("deque".equals(techniqueId)) {
+            return Color.parseColor("#1F4D4F");
+        }
+        if ("linked_queue".equals(techniqueId)
+            || "singly_linked_list".equals(techniqueId)
+            || "traversing_linked_list".equals(techniqueId)
+            || "print_linked_list".equals(techniqueId)
+            || "count_nodes_linked_list".equals(techniqueId)
+            || "search_in_linked_list".equals(techniqueId)
+            || "insert_at_beginning_linked_list".equals(techniqueId)
+            || "insert_after_given_node_linked_list".equals(techniqueId)
+            || "insert_into_sorted_linked_list".equals(techniqueId)
+            || "delete_node_given_location_linked_list".equals(techniqueId)
+            || "delete_node_by_item_linked_list".equals(techniqueId)) {
+            return Color.parseColor("#4A2F3F");
+        }
+        if ("circular_queue".equals(techniqueId)
+            || "traverse_circular_header_list".equals(techniqueId)
+            || "search_circular_header_list".equals(techniqueId)
+            || "delete_circular_header_list".equals(techniqueId)) {
+            return Color.parseColor("#145A5C");
+        }
+        return Color.parseColor("#1E293B");
+    }
+
+    private int resolveCircularHeaderColor() {
+        return Color.parseColor("#0F766E");
+    }
+
+    private boolean isBinaryDiscardedIndex(int index) {
+        if (!"binary_search".equals(techniqueId)) {
+            return false;
+        }
+        if (!"low".equalsIgnoreCase(primaryPointerLabel) || !"high".equalsIgnoreCase(secondaryPointerLabel)) {
+            return false;
+        }
+        if (primaryPointerIndex < 0 || secondaryPointerIndex < 0) {
+            return false;
+        }
+        int lowIndex = Math.min(primaryPointerIndex, secondaryPointerIndex);
+        int highIndex = Math.max(primaryPointerIndex, secondaryPointerIndex);
+        return index < lowIndex || index > highIndex;
+    }
+
+    private boolean isJumpDiscardedIndex(int index) {
+        if (!"jump_search".equals(techniqueId)) {
+            return false;
+        }
+        if (!"start".equalsIgnoreCase(secondaryPointerLabel) || secondaryPointerIndex <= 0) {
+            return false;
+        }
+        return index < secondaryPointerIndex;
+    }
+
+    private boolean isLinearDiscardedIndex(int index) {
+        if (!"linear_search".equals(techniqueId)) {
+            return false;
+        }
+        if (!"ptr".equalsIgnoreCase(primaryPointerLabel) || primaryPointerIndex <= 0) {
+            return false;
+        }
+        return index < primaryPointerIndex;
+    }
+
+    private boolean shouldDrawArrayIndices() {
+        if (values.length == 0) {
+            return false;
+        }
+        if (isSortingTechnique() || isSearchingTechnique()) {
+            return true;
+        }
+        return isStructureTechnique() && !isVerticalStructureTechnique() && !"circular_queue".equals(techniqueId);
+    }
+
+    private boolean shouldDrawStackIndices() {
+        return values.length > 0 && ("stack_basics".equals(techniqueId)
+            || "linked_stack_push".equals(techniqueId)
+            || "linked_stack_pop".equals(techniqueId));
+    }
+
+    private int resolveAnimatedValue(int index) {
+        if (index >= values.length) {
+            return 0;
+        }
+        if (previousValues.length != values.length || index >= previousValues.length) {
+            return values[index];
+        }
+        float start = previousValues[index];
+        float end = values[index];
+        return Math.round(start + ((end - start) * transitionProgress));
+    }
+
+    private void detectSwap(int[] oldValues, int[] newValues) {
+        swapAnimating = false;
+        swapFromIndex = -1;
+        swapToIndex = -1;
+
+        if (oldValues == null || newValues == null || oldValues.length != newValues.length || oldValues.length == 0) {
+            return;
+        }
+
+        Log.d("TechniqueVisualizer", "detectSwap called: old=" + java.util.Arrays.toString(oldValues) + " new=" + java.util.Arrays.toString(newValues));
+
+        int firstMismatch = -1;
+        int secondMismatch = -1;
+        for (int i = 0; i < oldValues.length; i++) {
+            if (oldValues[i] != newValues[i]) {
+                if (firstMismatch == -1) {
+                    firstMismatch = i;
+                } else if (secondMismatch == -1) {
+                    secondMismatch = i;
+                } else {
+                    Log.d("TechniqueVisualizer", "detectSwap: more than 2 mismatches, returning");
+                    return;
+                }
+            }
+        }
+
+        if (firstMismatch >= 0
+            && secondMismatch >= 0
+            && oldValues[firstMismatch] == newValues[secondMismatch]
+            && oldValues[secondMismatch] == newValues[firstMismatch]) {
+            swapAnimating = true;
+            swapFromIndex = firstMismatch;
+            swapToIndex = secondMismatch;
+            Log.d("TechniqueVisualizer", "detectSwap: Swap detected from " + swapFromIndex + " to " + swapToIndex);
+            startSwapAnimation();
+            // Fire swap audio + haptic
+            if (soundHaptic != null
+                    && firstMismatch < newValues.length
+                    && secondMismatch < newValues.length) {
+                soundHaptic.onSwap(newValues[firstMismatch], newValues[secondMismatch], lastMaxValue);
+            }
+        } else {
+            Log.d("TechniqueVisualizer", "detectSwap: Mismatches found but not a clean swap: first=" + firstMismatch + " second=" + secondMismatch);
+        }
+    }
+
+    private void startTransition() {
+        if (transitionAnimator != null) {
+            transitionAnimator.cancel();
+        }
+        transitionAnimator = ValueAnimator.ofFloat(0f, 1f);
+        transitionAnimator.setDuration(280L);
+        transitionAnimator.addUpdateListener(animation -> {
+            transitionProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        transitionAnimator.start();
+    }
+
+    private void startEdgeAnimation() {
+        if (edgeAnimator != null) {
+            edgeAnimator.cancel();
+        }
+        edgeAnimator = ValueAnimator.ofFloat(0f, 1f);
+        edgeAnimator.setDuration(420L);
+        edgeAnimator.addUpdateListener(animation -> {
+            edgeProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        edgeAnimator.start();
+    }
+
+    private void startPointerAnimation() {
+        if (pointerAnimator != null) {
+            pointerAnimator.cancel();
+        }
+        pointerMotionProgress = 0f;
+        pointerAnimator = ValueAnimator.ofFloat(0f, 1f);
+        pointerAnimator.setDuration(260L);
+        pointerAnimator.addUpdateListener(animation -> {
+            pointerMotionProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        pointerAnimator.start();
+    }
+
+    private void startBinaryRangeFade() {
+        if (binaryRangeAnimator != null) {
+            binaryRangeAnimator.cancel();
+        }
+        binaryRangeFadeProgress = 0f;
+        binaryRangeAnimator = ValueAnimator.ofFloat(0f, 1f);
+        binaryRangeAnimator.setDuration(320L);
+        binaryRangeAnimator.addUpdateListener(animation -> {
+            binaryRangeFadeProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        binaryRangeAnimator.start();
+    }
+
+    private void startMergeTransferAnimation() {
+        if (mergeTransferAnimator != null) {
+            mergeTransferAnimator.cancel();
+        }
+        mergeTransferProgress = 0f;
+        mergeTransferAnimator = ValueAnimator.ofFloat(0f, 1f);
+        mergeTransferAnimator.setDuration(320L);
+        mergeTransferAnimator.addUpdateListener(animation -> {
+            mergeTransferProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        mergeTransferAnimator.start();
+    }
+
+    private void startMatrixHighlightAnimation() {
+        if (matrixHighlightAnimator != null) {
+            matrixHighlightAnimator.cancel();
+        }
+        matrixHighlightProgress = 0f;
+        matrixHighlightAnimator = ValueAnimator.ofFloat(0f, 1f);
+        matrixHighlightAnimator.setDuration(260L);
+        matrixHighlightAnimator.setInterpolator(new DecelerateInterpolator());
+        matrixHighlightAnimator.addUpdateListener(animation -> {
+            matrixHighlightProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        matrixHighlightAnimator.start();
+    }
+
+    private void startStructureMotionAnimation() {
+        if (structureAnimator != null) {
+            structureAnimator.cancel();
+        }
+        structureMotionProgress = 0f;
+        structureAnimator = ValueAnimator.ofFloat(0f, 1f);
+        structureAnimator.setDuration(resolveStructureAnimationDuration());
+        structureAnimator.setInterpolator(isStructureExitOperation()
+            ? new AccelerateDecelerateInterpolator()
+            : new android.view.animation.OvershootInterpolator(1.3f));
+        structureAnimator.addUpdateListener(animation -> {
+            structureMotionProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        structureAnimator.start();
+    }
+
+    private void startSwapAnimation() {
+        if (swapAnimator != null) {
+            swapAnimator.cancel();
+        }
+        swapProgress = 0f;
+        Log.d("TechniqueVisualizer", "startSwapAnimation: Creating ValueAnimator");
+        swapAnimator = ValueAnimator.ofFloat(0f, 1f);
+        swapAnimator.setDuration(600L);
+        swapAnimator.setInterpolator(new android.view.animation.OvershootInterpolator(1.4f));
+        swapAnimator.addUpdateListener(animation -> {
+            swapProgress = (float) animation.getAnimatedValue();
+            Log.d("TechniqueVisualizer", "startSwapAnimation progress: " + swapProgress + ", fraction: " + animation.getAnimatedFraction());
+            if (animation.getAnimatedFraction() >= 0.99f) {
+                swapAnimating = false;
+                Log.d("TechniqueVisualizer", "startSwapAnimation finished, swapAnimating set to false");
+            }
+            invalidate();
+        });
+        swapAnimator.start();
+    }
+
+    private int lightenColor(int color, float factor) {
+        int red = Color.red(color);
+        int green = Color.green(color);
+        int blue = Color.blue(color);
+
+        red += Math.round((255 - red) * factor);
+        green += Math.round((255 - green) * factor);
+        blue += Math.round((255 - blue) * factor);
+
+        return Color.rgb(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
+    }
+
+    private int blendColors(int startColor, int endColor, float amount) {
+        float clamped = Math.max(0f, Math.min(1f, amount));
+        int red = Math.round(Color.red(startColor) + ((Color.red(endColor) - Color.red(startColor)) * clamped));
+        int green = Math.round(Color.green(startColor) + ((Color.green(endColor) - Color.green(startColor)) * clamped));
+        int blue = Math.round(Color.blue(startColor) + ((Color.blue(endColor) - Color.blue(startColor)) * clamped));
+        return Color.rgb(red, green, blue);
+    }
+
+    private float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private float lerp(float start, float end, float amount) {
+        return start + ((end - start) * amount);
+    }
+
+    int resolveArrayDesiredWidth() {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int screenWidth = metrics.widthPixels;
+        if (values.length == 0) {
+            return screenWidth;
+        }
+        float availableWidth = Math.max(0f, screenWidth - (HORIZONTAL_PADDING * 2f));
+        float desiredCellWidth = resolveHorizontalCellWidth(availableWidth);
+        int desired = Math.round((HORIZONTAL_PADDING * 2f) + (values.length * desiredCellWidth));
+        return Math.max(screenWidth, desired);
+    }
+
+    int resolvePatternDesiredWidth() {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int screenWidth = metrics.widthPixels;
+        int maxLength = Math.max(patternText.length(), patternQuery.length());
+        float cellWidth = 56f;
+        int desired = Math.round((HORIZONTAL_PADDING * 2f) + (maxLength * cellWidth));
+        return Math.max(screenWidth, desired);
+    }
+
+    int resolveScreenWidthDesiredWidth() {
+        if (isLandscapeCanvas() && getParent() instanceof View) {
+            int parentWidth = ((View) getParent()).getWidth();
+            if (parentWidth > 0) {
+                return parentWidth;
+            }
+        }
+        return getResources().getDisplayMetrics().widthPixels;
+    }
+
+    int resolveStackDesiredHeight() {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int screenHeight = metrics.heightPixels;
+        return Math.max(screenHeight / 2, 480);
+    }
+
+    int resolveTraversalDesiredHeight() {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int screenHeight = metrics.heightPixels;
+        return Math.max(screenHeight / 3, 360);
+    }
+
+    int resolveStandardDesiredHeight() {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int screenHeight = metrics.heightPixels;
+        return Math.max(screenHeight / 3, 340);
+    }
+
+    private VisualizerEngine resolveEngine() {
+        for (VisualizerEngine engine : engines) {
+            if (engine.supports(techniqueId)) {
+                return engine;
+            }
+        }
+        return null;
+    }
+
+    private boolean matricesEqual(int[][] left, int[][] right) {
+        if (left == right) {
+            return true;
+        }
+        if (left == null || right == null || left.length != right.length) {
+            return false;
+        }
+        for (int i = 0; i < left.length; i++) {
+            if (!Arrays.equals(left[i], right[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private float resolveHorizontalCellWidth() {
+        float availableWidth = getWidth() > 0
+            ? (getWidth() - (HORIZONTAL_PADDING * 2f))
+            : (getResources().getDisplayMetrics().widthPixels - (HORIZONTAL_PADDING * 2f));
+        return resolveHorizontalCellWidth(availableWidth);
+    }
+
+    private float resolveHorizontalCellWidth(float availableWidth) {
+        if (values.length == 0) {
+            return MAX_CELL_WIDTH;
+        }
+        float perItem = Math.max(0f, availableWidth) / (float) values.length;
+        if (isLandscapeCanvas()) {
+            return Math.max(48f, Math.min(MAX_CELL_WIDTH, perItem - 8f));
+        }
+        if (values.length <= 6) {
+            return Math.max(118f, Math.min(MAX_CELL_WIDTH, perItem - 10f));
+        }
+        if (values.length <= 10) {
+            return Math.max(96f, Math.min(148f, perItem - 8f));
+        }
+        if (values.length <= 14) {
+            return Math.max(78f, Math.min(120f, perItem - 6f));
+        }
+        if (values.length <= 20) {
+            return Math.max(66f, Math.min(96f, perItem - 4f));
+        }
+        return Math.max(56f, Math.min(84f, perItem - 2f));
+    }
+
+    private float resolveValueTextSize() {
+        int maxDigits = 1;
+        for (int value : values) {
+            maxDigits = Math.max(maxDigits, String.valueOf(Math.abs(value)).length());
+        }
+
+        float baseSize;
+        if (values.length <= 5) {
+            baseSize = 38f;
+        } else if (values.length <= 8) {
+            baseSize = 32f;
+        } else if (values.length <= 10) {
+            baseSize = 28f;
+        } else if (values.length <= 14) {
+            baseSize = 24f;
+        } else if (values.length <= 20) {
+            baseSize = 20f;
+        } else {
+            baseSize = 18f;
+        }
+
+        if (maxDigits >= 4) {
+            baseSize -= 4f;
+        } else if (maxDigits >= 3) {
+            baseSize -= 2f;
+        }
+        return Math.max(16f, baseSize);
+    }
+
+    private float resolveBoxHeight() {
+        if (values.length <= 5) {
+            return 138f;
+        }
+        if (values.length <= 10) {
+            return 124f;
+        }
+        if (values.length <= 14) {
+            return 112f;
+        }
+        return 102f;
+    }
+
+    private boolean isStructureTechnique() {
+        return "queue_basics".equals(techniqueId)
+            || "circular_queue".equals(techniqueId)
+            || "linked_queue".equals(techniqueId)
+            || "deque".equals(techniqueId)
+            || "priority_queue_array".equals(techniqueId)
+            || "priority_queue_2d".equals(techniqueId)
+            || "singly_linked_list".equals(techniqueId)
+            || "traversing_linked_list".equals(techniqueId)
+            || "print_linked_list".equals(techniqueId)
+            || "count_nodes_linked_list".equals(techniqueId)
+            || "search_in_linked_list".equals(techniqueId)
+            || "insert_at_beginning_linked_list".equals(techniqueId)
+            || "insert_after_given_node_linked_list".equals(techniqueId)
+            || "insert_into_sorted_linked_list".equals(techniqueId)
+            || "delete_node_given_location_linked_list".equals(techniqueId)
+            || "delete_node_by_item_linked_list".equals(techniqueId)
+            || "traverse_circular_header_list".equals(techniqueId)
+            || "search_circular_header_list".equals(techniqueId)
+            || "delete_circular_header_list".equals(techniqueId);
+    }
+
+    private boolean isVerticalStructureTechnique() {
+        return "stack_basics".equals(techniqueId)
+            || "linked_stack_push".equals(techniqueId)
+            || "linked_stack_pop".equals(techniqueId);
+    }
+
+    private float resolveStructureHorizontalPadding() {
+        return values.length >= 8 ? 18f : 22f;
+    }
+
+    private float resolveStructureAvailableWidth(float padding) {
+        return Math.max(0f, getWidth() - (padding * 2f));
+    }
+
+    private boolean isLandscapeCanvas() {
+        return getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    }
+
+    private float resolveStructureTop() {
+        return getHeight() * 0.39f;
+    }
+
+    private float resolveStructureBoxHeight() {
+        if (values.length <= 5) {
+            return 100f;
+        }
+        if (values.length <= 8) {
+            return 92f;
+        }
+        if (values.length <= 12) {
+            return 84f;
+        }
+        return 76f;
+    }
+
+    private float resolveStructureValueTextSize() {
+        if (values.length <= 5) {
+            return 28f;
+        }
+        if (values.length <= 8) {
+            return 24f;
+        }
+        if (values.length <= 12) {
+            return 21f;
+        }
+        return 18f;
+    }
+
+    private float resolveStackVisualWidth() {
+        float availableWidth = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        return Math.max(160f, Math.min(availableWidth * 0.42f, 240f));
+    }
+
+    private float resolveStackCellHeight() {
+        if (values.length <= 4) {
+            return 84f;
+        }
+        if (values.length <= 7) {
+            return 74f;
+        }
+        return 66f;
+    }
+
+    private float resolveStackGap() {
+        if (values.length <= 4) {
+            return 10f;
+        }
+        if (values.length <= 7) {
+            return 8f;
+        }
+        return 6f;
+    }
+
+    private float resolveStackBottomInset() {
+        return values.length <= 5 ? 54f : 42f;
+    }
+
+    private boolean isSearchingTechnique() {
+        return "linear_search".equals(techniqueId)
+            || "binary_search".equals(techniqueId)
+            || "jump_search".equals(techniqueId)
+            || "pattern_matching".equals(techniqueId);
+    }
+
+    private boolean isSortingTechnique() {
+        return "bubble_sort".equals(techniqueId)
+            || "selection_sort".equals(techniqueId)
+            || "insertion_sort".equals(techniqueId)
+            || "quicksort".equals(techniqueId)
+            || "merge_sort".equals(techniqueId)
+            || "radix_sort".equals(techniqueId)
+            || "heapsort".equals(techniqueId);
+    }
+
+    private String resolveStructureCardLabel(int index, boolean verticalStack) {
+        if (verticalStack) {
+            return index == values.length - 1 ? "TOP" : null;
+        }
+        if ("queue_basics".equals(techniqueId) || "linked_queue".equals(techniqueId) || "circular_queue".equals(techniqueId)) {
+            if (values.length == 1 && index == 0) {
+                return "F/R";
+            }
+            if (index == 0) {
+                return "FRONT";
+            }
+            if (index == values.length - 1) {
+                return "REAR";
+            }
+            return null;
+        }
+        if ("deque".equals(techniqueId)) {
+            if (values.length == 1 && index == 0) {
+                return "F/R";
+            }
+            if (index == 0) {
+                return "FRONT";
+            }
+            if (index == values.length - 1) {
+                return "REAR";
+            }
+        }
+        return null;
+    }
+
+    private float resolveStructureEaseProgress() {
+        float eased = structureMotionProgress;
+        if (!isStructureExitOperation()) {
+            return eased;
+        }
+        eased = 1f - ((1f - eased) * (1f - eased));
+        if (isStructureExitOperation()) {
+            eased = (float) (0.5f - (Math.cos(Math.PI * eased) / 2f));
+        }
+        return eased;
+    }
+
+    private long resolveStructureAnimationDuration() {
+        if ("push".equals(structureOperation) || "enqueue".equals(structureOperation)
+            || "enqueue_right".equals(structureOperation) || "rear_in".equals(structureOperation)
+            || "front_in".equals(structureOperation)) {
+            return 380L;
+        }
+        if (isStructureExitOperation()) {
+            return 360L;
+        }
+        return 300L;
+    }
+
+    private float[][] resolveTreeLayout(float rootYFactor, float middleYFactor, float leafYFactor) {
+        float width = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        boolean compact = width <= 900f;
+        float safeNodeInset = resolveTreeNodeRadius() + (compact ? 18f : 26f);
+        float left = width * (compact ? 0.18f : 0.14f);
+        float right = width * (compact ? 0.82f : 0.86f);
+        float center = width / 2f;
+        float quarterLeft = width * (compact ? 0.35f : 0.32f);
+        float quarterRight = width * (compact ? 0.65f : 0.68f);
+        float leafOne = width * (compact ? 0.22f : 0.18f);
+        float leafTwo = width * (compact ? 0.42f : 0.42f);
+        float leafThree = width * (compact ? 0.58f : 0.58f);
+        float leafFour = width * (compact ? 0.78f : 0.82f);
+        float rootY = getHeight() * (compact ? rootYFactor + 0.02f : rootYFactor);
+        float midY = getHeight() * (compact ? middleYFactor + 0.01f : middleYFactor);
+        float leafY = getHeight() * (compact ? leafYFactor - 0.02f : leafYFactor);
+        float[][] points = new float[][]{
+            {center, rootY},
+            {quarterLeft, midY},
+            {quarterRight, midY},
+            {leafOne, leafY},
+            {leafTwo, leafY},
+            {leafThree, leafY},
+            {leafFour, leafY}
+        };
+        for (float[] point : points) {
+            point[0] = clamp(point[0], safeNodeInset, Math.max(safeNodeInset, width - safeNodeInset));
+            point[1] = clamp(point[1], safeNodeInset, Math.max(safeNodeInset, getHeight() - safeNodeInset));
+        }
+        return points;
+    }
+
+    private float[][] resolveGraphLayout() {
+        return resolveGraphLayout(Math.max(values.length == 0 ? 5 : values.length, 5));
+    }
+
+    private float[][] resolveGraphLayout(int nodeCount) {
+        boolean compact = isCompactGraphLayout();
+        float[][] base = compact
+            ? new float[][]{
+                {getWidth() * 0.22f, getHeight() * 0.30f},
+                {getWidth() * 0.50f, getHeight() * 0.18f},
+                {getWidth() * 0.78f, getHeight() * 0.30f},
+                {getWidth() * 0.32f, getHeight() * 0.56f},
+                {getWidth() * 0.68f, getHeight() * 0.56f},
+                {getWidth() * 0.50f, getHeight() * 0.78f}
+            }
+            : new float[][]{
+                {getWidth() * 0.20f, getHeight() * 0.34f},
+                {getWidth() * 0.50f, getHeight() * 0.18f},
+                {getWidth() * 0.80f, getHeight() * 0.34f},
+                {getWidth() * 0.32f, getHeight() * 0.68f},
+                {getWidth() * 0.68f, getHeight() * 0.68f},
+                {getWidth() * 0.50f, getHeight() * 0.84f}
+            };
+        return Arrays.copyOf(base, Math.max(1, Math.min(nodeCount, base.length)));
+    }
+
+    private int[][] resolveGraphEdges(int nodeCount) {
+        int[][] base = new int[][]{
+            {0, 1}, {1, 2}, {0, 3}, {1, 3}, {1, 4}, {2, 4}, {3, 4}
+        };
+        int[][] working = new int[base.length + 1][2];
+        int count = 0;
+        for (int[] edge : base) {
+            if (edge[0] >= nodeCount || edge[1] >= nodeCount) {
+                continue;
+            }
+            if ("delete_edge_graph".equals(techniqueId)
+                && edgeMatches(edge[0], edge[1], activeEdgeFrom, activeEdgeTo)) {
+                continue;
+            }
+            working[count++] = edge;
+        }
+        if ("insert_edge_graph".equals(techniqueId)
+            && activeEdgeFrom >= 0
+            && activeEdgeTo >= 0
+            && activeEdgeFrom < nodeCount
+            && activeEdgeTo < nodeCount
+            && !containsEdge(working, count, activeEdgeFrom, activeEdgeTo)) {
+            working[count++] = new int[] {activeEdgeFrom, activeEdgeTo};
+        }
+        return Arrays.copyOf(working, count);
+    }
+
+    private boolean containsEdge(int[][] edges, int length, int from, int to) {
+        for (int i = 0; i < length; i++) {
+            if (edgeMatches(edges[i][0], edges[i][1], from, to)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean edgeMatches(int fromA, int toA, int fromB, int toB) {
+        if (isDirectedGraphMode()) {
+            return fromA == fromB && toA == toB;
+        }
+        return (fromA == fromB && toA == toB) || (fromA == toB && toA == fromB);
+    }
+
+    private float resolveTreeNodeRadius() {
+        float width = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        return isCompactTreeLayout()
+            ? Math.max(30f, Math.min(36f, width * 0.054f))
+            : Math.max(34f, Math.min(42f, width * 0.062f));
+    }
+
+    private float resolveHeapNodeRadius() {
+        float width = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        return isCompactTreeLayout()
+            ? Math.max(28f, Math.min(34f, width * 0.05f))
+            : Math.max(32f, Math.min(40f, width * 0.058f));
+    }
+
+    private float resolveTreeTextSize() {
+        return resolveTreeNodeRadius() <= 32f ? 20f : resolveTreeNodeRadius() <= 36f ? 22f : 24f;
+    }
+
+    private boolean isCompactTreeLayout() {
+        float width = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        return width <= 900f;
+    }
+
+    private boolean isCompactGraphLayout() {
+        float width = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        return width <= 900f;
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (transitionAnimator != null) {
+            transitionAnimator.cancel();
+        }
+        if (edgeAnimator != null) {
+            edgeAnimator.cancel();
+        }
+        if (swapAnimator != null) {
+            swapAnimator.cancel();
+        }
+        if (pointerAnimator != null) {
+            pointerAnimator.cancel();
+        }
+        if (structureAnimator != null) {
+            structureAnimator.cancel();
+        }
+        if (binaryRangeAnimator != null) {
+            binaryRangeAnimator.cancel();
+        }
+        if (mergeTransferAnimator != null) {
+            mergeTransferAnimator.cancel();
+        }
+        if (matrixHighlightAnimator != null) {
+            matrixHighlightAnimator.cancel();
+        }
+        if (pulseAnimator != null) {
+            pulseAnimator.cancel();
+        }
+        if (soundHaptic != null) {
+            soundHaptic.release();
+        }
+    }
+
+    private void drawParticles(Canvas canvas) {
+        if (!particles.isEmpty()) {
+            Paint pPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            pPaint.setStyle(Paint.Style.FILL);
+            for (int i = particles.size() - 1; i >= 0; i--) {
+                Particle p = particles.get(i);
+                p.update();
+                if (p.alpha <= 0f) {
+                    particles.remove(i);
+                } else {
+                    pPaint.setColor(p.color);
+                    pPaint.setAlpha((int) (p.alpha * 255));
+                    canvas.drawCircle(p.x, p.y, p.size * p.alpha, pPaint);
+                }
+            }
+            postInvalidateDelayed(16); // Force redraw to animate particles smoothly!
+        }
+    }
+
+    private static class Particle {
+        float x, y;
+        float vx, vy;
+        int color;
+        float size;
+        float alpha = 1.0f;
+        float decay;
+
+        Particle(float x, float y, float vx, float vy, int color, float size, float decay) {
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.color = color;
+            this.size = size;
+            this.decay = decay;
+        }
+
+        void update() {
+            x += vx;
+            y += vy;
+            vy += 0.2f; // Gravity pull downwards
+            alpha -= decay;
+        }
+    }
+}

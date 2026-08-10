@@ -1,0 +1,36 @@
+{
+  "id": "merging",
+  "title": "Merging",
+  "definition": "Merging combines two already sorted arrays into one larger sorted array.",
+  "realLifeExample": "It is like merging two sorted attendance lists into one final sorted list.",
+  "complexity": {
+    "best": "O(n + m)",
+    "average": "O(n + m)",
+    "worst": "O(n + m)",
+    "space": "O(n + m)"
+  },
+  "sampleInput": [3, 6, 9, 2, 5, 8],
+  "sampleTarget": 0,
+  "visualizationType": "sorting",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Sorting",
+    "sourceReference": "Merging",
+    "updatedAt": "2026-04-17",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "1. Compare the current front elements of both lists.\n2. Move the smaller one to the output.\n3. Repeat until one list ends.\n4. Append the remaining elements.\n5. Return the merged result.",
+    "Functions": "1. Put the merge logic inside one helper function.\n2. Continue comparing and copying elements.\n3. Return the completed merged array.",
+    "Recursion": "1. Compare the current front elements.\n2. Copy the smaller one.\n3. Recurse on the remaining part.\n4. Stop when one list is exhausted."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "public int[] merge(int[] left, int[] right) {\n    int[] result = new int[left.length + right.length];\n    int i = 0;\n    int j = 0;\n    int k = 0;\n    while (i < left.length && j < right.length) {\n        if (left[i] <= right[j]) {\n            result[k++] = left[i++];\n        } else {\n            result[k++] = right[j++];\n        }\n    }\n    while (i < left.length) {\n        result[k++] = left[i++];\n    }\n    while (j < right.length) {\n        result[k++] = right[j++];\n    }\n    return result;\n}",
+      "Functions": "public int[] mergeSortedArrays(int[] left, int[] right) {\n    return merge(left, right);\n}\n\nprivate int[] merge(int[] left, int[] right) {\n    int[] result = new int[left.length + right.length];\n    int i = 0;\n    int j = 0;\n    int k = 0;\n    while (i < left.length && j < right.length) {\n        result[k++] = left[i] <= right[j] ? left[i++] : right[j++];\n    }\n    while (i < left.length) {\n        result[k++] = left[i++];\n    }\n    while (j < right.length) {\n        result[k++] = right[j++];\n    }\n    return result;\n}",
+      "Recursion": "public int[] mergeRecursive(int[] left, int[] right) {\n    int[] result = new int[left.length + right.length];\n    mergeRecursive(left, right, 0, 0, 0, result);\n    return result;\n}\n\nprivate void mergeRecursive(int[] left, int[] right, int i, int j, int k, int[] result) {\n    if (i == left.length) {\n        while (j < right.length) {\n            result[k++] = right[j++];\n        }\n        return;\n    }\n    if (j == right.length) {\n        while (i < left.length) {\n            result[k++] = left[i++];\n        }\n        return;\n    }\n    if (left[i] <= right[j]) {\n        result[k] = left[i];\n        mergeRecursive(left, right, i + 1, j, k + 1, result);\n    } else {\n        result[k] = right[j];\n        mergeRecursive(left, right, i, j + 1, k + 1, result);\n    }\n}"
+    }
+  }
+}

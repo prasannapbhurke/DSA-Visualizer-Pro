@@ -1,0 +1,535 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "searching",
+      "title": "Searching",
+      "subtitle": "Find data quickly and clearly",
+      "accentHex": "#4ADE80"
+    },
+    {
+      "id": "sorting",
+      "title": "Sorting",
+      "subtitle": "Arrange items step by step",
+      "accentHex": "#60A5FA"
+    },
+    {
+      "id": "stack",
+      "title": "Stack",
+      "subtitle": "Learn push, pop, and top-based processing",
+      "accentHex": "#F59E0B"
+    },
+    {
+      "id": "queue",
+      "title": "Queue",
+      "subtitle": "Study front and rear operations clearly",
+      "accentHex": "#22D3EE"
+    },
+    {
+      "id": "linked_list",
+      "title": "Linked List",
+      "subtitle": "Understand nodes, links, insertions, and deletions",
+      "accentHex": "#A78BFA"
+    },
+    {
+      "id": "trees",
+      "title": "Trees",
+      "subtitle": "Explore hierarchical structures and traversals",
+      "accentHex": "#FBBF24"
+    },
+    {
+      "id": "graph",
+      "title": "Graph",
+      "subtitle": "Visualize vertices, edges, and graph algorithms",
+      "accentHex": "#FB7185"
+    }
+  ],
+  "techniques": [
+    {
+      "id": "linear_search",
+      "categoryId": "searching",
+      "title": "Linear Search",
+      "subtitle": "Checks each element one by one",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "binary_search",
+      "categoryId": "searching",
+      "title": "Binary Search",
+      "subtitle": "Cuts the sorted range in half",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "jump_search",
+      "categoryId": "searching",
+      "title": "Jump Search",
+      "subtitle": "Skips blocks before scanning the right range",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "pattern_matching",
+      "categoryId": "searching",
+      "title": "Pattern Matching",
+      "subtitle": "Finds a smaller pattern inside a larger text",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "bubble_sort",
+      "categoryId": "sorting",
+      "title": "Bubble Sort",
+      "subtitle": "Swaps nearby values until sorted",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "selection_sort",
+      "categoryId": "sorting",
+      "title": "Selection Sort",
+      "subtitle": "Picks the smallest remaining value",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "insertion_sort",
+      "categoryId": "sorting",
+      "title": "Insertion Sort",
+      "subtitle": "Builds a sorted section one value at a time",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "merging",
+      "categoryId": "sorting",
+      "title": "Merging",
+      "subtitle": "Combines two sorted arrays into one sorted result",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "merge_sort",
+      "categoryId": "sorting",
+      "title": "Merge Sort",
+      "subtitle": "Splits and merges arrays into sorted order",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "quicksort",
+      "categoryId": "sorting",
+      "title": "Quicksort",
+      "subtitle": "Partitions around a pivot and sorts subranges",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "heapsort",
+      "categoryId": "sorting",
+      "title": "HEAPSORT",
+      "subtitle": "Builds a heap and repeatedly places the maximum",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "radix_sort",
+      "categoryId": "sorting",
+      "title": "Radix Sort",
+      "subtitle": "Sorts values digit by digit using buckets",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "stack_basics",
+      "categoryId": "stack",
+      "title": "Stack Operations",
+      "subtitle": "Push and pop values at the top",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "linked_stack_push",
+      "categoryId": "stack",
+      "title": "Linked Stack PUSH",
+      "subtitle": "Insert a node at the top of a linked stack",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "linked_stack_pop",
+      "categoryId": "stack",
+      "title": "Linked Stack POP",
+      "subtitle": "Remove the top node from a linked stack",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "postfix_evaluation",
+      "categoryId": "stack",
+      "title": "Evaluation of a Postfix Expression",
+      "subtitle": "Evaluate postfix notation using a stack",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "infix_to_postfix",
+      "categoryId": "stack",
+      "title": "Infix to Postfix (POLISH)",
+      "subtitle": "Transform infix notation into postfix notation",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "infix_to_prefix",
+      "categoryId": "stack",
+      "title": "Infix to Prefix",
+      "subtitle": "Transform infix notation into prefix notation",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "queue_basics",
+      "categoryId": "queue",
+      "title": "Linear Queue Insertion and Deletion",
+      "subtitle": "Insert and delete using front and rear pointers",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "circular_queue",
+      "categoryId": "queue",
+      "title": "Circular Queue Insertion and Deletion",
+      "subtitle": "Wrap queue positions when the end is reached",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "linked_queue",
+      "categoryId": "queue",
+      "title": "Linked List as Queue Insertion and Deletion",
+      "subtitle": "Use linked nodes for enqueue and dequeue",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "priority_queue_array",
+      "categoryId": "queue",
+      "title": "Priority Queue (One-dimensional Array)",
+      "subtitle": "Handle priority with one array structure",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "priority_queue_2d",
+      "categoryId": "queue",
+      "title": "Priority Queue (Two-dimensional Array)",
+      "subtitle": "Store separate priority levels using multiple rows",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "deque",
+      "categoryId": "queue",
+      "title": "Deque",
+      "subtitle": "Insert and delete from both ends",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "singly_linked_list",
+      "categoryId": "linked_list",
+      "title": "Singly Linked List",
+      "subtitle": "Work with nodes connected in one direction",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "traversing_linked_list",
+      "categoryId": "linked_list",
+      "title": "Traversing a Linked List",
+      "subtitle": "Visit each node one by one",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "print_linked_list",
+      "categoryId": "linked_list",
+      "title": "Print Linked List",
+      "subtitle": "Display every node in sequence",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "count_nodes_linked_list",
+      "categoryId": "linked_list",
+      "title": "Count Nodes in Linked List",
+      "subtitle": "Count how many nodes are present",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "search_in_linked_list",
+      "categoryId": "linked_list",
+      "title": "Search in Linked List",
+      "subtitle": "Find the first node containing an item",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "find_linked_list",
+      "categoryId": "linked_list",
+      "title": "FIND (Search in Linked List)",
+      "subtitle": "Follow the PDF-style linked list search procedure",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "insert_at_beginning_linked_list",
+      "categoryId": "linked_list",
+      "title": "Insert at Beginning of a Linked List",
+      "subtitle": "Add a new first node",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "insert_after_given_node_linked_list",
+      "categoryId": "linked_list",
+      "title": "Inserting After a Given Node in Linked List",
+      "subtitle": "Insert a node after a known location",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "insert_into_sorted_linked_list",
+      "categoryId": "linked_list",
+      "title": "Inserting into a Sorted Linked List",
+      "subtitle": "Place a node into its sorted position",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "delete_node_given_location_linked_list",
+      "categoryId": "linked_list",
+      "title": "Deleting a Node from a Linked List (Given Location)",
+      "subtitle": "Delete a node when its location is known",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "delete_node_by_item_linked_list",
+      "categoryId": "linked_list",
+      "title": "Deleting a Node by ITEM in a Linked List",
+      "subtitle": "Find and delete the first matching value",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "delete_linked_list",
+      "categoryId": "linked_list",
+      "title": "DELETE (Delete from Linked List)",
+      "subtitle": "Delete the first matching node using the PDF procedure",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "traverse_circular_header_list",
+      "categoryId": "linked_list",
+      "title": "Traversing a Circular Header List",
+      "subtitle": "Traverse until the header node appears again",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "search_circular_header_list",
+      "categoryId": "linked_list",
+      "title": "Searching a Circular Header List",
+      "subtitle": "Search items in a circular header list",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "delete_circular_header_list",
+      "categoryId": "linked_list",
+      "title": "Deleting from a Circular Header List",
+      "subtitle": "Delete a node from a circular header list",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "tree_traversal",
+      "categoryId": "trees",
+      "title": "Tree Traversal",
+      "subtitle": "Visit tree nodes in a defined order",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "preorder_traversal",
+      "categoryId": "trees",
+      "title": "Preorder Traversal",
+      "subtitle": "Visit root, left subtree, then right subtree",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "postorder_traversal",
+      "categoryId": "trees",
+      "title": "Postorder Traversal",
+      "subtitle": "Visit left subtree, right subtree, then root",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "bst_search_parent_tracking",
+      "categoryId": "trees",
+      "title": "BST Search with Parent Tracking",
+      "subtitle": "Search a BST while also tracking the parent node",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "bst_insertion",
+      "categoryId": "trees",
+      "title": "BST Insertion (INSBST)",
+      "subtitle": "Insert a new value into a binary search tree",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "bst_deletion_case_a",
+      "categoryId": "trees",
+      "title": "BST Deletion (CASE A)",
+      "subtitle": "Delete a BST node with zero or one child",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "bst_deletion_case_b",
+      "categoryId": "trees",
+      "title": "BST Deletion (CASE B)",
+      "subtitle": "Delete a BST node with two children",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "bst_deletion_del",
+      "categoryId": "trees",
+      "title": "BST Deletion (DEL Operation)",
+      "subtitle": "General BST deletion using the required cases",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "max_heap_insertion",
+      "categoryId": "trees",
+      "title": "Insertion in a Max Heap (INSHEAP)",
+      "subtitle": "Insert a value and restore max-heap order",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "max_heap_deletion",
+      "categoryId": "trees",
+      "title": "Deletion from Max Heap (DELHEAP)",
+      "subtitle": "Delete the heap root and restore heap order",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "traversal_using_stacks",
+      "categoryId": "trees",
+      "title": "Traversal Algorithms Using Stacks",
+      "subtitle": "Simulate traversal with an explicit stack",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "huffman_algorithm",
+      "categoryId": "trees",
+      "title": "Huffman's Algorithm",
+      "subtitle": "Build an optimal prefix coding tree",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "avl_tree",
+      "categoryId": "trees",
+      "title": "AVL Tree",
+      "subtitle": "Keep a binary search tree balanced after updates",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "trie",
+      "categoryId": "trees",
+      "title": "Trie",
+      "subtitle": "Store strings using shared prefix paths",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "graph_traversal",
+      "categoryId": "graph",
+      "title": "Graph Traversal",
+      "subtitle": "Visit graph vertices using BFS or DFS",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "warshall_algorithm",
+      "categoryId": "graph",
+      "title": "Warshall's Algorithm",
+      "subtitle": "Build the transitive closure matrix",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "floyd_algorithm",
+      "categoryId": "graph",
+      "title": "Floyd's Algorithm",
+      "subtitle": "Compute all-pairs shortest paths",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "shortest_paths",
+      "categoryId": "graph",
+      "title": "Shortest Paths",
+      "subtitle": "Learn how minimum-cost routes are found",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "dijkstra_algorithm",
+      "categoryId": "graph",
+      "title": "Dijkstra's Algorithm",
+      "subtitle": "Grow shortest distances from one source vertex",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "find_edge_graph",
+      "categoryId": "graph",
+      "title": "FINDEDGE",
+      "subtitle": "Check whether an edge exists in the graph",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "insert_node_graph",
+      "categoryId": "graph",
+      "title": "INSNODE",
+      "subtitle": "Insert a new node into the graph structure",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "insert_edge_graph",
+      "categoryId": "graph",
+      "title": "INSEDGE",
+      "subtitle": "Insert a directed edge between two nodes",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "delete_edge_graph",
+      "categoryId": "graph",
+      "title": "Delete Edge in Graph",
+      "subtitle": "Delete an edge from adjacency-list representation",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "delete_vertex_graph",
+      "categoryId": "graph",
+      "title": "Delete Node in Graph",
+      "subtitle": "Delete a vertex and its incident edges",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "breadth_first_search",
+      "categoryId": "graph",
+      "title": "Breadth-First Search (BFS)",
+      "subtitle": "Traverse graph nodes level by level",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "depth_first_search",
+      "categoryId": "graph",
+      "title": "Depth-First Search (DFS)",
+      "subtitle": "Traverse by going deep before backtracking",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "topological_sort",
+      "categoryId": "graph",
+      "title": "Topological Sort",
+      "subtitle": "Order a DAG so every edge points forward",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "spanning_tree",
+      "categoryId": "graph",
+      "title": "Spanning Tree",
+      "subtitle": "Connect all vertices without creating cycles",
+      "difficulty": "Hard"
+    }
+  ],
+  "contentFiles": [
+    "linear_search.json",
+    "binary_search.json",
+    "jump_search.json",
+    "pattern_matching.json",
+    "bubble_sort.json",
+    "selection_sort.json",
+    "insertion_sort.json",
+    "merging.json",
+    "merge_sort.json",
+    "quicksort.json",
+    "heapsort.json",
+    "radix_sort.json",
+    "stack_queue.json",
+    "linked_list.json",
+    "trees_graph.json"
+  ]
+}

@@ -1,0 +1,18 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.DSA" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/sky_400</item>
+        <item name="colorSecondary">@color/amber_500</item>
+        <item name="colorTertiary">@color/emerald_400</item>
+        <item name="android:statusBarColor">@color/slate_950</item>
+        <item name="android:navigationBarColor">@color/slate_950</item>
+        <item name="android:windowBackground">@color/slate_950</item>
+        <item name="android:colorBackground">@color/slate_950</item>
+        <item name="colorSurface">@color/slate_900</item>
+        <item name="colorOnSurface">@color/slate_100</item>
+        <item name="android:textColor">@color/slate_100</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+    </style>
+
+    <style name="Theme.DSA" parent="Base.Theme.DSA" />
+</resources>

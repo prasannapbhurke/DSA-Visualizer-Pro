@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/content_section_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/source_code"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/content_topic_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@color/surface_panel_muted"
+            android:letterSpacing="0.03"
+            android:paddingStart="10dp"
+            android:paddingTop="7dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="7dp"
+            android:text="Technique"
+            android:textColor="@color/text_primary_soft"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/content_mode_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/content_mode_hint"
+            android:textColor="@color/text_muted_soft"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/content_style_toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_style_iterative"
+                style="@style/Widget.DSA.Button.ModeTab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="13sp"
+                android:text="Iterative" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_style_functions"
+                style="@style/Widget.DSA.Button.ModeTab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="13sp"
+                android:text="Functions" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_style_recursion"
+                style="@style/Widget.DSA.Button.ModeTab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="13sp"
+                android:text="Recursion" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/content_language_toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_language_java"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Java" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_language_c"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="C" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_language_python"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Python" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/content_comment_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_comments_on"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/commented" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_comments_off"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/clean" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <TextView
+            android:id="@+id/content_code_theme_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/content_code_theme_label"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/content_code_theme_toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:visibility="gone"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_code_theme_classic"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/content_code_theme_classic" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_code_theme_dim"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/content_code_theme_dim" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_code_theme_contrast"
+                style="@style/Widget.DSA.Button.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/content_code_theme_contrast" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/code_toolbar_background"
+            android:gravity="end|center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_zoom_out"
+                style="@style/Widget.DSA.Button.CodeTool"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="6dp"
+                android:layout_weight="1"
+                android:text="@string/zoom_out" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_zoom_in"
+                style="@style/Widget.DSA.Button.CodeTool"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="6dp"
+                android:layout_weight="1"
+                android:text="@string/zoom_in" />
+
+            <TextView
+                android:id="@+id/content_zoom_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="6dp"
+                android:background="@drawable/surface_chip_background"
+                android:gravity="center"
+                android:minWidth="52dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="16sp"
+                android:textColor="@color/text_primary_soft"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_copy"
+                style="@style/Widget.DSA.Button.CodeTool"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="6dp"
+                android:layout_weight="1"
+                android:text="@string/copy"
+                app:icon="@drawable/ic_content_copy"
+                app:iconGravity="textStart"
+                app:iconTint="@color/text_primary_bright" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/content_share"
+                style="@style/Widget.DSA.Button.CodeTool"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="6dp"
+                android:layout_weight="1"
+                android:text="@string/share"
+                app:icon="@drawable/ic_share"
+                app:iconGravity="textStart"
+                app:iconTint="@color/text_primary_bright" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <HorizontalScrollView
+            android:id="@+id/content_horizontal_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/code_surface_background"
+            android:fadingEdge="horizontal"
+            android:fadeScrollbars="false"
+            android:fillViewport="true"
+            android:padding="2dp"
+            android:scrollbarStyle="outsideInset"
+            android:scrollbars="horizontal">
+
+            <TextView
+                android:id="@+id/content_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:breakStrategy="simple"
+                android:fontFamily="monospace"
+                android:hyphenationFrequency="none"
+                android:lineSpacingExtra="6dp"
+                android:paddingStart="16dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="18dp"
+                android:scrollHorizontally="true"
+                android:singleLine="false"
+                android:textColor="@color/text_primary_bright"
+                android:textIsSelectable="true"
+                android:textSize="16sp" />
+        </HorizontalScrollView>
+    </ScrollView>
+
+</LinearLayout>

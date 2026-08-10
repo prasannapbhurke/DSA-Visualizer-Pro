@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="String Algorithms">
+        <menu>
+            <item
+                android:id="@+id/algo_pattern_matching"
+                android:title="Pattern Matching Algorithms" />
+        </menu>
+    </item>
+
+    <item android:title="Sorting Algorithms">
+        <menu>
+            <item android:id="@+id/algo_bubble_sort" android:title="Bubble Sort" />
+            <item android:id="@+id/algo_quick_sort" android:title="Quick Sort" />
+            <item android:id="@+id/algo_heap_sort" android:title="Heap; Heapsort" />
+            <item android:id="@+id/algo_insertion_sort" android:title="Insertion Sort" />
+            <item android:id="@+id/algo_selection_sort" android:title="Selection Sort" />
+            <item android:id="@+id/algo_merging" android:title="Merging" />
+            <item android:id="@+id/algo_merge_sort" android:title="Merge-Sort" />
+            <item android:id="@+id/algo_radix_sort" android:title="Radix Sort" />
+        </menu>
+    </item>
+
+    <item android:title="Searching Algorithms">
+        <menu>
+            <item android:id="@+id/algo_linear_search" android:title="Linear Search" />
+            <item android:id="@+id/algo_binary_search" android:title="Binary Search" />
+            <item android:id="@+id/algo_bsts" android:title="Binary Search Trees" />
+            <item android:id="@+id/algo_bst_insert" android:title="Searching and Inserting in Binary Search Trees" />
+            <item android:id="@+id/algo_bst_delete" android:title="Deleting in a Binary Search Tree" />
+            <item android:id="@+id/algo_hashing" android:title="Hashing" />
+        </menu>
+    </item>
+
+    <item android:title="Linked Structures">
+        <menu>
+            <item android:id="@+id/algo_singly_list" android:title="Singly Linked List" />
+            <item android:id="@+id/algo_doubly_list" android:title="Doubly Linked List" />
+        </menu>
+    </item>
+
+    <item android:title="Stack Queue Recursion">
+        <menu>
+            <item android:id="@+id/algo_stack" android:title="Stack" />
+            <item android:id="@+id/algo_queue" android:title="Queue" />
+            <item android:id="@+id/algo_deque" android:title="Deque" />
+            <item android:id="@+id/algo_priority_queue" android:title="Priority Queue" />
+            <item android:id="@+id/algo_hanoi" android:title="Tower of Hanoi" />
+        </menu>
+    </item>
+
+    <item android:title="Trees">
+        <menu>
+            <item android:id="@+id/algo_traverse_trees" android:title="Traversing Binary Trees" />
+            <item android:id="@+id/algo_traverse_stacks" android:title="Traversal Algorithms using Stacks" />
+            <item android:id="@+id/algo_huffman" android:title="Path Lengths; Huffman's Algorithm" />
+        </menu>
+    </item>
+
+    <item android:title="Graphs">
+        <menu>
+            <item android:id="@+id/algo_graph_traversal" android:title="Traversing a Graph" />
+            <item android:id="@+id/algo_topological_sort" android:title="Posets; Topological Sorting" />
+            <item android:id="@+id/algo_warshall" android:title="Warshall&apos;s Algorithm; Shortest Paths" />
+            <item android:id="@+id/algo_spanning_tree" android:title="Spanning Tree" />
+        </menu>
+    </item>
+
+</menu>

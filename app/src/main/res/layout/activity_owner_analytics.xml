@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/main_background">
+
+    <LinearLayout
+        android:id="@+id/owner_analytics_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/owner_analytics_back_button"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/owner_users_back"
+                android:padding="10dp"
+                android:src="@drawable/ic_arrow_back"
+                android:tint="@color/text_primary_bright" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="@string/owner_analytics_title"
+                android:textColor="@color/text_primary_bright"
+                android:textSize="@dimen/dsa_screen_title_text"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/owner_analytics_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:indeterminate="true" />
+
+        <TextView
+            android:id="@+id/owner_analytics_summary_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/text_muted_soft"
+            android:textSize="@dimen/dsa_body_text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/owner_analytics_topics_title"
+            android:textColor="@color/text_primary_bright"
+            android:textSize="@dimen/dsa_section_title_text"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/owner_analytics_topics_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_muted_soft"
+            android:textSize="@dimen/dsa_body_small_text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/owner_analytics_issues_title"
+            android:textColor="@color/text_primary_bright"
+            android:textSize="@dimen/dsa_section_title_text"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/owner_analytics_issues_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_muted_soft"
+            android:textSize="@dimen/dsa_body_small_text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/owner_analytics_audit_title"
+            android:textColor="@color/text_primary_bright"
+            android:textSize="@dimen/dsa_section_title_text"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/owner_analytics_audit_logs_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_muted_soft"
+            android:textSize="@dimen/dsa_body_small_text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/owner_analytics_refresh_button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/owner_users_refresh_button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/owner_analytics_export_button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/owner_analytics_export_button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/owner_analytics_restore_button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/owner_analytics_restore_button" />
+    </LinearLayout>
+
+</ScrollView>

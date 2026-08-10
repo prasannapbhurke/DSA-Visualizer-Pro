@@ -1,0 +1,49 @@
+{
+  "sessions": [
+    {
+      "id": 1776777016616
+    }
+  ],
+  "practiceSessions": [],
+  "progressEntries": [],
+  "feedbackEntries": [],
+  "shares": [],
+  "users": [
+    {
+      "id": "guest_a97a3f2d-2974-4d6d-98b9-2ef30b490ae0",
+      "type": "guest",
+      "displayName": "Guest RMX3851",
+      "token": "6305c4bd2314b1a6cd241d9978f52494d9d5822cad954887",
+      "createdAt": "2026-04-26T11:18:04.647Z",
+      "lastSeenAt": "2026-04-26T14:25:16.493Z"
+    }
+  ],
+  "mistakes": [],
+  "googleUsers": [
+    {
+      "id": "user_208e6da2-adb8-4439-b8a4-943d364c29be",
+      "googleId": "101005375614750933565",
+      "email": "prasannapbhurke@gmail.com",
+      "name": "prasanna",
+      "role": "owner",
+      "provider": "google",
+      "createdAt": "2026-04-26T10:18:13.059Z",
+      "lastSeenAt": "2026-05-02T06:51:59.715Z",
+      "token": "de530440b4e3f0bdbac3a8b3eb58c5d771d8b24099f90aeaae76c4f96ad3b253"
+    },
+    {
+      "id": "user_f2f3030a-1be2-44a1-8d05-3afed870e294",
+      "googleId": "108091929337520751772",
+      "email": "kirayt0006@gmail.com",
+      "name": "Kira",
+      "role": "student",
+      "provider": "google",
+      "createdAt": "2026-04-26T14:25:16.833Z",
+      "lastSeenAt": "2026-04-26T14:33:18.272Z",
+      "token": "b9252b5cef86225151f8f9034e6d25ea331471d7580c4d83669d50b93b5f62da"
+    }
+  ],
+  "preferences": {
+    "theme": "dark"
+  }
+}

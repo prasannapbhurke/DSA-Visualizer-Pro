@@ -1,0 +1,41 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+.vercel
+
+# Node dependencies and environment secrets
+node_modules/
+**/node_modules/
+.env
+*.env
+.env.*
+server/.env
+client/.env
+admin-web/.env
+
+# Temporary development scratch folder
+scratch/
+
+# Electron and React build output directories
+admin-web/release/
+admin-web/dist/
+client/build/
+release/
+dist/
+out/
+build/
+
+

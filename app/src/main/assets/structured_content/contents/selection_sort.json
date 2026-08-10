@@ -1,0 +1,41 @@
+{
+  "id": "selection_sort",
+  "title": "Selection Sort",
+  "definition": "Selection Sort repeatedly finds the smallest remaining value and places it into the next sorted position.",
+  "realLifeExample": "It is like scanning a list of marks, picking the smallest one, and placing it first before repeating the process.",
+  "complexity": {
+    "best": "O(n^2)",
+    "average": "O(n^2)",
+    "worst": "O(n^2)",
+    "space": "O(1)"
+  },
+  "sampleInput": [29, 10, 14, 37, 13],
+  "sampleTarget": 0,
+  "visualizationType": "sorting",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Sorting",
+    "sourceReference": "Selection Sort",
+    "updatedAt": "2026-04-17",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "(Selection Sort) SELECT(DATA, N)\n\n1. Repeat for K = 1 to N - 1.\n2. Set MIN := DATA[K] and LOC := K.\n3. Scan J = K + 1 to N.\n4. If DATA[J] is smaller than MIN, update MIN and LOC.\n5. Interchange DATA[K] and DATA[LOC].\n6. Exit.",
+    "Functions": "FUNCTION SELECT(DATA, N)\n\n1. For each position K, call FIND_MIN(DATA, K, N).\n2. Receive the location LOC of the smallest value.\n3. Swap DATA[K] with DATA[LOC].\n4. Return DATA.\n\nMAIN:\n1. Read N and DATA.\n2. Call SELECT(DATA, N).\n3. Print DATA.",
+    "Recursion": "FUNCTION SELECT_REC(DATA, K, N)\n\n1. If K = N, return.\n2. Find the location LOC of the minimum item from K to N.\n3. Swap DATA[K] and DATA[LOC].\n4. Call SELECT_REC(DATA, K + 1, N)."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "public void selectionSort(int[] arr) {\n    for (int i = 0; i < arr.length - 1; i++) {\n        int minIndex = i;\n        for (int j = i + 1; j < arr.length; j++) {\n            if (arr[j] < arr[minIndex]) {\n                minIndex = j;\n            }\n        }\n        int temp = arr[i];\n        arr[i] = arr[minIndex];\n        arr[minIndex] = temp;\n    }\n}",
+      "Functions": "public void selectionSort(int[] arr) {\n    for (int i = 0; i < arr.length - 1; i++) {\n        int minIndex = findMinIndex(arr, i);\n        swap(arr, i, minIndex);\n    }\n}\n\nprivate int findMinIndex(int[] arr, int start) {\n    int minIndex = start;\n    for (int j = start + 1; j < arr.length; j++) {\n        if (arr[j] < arr[minIndex]) {\n            minIndex = j;\n        }\n    }\n    return minIndex;\n}\n\nprivate void swap(int[] arr, int left, int right) {\n    int temp = arr[left];\n    arr[left] = arr[right];\n    arr[right] = temp;\n}",
+      "Recursion": "public void selectionSortRecursive(int[] arr, int start) {\n    if (start >= arr.length - 1) {\n        return;\n    }\n    int minIndex = start;\n    for (int j = start + 1; j < arr.length; j++) {\n        if (arr[j] < arr[minIndex]) {\n            minIndex = j;\n        }\n    }\n    int temp = arr[start];\n    arr[start] = arr[minIndex];\n    arr[minIndex] = temp;\n    selectionSortRecursive(arr, start + 1);\n}"
+    }
+  },
+  "commentedCode": {
+    "C": {
+      "Iterative": "#include <stdio.h>\n\nint main() {\n    int n;\n\n    // Step 1: Read how many elements are present.\n    printf(\"Enter number of elements: \");\n    scanf(\"%d\", &n);\n\n    // Step 2: Create an array to store the input values.\n    int A[100];\n\n    // Step 3: Read all elements into the array.\n    printf(\"Enter elements:\\n\");\n    for (int i = 1; i <= n; i++) {\n        printf(\"Enter value: \");\n        scanf(\"%d\", &A[i]);\n    }\n\n    // Step 4: Run Selection Sort.\n    // Each pass places the smallest remaining element in its correct position.\n    for (int k = 1; k <= n - 1; k++) {\n        // Assume the current position already has the minimum value.\n        int min = A[k];\n        int loc = k;\n\n        // Search the remaining unsorted part for a smaller value.\n        for (int j = k + 1; j <= n; j++) {\n            if (min > A[j]) {\n                min = A[j];\n                loc = j;\n            }\n        }\n\n        // Swap the found minimum value into position k.\n        int temp = A[k];\n        A[k] = A[loc];\n        A[loc] = temp;\n    }\n\n    // Step 5: Print the sorted array.\n    printf(\"Sorted array:\\n\");\n    for (int i = 1; i <= n; i++) {\n        printf(\"%d \", A[i]);\n    }\n\n    return 0;\n}"
+    }
+  }
+}

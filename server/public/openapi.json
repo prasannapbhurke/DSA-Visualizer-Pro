@@ -1,0 +1,359 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DSA Visualizer API",
+    "version": "1.0.0",
+    "description": "Backend API for Google sign-in, progress sync, feedback, classrooms, resources, admin dashboards, and web visualization sharing."
+  },
+  "servers": [
+    {
+      "url": "https://dsa-visualizer-api-latest.onrender.com",
+      "description": "Render production"
+    },
+    {
+      "url": "http://localhost:5000",
+      "description": "Local development"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" },
+              "code": { "type": "string" }
+            }
+          }
+        }
+      },
+      "GoogleAuthRequest": {
+        "type": "object",
+        "required": ["idToken"],
+        "properties": {
+          "idToken": { "type": "string" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string" },
+          "role": { "type": "string", "enum": ["student", "teacher", "owner"] },
+          "picture": { "type": "string" },
+          "lastSeenAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ProgressEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "techniqueId": { "type": "string" },
+          "completed": { "type": "boolean" },
+          "score": { "type": "number" },
+          "lastStep": { "type": "integer" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PracticeSession": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "techniqueId": { "type": "string" },
+          "durationSeconds": { "type": "integer" },
+          "score": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Feedback": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "techniqueId": { "type": "string" },
+          "type": { "type": "string" },
+          "message": { "type": "string" },
+          "reviewed": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Classroom": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "teacherId": { "type": "string" },
+          "name": { "type": "string" },
+          "joinCode": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ClassResource": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "classId": { "type": "string" },
+          "title": { "type": "string" },
+          "fileName": { "type": "string" },
+          "url": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/status": {
+      "get": {
+        "security": [],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Server status",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "status": "Server is running",
+                    "timestamp": "2026-05-03T00:00:00.000Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google-config": {
+      "get": {
+        "security": [],
+        "summary": "Read Google OAuth configuration status",
+        "responses": {
+          "200": {
+            "description": "Google client configuration"
+          }
+        }
+      }
+    },
+    "/api/auth/google": {
+      "post": {
+        "security": [],
+        "summary": "Sign in with a Google ID token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GoogleAuthRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Authenticated user and API token" },
+          "400": { "description": "Missing or invalid token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "summary": "Get the current authenticated user",
+        "responses": {
+          "200": { "description": "Current user" },
+          "401": { "description": "Missing or invalid bearer token" }
+        }
+      }
+    },
+    "/api/techniques/{id}/progress": {
+      "get": {
+        "summary": "Get progress for one technique",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Progress entry" }, "404": { "description": "No progress yet" } }
+      },
+      "put": {
+        "summary": "Update progress for one technique",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProgressEntry" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated progress" } }
+      }
+    },
+    "/api/progress": {
+      "get": {
+        "summary": "List progress for the current user",
+        "responses": { "200": { "description": "Progress entries" } }
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "summary": "List current user's practice sessions",
+        "responses": { "200": { "description": "Practice sessions" } }
+      },
+      "post": {
+        "summary": "Create a practice session",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PracticeSession" } } }
+        },
+        "responses": { "201": { "description": "Created session" } }
+      }
+    },
+    "/api/feedback": {
+      "get": {
+        "summary": "Owner feedback inbox",
+        "description": "Owner-only endpoint.",
+        "responses": { "200": { "description": "Feedback entries" }, "403": { "description": "Owner role required" } }
+      },
+      "post": {
+        "summary": "Submit app feedback",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Feedback" } } }
+        },
+        "responses": { "201": { "description": "Feedback saved" } }
+      }
+    },
+    "/api/feedback/{feedbackId}": {
+      "delete": {
+        "summary": "Delete feedback entry",
+        "description": "Teacher/owner endpoint. Owners can delete any feedback; teachers can delete feedback from enrolled students in their classes using student enrollment validation.",
+        "parameters": [
+          {
+            "name": "feedbackId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Feedback deleted" },
+          "403": { "description": "Owner or teacher role required" },
+          "404": { "description": "Feedback not found or student not enrolled in teacher class" }
+        }
+      }
+    },
+    "/api/teacher/feedback": {
+      "get": {
+        "summary": "Teacher class-scoped feedback inbox",
+        "description": "Teacher/owner endpoint. Supports class/topic/type filters through query parameters.",
+        "responses": { "200": { "description": "Class feedback entries" }, "403": { "description": "Teacher or owner role required" } }
+      }
+    },
+    "/api/classes": {
+      "get": {
+        "summary": "List classes visible to the current user",
+        "responses": { "200": { "description": "Class list" } }
+      },
+      "post": {
+        "summary": "Create a class",
+        "description": "Teacher/owner endpoint.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Classroom" } } }
+        },
+        "responses": { "201": { "description": "Created class" } }
+      }
+    },
+    "/api/classes/join": {
+      "post": {
+        "summary": "Join a class with a join code",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["joinCode"], "properties": { "joinCode": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Joined class" } }
+      }
+    },
+    "/api/classes/{classId}/students": {
+      "get": {
+        "summary": "List students and progress for a class",
+        "parameters": [{ "name": "classId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Class students" }, "403": { "description": "Teacher/owner required" } }
+      }
+    },
+    "/api/classes/{classId}/resources": {
+      "get": {
+        "summary": "List class resources",
+        "parameters": [{ "name": "classId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Class resources" } }
+      },
+      "post": {
+        "summary": "Upload or register a class resource",
+        "description": "Teacher/owner endpoint. The current implementation accepts resource metadata and file payload data according to parseClassResourceUploadRequest.",
+        "parameters": [{ "name": "classId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClassResource" } } }
+        },
+        "responses": { "201": { "description": "Resource created" } }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "List Google users",
+        "description": "Owner-only endpoint used by Manage Users.",
+        "responses": { "200": { "description": "Users" }, "403": { "description": "Owner role required" } }
+      }
+    },
+    "/api/users/{userId}/role": {
+      "put": {
+        "summary": "Promote or demote a user role",
+        "description": "Owner-only endpoint.",
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["role"], "properties": { "role": { "type": "string", "enum": ["student", "teacher", "owner"] } } } } }
+        },
+        "responses": { "200": { "description": "Updated user" }, "403": { "description": "Owner role required" } }
+      }
+    },
+    "/api/admin/stats": {
+      "get": {
+        "summary": "Admin dashboard summary stats",
+        "description": "Owner and teacher endpoint.",
+        "responses": { "200": { "description": "Stats" }, "403": { "description": "Owner/teacher role required" } }
+      }
+    },
+    "/api/admin/export": {
+      "get": {
+        "summary": "Export backend data",
+        "description": "Owner-only endpoint.",
+        "responses": { "200": { "description": "JSON export" }, "403": { "description": "Owner role required" } }
+      }
+    },
+    "/share-visualization": {
+      "post": {
+        "security": [],
+        "summary": "Create a public visualization share link",
+        "responses": { "201": { "description": "Share ID" } }
+      }
+    },
+    "/shared/{shareId}": {
+      "get": {
+        "security": [],
+        "summary": "Load a shared visualization",
+        "parameters": [{ "name": "shareId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Shared visualization" }, "404": { "description": "Share not found" } }
+      }
+    }
+  }
+}

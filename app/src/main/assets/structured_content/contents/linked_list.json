@@ -1,0 +1,226 @@
+{
+  "defaults": {
+    "visualizationType": "structure",
+    "metadata": {
+      "contentVersion": 1,
+      "formatVersion": 2,
+      "sourceTitle": "Lipschutz Data Structures",
+      "sourceChapter": "Linked Lists",
+      "sourceReference": "Linked-list procedures",
+      "updatedAt": "2026-04-17",
+      "overrideOf": ""
+    }
+  },
+  "contents": [
+    {
+      "id": "singly_linked_list",
+      "title": "Singly Linked List",
+      "definition": "A singly linked list stores data in nodes where each node points to the next node in the sequence.",
+      "realLifeExample": "It is like a treasure hunt where each clue tells you only where the next clue is located.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(n)"
+      },
+      "sampleInput": [10, 20, 30, 40],
+      "sampleTarget": 30
+    },
+    {
+      "id": "traversing_linked_list",
+      "title": "Traversing a Linked List",
+      "definition": "Traversing a linked list means starting at the head node and moving through each next pointer until the list ends.",
+      "realLifeExample": "It is like reading a chain of notes where each note tells you which note to open next.",
+      "complexity": {
+        "best": "O(n)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [3, 6, 9, 12],
+      "sampleTarget": 0
+    },
+    {
+      "id": "print_linked_list",
+      "title": "Print Linked List",
+      "definition": "Printing a linked list means visiting every node in order and displaying its stored data.",
+      "realLifeExample": "It is like calling out each stop one by one while moving through a route map.",
+      "complexity": {
+        "best": "O(n)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [8, 16, 24, 32],
+      "sampleTarget": 0
+    },
+    {
+      "id": "count_nodes_linked_list",
+      "title": "Count Nodes in Linked List",
+      "definition": "Counting nodes in a linked list means moving through the list and increasing a counter for each node visited.",
+      "realLifeExample": "It is like counting train coaches one by one from the engine to the last coach.",
+      "complexity": {
+        "best": "O(n)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [5, 15, 25, 35, 45],
+      "sampleTarget": 0
+    },
+    {
+      "id": "search_in_linked_list",
+      "title": "Search in Linked List",
+      "definition": "Searching in a linked list compares each node value with the target until a match is found or the list ends.",
+      "realLifeExample": "It is like checking each name tag in a line until you find the person you want.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [14, 28, 42, 56],
+      "sampleTarget": 42
+    },
+    {
+      "id": "find_linked_list",
+      "title": "FIND (Search in Linked List)",
+      "definition": "FIND is the textbook-style linked-list search procedure that returns the matching node location or reports failure.",
+      "realLifeExample": "It is like following a checklist procedure to inspect one box after another until the required item appears.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [2, 4, 6, 8, 10],
+      "sampleTarget": 8
+    },
+    {
+      "id": "insert_at_beginning_linked_list",
+      "title": "Insert at Beginning of a Linked List",
+      "definition": "Insertion at the beginning creates a new node, links it to the current head, and updates the head pointer.",
+      "realLifeExample": "It is like placing a new coach at the front of a train so it becomes the first coach.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(1)"
+      },
+      "sampleInput": [20, 30, 40],
+      "sampleTarget": 10
+    },
+    {
+      "id": "insert_after_given_node_linked_list",
+      "title": "Inserting After a Given Node in Linked List",
+      "definition": "This operation inserts a new node immediately after a known node by adjusting the next links carefully.",
+      "realLifeExample": "It is like inserting a new page into a notebook directly after a page you already opened.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(1)"
+      },
+      "sampleInput": [10, 20, 40],
+      "sampleTarget": 30
+    },
+    {
+      "id": "insert_into_sorted_linked_list",
+      "title": "Inserting into a Sorted Linked List",
+      "definition": "Insertion into a sorted linked list finds the correct position first and then links the new node there.",
+      "realLifeExample": "It is like putting a new book into the right place on a shelf arranged by size.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [5, 15, 25, 35],
+      "sampleTarget": 20
+    },
+    {
+      "id": "delete_node_given_location_linked_list",
+      "title": "Deleting a Node from a Linked List (Given Location)",
+      "definition": "When the location is known, deletion relinks the previous node to the next node and removes the chosen node.",
+      "realLifeExample": "It is like removing one coach from the middle of a train and reconnecting the remaining coaches.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [9, 18, 27, 36],
+      "sampleTarget": 27
+    },
+    {
+      "id": "delete_node_by_item_linked_list",
+      "title": "Deleting a Node by ITEM in a Linked List",
+      "definition": "Deletion by item first searches for the required value and then removes the matching node safely.",
+      "realLifeExample": "It is like looking through a row of files for one label and removing that exact file when found.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [4, 8, 12, 16],
+      "sampleTarget": 12
+    },
+    {
+      "id": "delete_linked_list",
+      "title": "DELETE (Delete from Linked List)",
+      "definition": "DELETE is the textbook-style procedure for removing the first matching node from a linked list.",
+      "realLifeExample": "It is like following a written checklist to find the target record and remove it safely.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [11, 22, 33, 44],
+      "sampleTarget": 33
+    },
+    {
+      "id": "traverse_circular_header_list",
+      "title": "Traversing a Circular Header List",
+      "definition": "Traversal in a circular header list starts after the header node and stops when the header node is reached again.",
+      "realLifeExample": "It is like moving around a circular track and knowing you are done when you return to the start marker.",
+      "complexity": {
+        "best": "O(n)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [6, 12, 18, 24],
+      "sampleTarget": 0
+    },
+    {
+      "id": "search_circular_header_list",
+      "title": "Searching a Circular Header List",
+      "definition": "Searching a circular header list checks nodes one by one and stops when the header node is reached again or the item is found.",
+      "realLifeExample": "It is like checking labels around a round display until you return to the starting label.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [7, 14, 21, 28],
+      "sampleTarget": 21
+    },
+    {
+      "id": "delete_circular_header_list",
+      "title": "Deleting from a Circular Header List",
+      "definition": "Deletion in a circular header list finds the matching node and reconnects the previous node so the circle remains valid.",
+      "realLifeExample": "It is like removing one bead from a closed necklace and joining the two loose ends again.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(1)"
+      },
+      "sampleInput": [13, 26, 39, 52],
+      "sampleTarget": 39
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "jump_search",
+  "title": "Jump Search",
+  "definition": "Jump Search skips ahead in fixed-size blocks and then scans inside the possible block.",
+  "realLifeExample": "It is like checking every few pages of a notebook before reading line by line in the correct section.",
+  "complexity": {
+    "best": "O(1)",
+    "average": "O(sqrt n)",
+    "worst": "O(sqrt n)",
+    "space": "O(1)"
+  },
+  "sampleInput": [2, 5, 9, 14, 18, 23, 27, 31, 36],
+  "sampleTarget": 23,
+  "visualizationType": "searching",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Searching",
+    "sourceReference": "Jump Search",
+    "updatedAt": "2026-04-17",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "1. Choose a jump size of sqrt(n).\n2. Jump through the array block by block.\n3. Stop when the target may lie in the current block.\n4. Scan linearly inside that block.\n5. Return the position or failure.",
+    "Functions": "1. Create a function that receives the array, size and item.\n2. Jump to the likely block.\n3. Search inside that block.\n4. Return the position.",
+    "Recursion": "1. Recursively jump between blocks.\n2. Once the right block is found, recursively scan inside it.\n3. Return the result."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "public int jumpSearch(int[] arr, int target) {\n    int step = (int) Math.sqrt(arr.length);\n    int prev = 0;\n    while (prev < arr.length && arr[Math.min(step, arr.length) - 1] < target) {\n        prev = step;\n        step += (int) Math.sqrt(arr.length);\n        if (prev >= arr.length) {\n            return -1;\n        }\n    }\n    while (prev < Math.min(step, arr.length)) {\n        if (arr[prev] == target) {\n            return prev;\n        }\n        prev++;\n    }\n    return -1;\n}",
+      "Functions": "public int jumpSearch(int[] arr, int target) {\n    return jumpWithinBlock(arr, target);\n}\n\nprivate int jumpWithinBlock(int[] arr, int target) {\n    int step = (int) Math.sqrt(arr.length);\n    int prev = 0;\n    while (prev < arr.length && arr[Math.min(step, arr.length) - 1] < target) {\n        prev = step;\n        step += (int) Math.sqrt(arr.length);\n        if (prev >= arr.length) {\n            return -1;\n        }\n    }\n    while (prev < Math.min(step, arr.length)) {\n        if (arr[prev] == target) {\n            return prev;\n        }\n        prev++;\n    }\n    return -1;\n}",
+      "Recursion": "public int jumpSearchRecursive(int[] arr, int target, int start, int step) {\n    int end = Math.min(step, arr.length);\n    if (start >= arr.length) {\n        return -1;\n    }\n    if (arr[end - 1] >= target) {\n        return scanBlock(arr, target, start, end);\n    }\n    return jumpSearchRecursive(arr, target, end, end + (int) Math.sqrt(arr.length));\n}\n\nprivate int scanBlock(int[] arr, int target, int index, int end) {\n    if (index >= end) {\n        return -1;\n    }\n    if (arr[index] == target) {\n        return index;\n    }\n    return scanBlock(arr, target, index + 1, end);\n}"
+    }
+  }
+}

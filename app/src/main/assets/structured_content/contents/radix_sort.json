@@ -1,0 +1,36 @@
+{
+  "id": "radix_sort",
+  "title": "Radix Sort",
+  "definition": "Radix Sort arranges numbers digit by digit from least significant digit to most significant digit.",
+  "realLifeExample": "It is like sorting files first by units digit, then tens digit, then hundreds digit.",
+  "complexity": {
+    "best": "O(d(n + b))",
+    "average": "O(d(n + b))",
+    "worst": "O(d(n + b))",
+    "space": "O(n + b)"
+  },
+  "sampleInput": [170, 45, 75, 90, 802, 24, 2, 66],
+  "sampleTarget": 0,
+  "visualizationType": "sorting",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Sorting",
+    "sourceReference": "Radix Sort",
+    "updatedAt": "2026-04-17",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "1. Choose the least significant digit.\n2. Place values into buckets by that digit.\n3. Collect the buckets in order.\n4. Move to the next digit.\n5. Repeat until all digits are processed.",
+    "Functions": "1. Use one function to distribute values into buckets.\n2. Use another function to collect them back.\n3. Repeat for each digit position.",
+    "Recursion": "1. Bucket values by the current digit.\n2. Rebuild the array.\n3. Recurse on the next digit position.\n4. Stop after the most significant digit."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "public void radixSort(int[] arr) {\n    int max = 0;\n    for (int value : arr) {\n        max = Math.max(max, value);\n    }\n    for (int exp = 1; max / exp > 0; exp *= 10) {\n        countingSortByDigit(arr, exp);\n    }\n}\n\nprivate void countingSortByDigit(int[] arr, int exp) {\n    int[] output = new int[arr.length];\n    int[] count = new int[10];\n    for (int value : arr) {\n        count[(value / exp) % 10]++;\n    }\n    for (int i = 1; i < 10; i++) {\n        count[i] += count[i - 1];\n    }\n    for (int i = arr.length - 1; i >= 0; i--) {\n        int digit = (arr[i] / exp) % 10;\n        output[count[digit] - 1] = arr[i];\n        count[digit]--;\n    }\n    for (int i = 0; i < arr.length; i++) {\n        arr[i] = output[i];\n    }\n}",
+      "Functions": "public void radixSort(int[] arr) {\n    int max = findMax(arr);\n    for (int exp = 1; max / exp > 0; exp *= 10) {\n        countingSortByDigit(arr, exp);\n    }\n}\n\nprivate int findMax(int[] arr) {\n    int max = 0;\n    for (int value : arr) {\n        max = Math.max(max, value);\n    }\n    return max;\n}\n\nprivate void countingSortByDigit(int[] arr, int exp) {\n    int[] output = new int[arr.length];\n    int[] count = new int[10];\n    for (int value : arr) {\n        count[(value / exp) % 10]++;\n    }\n    for (int i = 1; i < 10; i++) {\n        count[i] += count[i - 1];\n    }\n    for (int i = arr.length - 1; i >= 0; i--) {\n        int digit = (arr[i] / exp) % 10;\n        output[count[digit] - 1] = arr[i];\n        count[digit]--;\n    }\n    for (int i = 0; i < arr.length; i++) {\n        arr[i] = output[i];\n    }\n}",
+      "Recursion": "public void radixSortRecursive(int[] arr, int exp, int max) {\n    if (max / exp == 0) {\n        return;\n    }\n    countingSortByDigit(arr, exp);\n    radixSortRecursive(arr, exp * 10, max);\n}\n\nprivate void countingSortByDigit(int[] arr, int exp) {\n    int[] output = new int[arr.length];\n    int[] count = new int[10];\n    for (int value : arr) {\n        count[(value / exp) % 10]++;\n    }\n    for (int i = 1; i < 10; i++) {\n        count[i] += count[i - 1];\n    }\n    for (int i = arr.length - 1; i >= 0; i--) {\n        int digit = (arr[i] / exp) % 10;\n        output[count[digit] - 1] = arr[i];\n        count[digit]--;\n    }\n    for (int i = 0; i < arr.length; i++) {\n        arr[i] = output[i];\n    }\n}"
+    }
+  }
+}

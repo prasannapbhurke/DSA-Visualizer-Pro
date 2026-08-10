@@ -1,0 +1,267 @@
+{
+  "defaults": {
+    "metadata": {
+      "contentVersion": 1,
+      "formatVersion": 2,
+      "sourceTitle": "Lipschutz Data Structures",
+      "sourceChapter": "Trees and Graphs",
+      "sourceReference": "Tree and graph procedures",
+      "updatedAt": "2026-04-17",
+      "overrideOf": ""
+    }
+  },
+  "contents": [
+    {
+      "id": "tree_traversal",
+      "title": "Tree Traversal",
+      "definition": "Tree traversal visits every node in a tree using a defined visiting order.",
+      "realLifeExample": "It is like deciding a fixed route for checking every room in a building exactly once.",
+      "complexity": {"best": "O(n)", "average": "O(n)", "worst": "O(n)", "space": "O(h)"},
+      "sampleInput": [50, 30, 70, 20, 40, 60, 80],
+      "sampleTarget": 0
+    },
+    {
+      "id": "preorder_traversal",
+      "title": "Preorder Traversal",
+      "definition": "Preorder traversal visits the root first, then the left subtree, and then the right subtree.",
+      "realLifeExample": "It is like announcing a manager first and then visiting the teams below from left to right.",
+      "complexity": {"best": "O(n)", "average": "O(n)", "worst": "O(n)", "space": "O(h)"},
+      "sampleInput": [50, 30, 70, 20, 40, 60, 80],
+      "sampleTarget": 0
+    },
+    {
+      "id": "postorder_traversal",
+      "title": "Postorder Traversal",
+      "definition": "Postorder traversal visits the left subtree, then the right subtree, and then the root.",
+      "realLifeExample": "It is like completing all smaller jobs first and reporting to the manager only after both sides are done.",
+      "complexity": {"best": "O(n)", "average": "O(n)", "worst": "O(n)", "space": "O(h)"},
+      "sampleInput": [50, 30, 70, 20, 40, 60, 80],
+      "sampleTarget": 0
+    },
+    {
+      "id": "bst_search_parent_tracking",
+      "title": "BST Search with Parent Tracking",
+      "definition": "This BST search keeps track of both the current node and its parent while locating an item.",
+      "realLifeExample": "It is like walking down a family tree while remembering both the current person and their parent.",
+      "complexity": {"best": "O(1)", "average": "O(log n)", "worst": "O(n)", "space": "O(1)"},
+      "sampleInput": [45, 25, 65, 15, 35, 55, 75],
+      "sampleTarget": 55
+    },
+    {
+      "id": "bst_insertion",
+      "title": "BST Insertion (INSBST)",
+      "definition": "BST insertion finds the correct empty position according to BST order and links the new node there.",
+      "realLifeExample": "It is like placing a new labeled folder into the correct branch of a sorted filing tree.",
+      "complexity": {"best": "O(1)", "average": "O(log n)", "worst": "O(n)", "space": "O(1)"},
+      "sampleInput": [40, 20, 60, 10, 30, 50, 70],
+      "sampleTarget": 25
+    },
+    {
+      "id": "bst_deletion_case_a",
+      "title": "BST Deletion (CASE A)",
+      "definition": "CASE A deletes a BST node that has no child or only one child and reconnects the remaining branch correctly.",
+      "realLifeExample": "It is like removing one simple connector from a branching pipe where only one path needs reconnecting.",
+      "complexity": {"best": "O(1)", "average": "O(log n)", "worst": "O(n)", "space": "O(1)"},
+      "sampleInput": [40, 20, 60, 10, 30],
+      "sampleTarget": 10
+    },
+    {
+      "id": "bst_deletion_case_b",
+      "title": "BST Deletion (CASE B)",
+      "definition": "CASE B deletes a BST node with two children by replacing it with a suitable successor or predecessor.",
+      "realLifeExample": "It is like replacing a team leader with the next appropriate person so the hierarchy stays sorted.",
+      "complexity": {"best": "O(log n)", "average": "O(log n)", "worst": "O(n)", "space": "O(1)"},
+      "sampleInput": [40, 20, 60, 10, 30, 50, 70],
+      "sampleTarget": 40
+    },
+    {
+      "id": "bst_deletion_del",
+      "title": "BST Deletion (DEL Operation)",
+      "definition": "DEL is the general BST deletion procedure that applies the appropriate deletion case based on the node structure.",
+      "realLifeExample": "It is like following a full instruction chart that chooses the right removal method for each tree case.",
+      "complexity": {"best": "O(log n)", "average": "O(log n)", "worst": "O(n)", "space": "O(1)"},
+      "sampleInput": [50, 30, 70, 20, 40, 60, 80],
+      "sampleTarget": 30
+    },
+    {
+      "id": "max_heap_insertion",
+      "title": "Insertion in a Max Heap (INSHEAP)",
+      "definition": "Heap insertion places a new value at the end and percolates it upward until max-heap order is restored.",
+      "realLifeExample": "It is like placing a stronger player into a ranking ladder and moving them upward until the order is correct.",
+      "complexity": {"best": "O(1)", "average": "O(log n)", "worst": "O(log n)", "space": "O(1)"},
+      "sampleInput": [90, 70, 60, 40, 30, 20],
+      "sampleTarget": 80
+    },
+    {
+      "id": "max_heap_deletion",
+      "title": "Deletion from Max Heap (DELHEAP)",
+      "definition": "Heap deletion removes the root, moves the last value to the top, and percolates it downward to restore order.",
+      "realLifeExample": "It is like removing the strongest player from the top rank and readjusting the ladder below.",
+      "complexity": {"best": "O(1)", "average": "O(log n)", "worst": "O(log n)", "space": "O(1)"},
+      "sampleInput": [90, 70, 60, 40, 30, 20],
+      "sampleTarget": 0
+    },
+    {
+      "id": "traversal_using_stacks",
+      "title": "Traversal Algorithms Using Stacks",
+      "definition": "Traversal using stacks replaces recursion with an explicit stack that stores pending nodes.",
+      "realLifeExample": "It is like keeping your own to-do pile of tree nodes instead of relying on automatic memory.",
+      "complexity": {"best": "O(n)", "average": "O(n)", "worst": "O(n)", "space": "O(n)"},
+      "sampleInput": [50, 30, 70, 20, 40, 60, 80],
+      "sampleTarget": 0
+    },
+    {
+      "id": "huffman_algorithm",
+      "title": "Huffman's Algorithm",
+      "definition": "Huffman's algorithm repeatedly combines the two least frequent nodes to build an optimal prefix code tree.",
+      "realLifeExample": "It is like tying together the two lightest bundles first until only one coding tree remains.",
+      "complexity": {"best": "O(n log n)", "average": "O(n log n)", "worst": "O(n log n)", "space": "O(n)"},
+      "sampleInput": [5, 9, 12, 13, 16, 45],
+      "sampleTarget": 0
+    },
+    {
+      "id": "avl_tree",
+      "title": "AVL Tree",
+      "definition": "An AVL tree is a self-balancing BST that keeps subtree heights nearly equal after insertions and deletions.",
+      "realLifeExample": "It is like keeping a shelf balanced so no side becomes too heavy compared with the other.",
+      "complexity": {"best": "O(log n)", "average": "O(log n)", "worst": "O(log n)", "space": "O(n)"},
+      "sampleInput": [30, 20, 40, 10, 25, 35, 50],
+      "sampleTarget": 5
+    },
+    {
+      "id": "trie",
+      "title": "Trie",
+      "definition": "A trie stores words character by character so words with the same prefix share the same path.",
+      "realLifeExample": "It is like a branching dictionary where common beginnings share one hallway before splitting.",
+      "complexity": {"best": "O(m)", "average": "O(m)", "worst": "O(m)", "space": "O(alphabet * nodes)"},
+      "sampleInput": [19, 18, 9, 5],
+      "sampleTarget": 0
+    },
+    {
+      "id": "graph_traversal",
+      "title": "Graph Traversal",
+      "definition": "Graph traversal visits graph vertices in a controlled order such as breadth-first or depth-first search.",
+      "realLifeExample": "It is like exploring a city map by following a planned strategy for choosing the next road.",
+      "complexity": {"best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)", "space": "O(V)"},
+      "sampleInput": [0, 1, 2, 3, 4],
+      "sampleTarget": 0
+    },
+    {
+      "id": "warshall_algorithm",
+      "title": "Warshall's Algorithm",
+      "definition": "Warshall's algorithm updates a reachability matrix to find which vertices can reach each other through intermediate vertices.",
+      "realLifeExample": "It is like checking whether travel between cities becomes possible when layover cities are allowed.",
+      "complexity": {"best": "O(n^3)", "average": "O(n^3)", "worst": "O(n^3)", "space": "O(n^2)"},
+      "sampleInput": [0, 1, 2, 3],
+      "sampleTarget": 0
+    },
+    {
+      "id": "floyd_algorithm",
+      "title": "Floyd's Algorithm",
+      "definition": "Floyd's algorithm improves every pair distance by allowing each vertex in turn as an intermediate stop.",
+      "realLifeExample": "It is like updating a full travel table whenever a better connecting city is discovered.",
+      "complexity": {"best": "O(n^3)", "average": "O(n^3)", "worst": "O(n^3)", "space": "O(n^2)"},
+      "sampleInput": [0, 1, 2, 3],
+      "sampleTarget": 0
+    },
+    {
+      "id": "shortest_paths",
+      "title": "Shortest Paths",
+      "definition": "Shortest path methods find the minimum-cost route between graph vertices using path relaxation or matrix updates.",
+      "realLifeExample": "It is like comparing all route options on a map and keeping the cheapest route discovered so far.",
+      "complexity": {"best": "O(V^2)", "average": "O(V^2)", "worst": "O(V^3)", "space": "O(V^2)"},
+      "sampleInput": [0, 1, 2, 3, 4],
+      "sampleTarget": 0
+    },
+    {
+      "id": "dijkstra_algorithm",
+      "title": "Dijkstra's Algorithm",
+      "definition": "Dijkstra's algorithm repeatedly fixes the smallest unsettled distance and relaxes outgoing edges from that vertex.",
+      "realLifeExample": "It is like always expanding the nearest confirmed city before considering farther routes.",
+      "complexity": {"best": "O(V^2)", "average": "O((V + E) log V)", "worst": "O((V + E) log V)", "space": "O(V)"},
+      "sampleInput": [0, 1, 2, 3, 4],
+      "sampleTarget": 0
+    },
+    {
+      "id": "find_edge_graph",
+      "title": "FINDEDGE",
+      "definition": "FINDEDGE checks whether a specified edge exists between two chosen graph vertices.",
+      "realLifeExample": "It is like checking whether a direct road exists between two cities on a map.",
+      "complexity": {"best": "O(1)", "average": "O(degree)", "worst": "O(V)", "space": "O(1)"},
+      "sampleInput": [0, 1, 2, 3],
+      "sampleTarget": 0
+    },
+    {
+      "id": "insert_node_graph",
+      "title": "INSNODE",
+      "definition": "INSNODE adds a new vertex to the graph structure and initializes the related storage for its edges.",
+      "realLifeExample": "It is like adding a new city to a road map before drawing any roads to it.",
+      "complexity": {"best": "O(1)", "average": "O(1)", "worst": "O(V)", "space": "O(1)"},
+      "sampleInput": [0, 1, 2],
+      "sampleTarget": 3
+    },
+    {
+      "id": "insert_edge_graph",
+      "title": "INSEDGE",
+      "definition": "INSEDGE inserts a connection between two graph vertices in the chosen representation.",
+      "realLifeExample": "It is like drawing a new road between two already existing cities.",
+      "complexity": {"best": "O(1)", "average": "O(1)", "worst": "O(V)", "space": "O(1)"},
+      "sampleInput": [0, 1, 2, 3],
+      "sampleTarget": 0
+    },
+    {
+      "id": "delete_edge_graph",
+      "title": "Delete Edge in Graph",
+      "definition": "Deleting an edge removes the connection between two vertices from the graph representation.",
+      "realLifeExample": "It is like erasing a road from a city map while keeping the cities themselves.",
+      "complexity": {"best": "O(1)", "average": "O(degree)", "worst": "O(V)", "space": "O(1)"},
+      "sampleInput": [0, 1, 2, 3],
+      "sampleTarget": 0
+    },
+    {
+      "id": "delete_vertex_graph",
+      "title": "Delete Node in Graph",
+      "definition": "Deleting a graph vertex removes the node and all edges connected to it.",
+      "realLifeExample": "It is like removing one city from a map along with every road touching that city.",
+      "complexity": {"best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)", "space": "O(1)"},
+      "sampleInput": [0, 1, 2, 3],
+      "sampleTarget": 2
+    },
+    {
+      "id": "breadth_first_search",
+      "title": "Breadth-First Search (BFS)",
+      "definition": "BFS visits graph nodes level by level using a queue.",
+      "realLifeExample": "It is like exploring all houses on one street before moving to the next street.",
+      "complexity": {"best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)", "space": "O(V)"},
+      "sampleInput": [0, 1, 2, 3, 4],
+      "sampleTarget": 0
+    },
+    {
+      "id": "depth_first_search",
+      "title": "Depth-First Search (DFS)",
+      "definition": "DFS follows one path as deep as possible before backtracking to explore other branches.",
+      "realLifeExample": "It is like following one corridor in a maze until it ends and only then coming back.",
+      "complexity": {"best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)", "space": "O(V)"},
+      "sampleInput": [0, 1, 2, 3, 4],
+      "sampleTarget": 0
+    },
+    {
+      "id": "topological_sort",
+      "title": "Topological Sort",
+      "definition": "Topological sort orders the vertices of a DAG so every directed edge goes from an earlier vertex to a later one.",
+      "realLifeExample": "It is like listing tasks so every prerequisite appears before the task that depends on it.",
+      "complexity": {"best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)", "space": "O(V)"},
+      "sampleInput": [0, 1, 2, 3, 4, 5],
+      "sampleTarget": 0
+    },
+    {
+      "id": "spanning_tree",
+      "title": "Spanning Tree",
+      "definition": "A spanning tree connects all graph vertices without forming any cycle.",
+      "realLifeExample": "It is like selecting only the roads needed to keep every city connected without any unnecessary loop.",
+      "complexity": {"best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)", "space": "O(V)"},
+      "sampleInput": [0, 1, 2, 3, 4],
+      "sampleTarget": 0
+    }
+  ]
+}

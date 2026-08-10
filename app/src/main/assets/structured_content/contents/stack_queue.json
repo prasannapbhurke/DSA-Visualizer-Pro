@@ -1,0 +1,184 @@
+{
+  "defaults": {
+    "visualizationType": "structure",
+    "metadata": {
+      "contentVersion": 1,
+      "formatVersion": 2,
+      "sourceTitle": "Lipschutz Data Structures",
+      "sourceChapter": "Stack and Queue",
+      "sourceReference": "Core stack and queue procedures",
+      "updatedAt": "2026-04-17",
+      "overrideOf": ""
+    }
+  },
+  "contents": [
+    {
+      "id": "stack_basics",
+      "title": "Stack Operations",
+      "definition": "A stack stores data in last-in, first-out order, so the most recently inserted item is removed first.",
+      "realLifeExample": "A stack of plates works the same way because the top plate is the first one taken out.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(n)"
+      },
+      "sampleInput": [10, 20, 30, 40],
+      "sampleTarget": 0
+    },
+    {
+      "id": "linked_stack_push",
+      "title": "Linked Stack PUSH",
+      "definition": "Linked stack push inserts a new node at the front of the linked stack and makes it the new top.",
+      "realLifeExample": "It is like placing one more book on top of a pile and treating that book as the new top item.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(1)"
+      },
+      "sampleInput": [15, 25, 35],
+      "sampleTarget": 45
+    },
+    {
+      "id": "linked_stack_pop",
+      "title": "Linked Stack POP",
+      "definition": "Linked stack pop removes the node at the top of the stack and shifts the top pointer to the next node.",
+      "realLifeExample": "It is like removing the top card from a deck and revealing the next card below it.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(1)"
+      },
+      "sampleInput": [15, 25, 35],
+      "sampleTarget": 0
+    },
+    {
+      "id": "postfix_evaluation",
+      "title": "Evaluation of a Postfix Expression",
+      "definition": "Postfix evaluation scans an expression from left to right and uses a stack to hold operands until an operator can be applied.",
+      "realLifeExample": "It is like keeping numbers on a scratch pad until an arithmetic sign tells you which two values to combine.",
+      "complexity": {
+        "best": "O(n)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(n)"
+      },
+      "sampleInput": [2, 3, 4],
+      "sampleTarget": 14
+    },
+    {
+      "id": "infix_to_postfix",
+      "title": "Infix to Postfix (POLISH)",
+      "definition": "The POLISH algorithm converts an infix expression into postfix form by using a stack for operators and parentheses.",
+      "realLifeExample": "It is like temporarily holding operation signs until the output order is safe and unambiguous.",
+      "complexity": {
+        "best": "O(n)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(n)"
+      },
+      "sampleInput": [2, 3, 4],
+      "sampleTarget": 0
+    },
+    {
+      "id": "infix_to_prefix",
+      "title": "Infix to Prefix",
+      "definition": "Infix to prefix conversion reverses the expression, swaps parentheses, uses a stack conversion pass, and reverses the result.",
+      "realLifeExample": "It is like reading the expression from the other side, arranging operators by priority, then flipping the answer back.",
+      "complexity": {
+        "best": "O(n)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(n)"
+      },
+      "sampleInput": [2, 3, 4],
+      "sampleTarget": 0
+    },
+    {
+      "id": "queue_basics",
+      "title": "Linear Queue Insertion and Deletion",
+      "definition": "A linear queue follows first-in, first-out order and uses front and rear positions to track deletion and insertion.",
+      "realLifeExample": "People standing in a ticket line behave like a queue because the first person to enter is the first person served.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(n)"
+      },
+      "sampleInput": [11, 22, 33, 44],
+      "sampleTarget": 0
+    },
+    {
+      "id": "circular_queue",
+      "title": "Circular Queue Insertion and Deletion",
+      "definition": "A circular queue reuses empty spaces by wrapping front and rear back to the beginning when they reach the end.",
+      "realLifeExample": "It is like seats arranged in a circle where the next available place may come again at the beginning.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(n)"
+      },
+      "sampleInput": [5, 10, 15, 20],
+      "sampleTarget": 0
+    },
+    {
+      "id": "linked_queue",
+      "title": "Linked List as Queue Insertion and Deletion",
+      "definition": "A linked queue stores queue items in linked nodes so insertions happen at the rear and deletions happen at the front.",
+      "realLifeExample": "It is like adding a new person at the back of a line while the person at the front leaves when served.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(n)"
+      },
+      "sampleInput": [12, 24, 36, 48],
+      "sampleTarget": 0
+    },
+    {
+      "id": "priority_queue_array",
+      "title": "Priority Queue (One-dimensional Array)",
+      "definition": "A priority queue removes the highest-priority item first even if that item was not inserted first.",
+      "realLifeExample": "Emergency patients are treated before regular patients, so priority decides who goes first.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(n)"
+      },
+      "sampleInput": [3, 1, 4, 2],
+      "sampleTarget": 0
+    },
+    {
+      "id": "priority_queue_2d",
+      "title": "Priority Queue (Two-dimensional Array)",
+      "definition": "A two-dimensional priority queue keeps separate storage for each priority level and processes higher priorities first.",
+      "realLifeExample": "It is like having separate service lines for urgent, normal, and low-priority tasks.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(n)",
+        "worst": "O(n)",
+        "space": "O(n)"
+      },
+      "sampleInput": [1, 2, 3],
+      "sampleTarget": 0
+    },
+    {
+      "id": "deque",
+      "title": "Deque",
+      "definition": "A deque allows insertion and deletion from both the front and the rear of the structure.",
+      "realLifeExample": "It is like a line where people are allowed to enter or leave from either side.",
+      "complexity": {
+        "best": "O(1)",
+        "average": "O(1)",
+        "worst": "O(1)",
+        "space": "O(n)"
+      },
+      "sampleInput": [7, 14, 21, 28],
+      "sampleTarget": 0
+    }
+  ]
+}

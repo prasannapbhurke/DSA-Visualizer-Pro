@@ -1,0 +1,39 @@
+{
+  "id": "bubble_sort",
+  "title": "Bubble Sort",
+  "definition": "Bubble Sort repeatedly compares adjacent values and swaps them until the array is ordered.",
+  "realLifeExample": "It is like repeatedly comparing neighboring cards and moving the larger one toward the front in descending order.",
+  "complexity": {
+    "best": "O(n)",
+    "average": "O(n^2)",
+    "worst": "O(n^2)",
+    "space": "O(1)"
+  },
+  "sampleInput": [18, 4, 27, 11, 9, 32],
+  "sampleTarget": 0,
+  "visualizationType": "sorting",
+  "metadata": {
+    "contentVersion": 2,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Sorting",
+    "sourceReference": "Bubble Sort procedure",
+    "updatedAt": "2026-04-15"
+  },
+  "algorithm": {
+    "Iterative": "(Bubble Sort) BUBBLE(DATA, N)\n\n1. Repeat Steps 2 and 3 for K = 1 to N - 1.\n2. Set PTR := 1.\n3. Repeat while PTR <= N - K.\n   (a) If DATA[PTR] < DATA[PTR + 1], then interchange them.\n   (b) Set PTR := PTR + 1.\n4. Exit.",
+    "Functions": "FUNCTION BUBBLE(DATA, N)\n\n1. Repeat Steps 2 and 3 for K = 1 to N - 1.\n2. Set PTR := 1.\n3. Repeat while PTR <= N - K.\n   (a) If DATA[PTR] < DATA[PTR + 1], then interchange them.\n   (b) Set PTR := PTR + 1.\n4. Return DATA.\n\nMAIN:\n1. Read N and DATA.\n2. Call BUBBLE(DATA, N).\n3. Print DATA.",
+    "Recursion": "FUNCTION BUBBLE(DATA, N)\n\n1. If N = 1, then return.\n2. Set PTR := 1.\n3. Repeat while PTR <= N - 1.\n   (a) If DATA[PTR] < DATA[PTR + 1], then interchange them.\n   (b) Set PTR := PTR + 1.\n4. Call BUBBLE(DATA, N - 1)."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "import java.util.Scanner;\nclass Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        int arr[] = new int[n];\n        for (int i = 0; i < n; i++) {\n            arr[i] = sc.nextInt();\n        }\n        for (int k = 1; k <= n - 1; k++) {\n            int ptr = 0;\n            while (ptr <= n - k - 1) {\n                if (arr[ptr] < arr[ptr + 1]) {\n                    int temp = arr[ptr];\n                    arr[ptr] = arr[ptr + 1];\n                    arr[ptr + 1] = temp;\n                }\n                ptr++;\n            }\n        }\n        for (int i = 0; i < n; i++) {\n            System.out.print(arr[i] + \" \");\n        }\n    }\n}",
+      "Functions": "import java.util.Scanner;\nclass Main {\n    static void bubble(int arr[], int n) {\n        for (int k = 1; k <= n - 1; k++) {\n            int ptr = 0;\n            while (ptr <= n - k - 1) {\n                if (arr[ptr] < arr[ptr + 1]) {\n                    int temp = arr[ptr];\n                    arr[ptr] = arr[ptr + 1];\n                    arr[ptr + 1] = temp;\n                }\n                ptr++;\n            }\n        }\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        int arr[] = new int[n];\n        for (int i = 0; i < n; i++) {\n            arr[i] = sc.nextInt();\n        }\n        bubble(arr, n);\n        for (int i = 0; i < n; i++) {\n            System.out.print(arr[i] + \" \");\n        }\n    }\n}",
+      "Recursion": "import java.util.Scanner;\nclass Main {\n    static void bubble(int arr[], int n) {\n        if (n == 1) {\n            return;\n        }\n        int ptr = 0;\n        while (ptr <= n - 2) {\n            if (arr[ptr] < arr[ptr + 1]) {\n                int temp = arr[ptr];\n                arr[ptr] = arr[ptr + 1];\n                arr[ptr + 1] = temp;\n            }\n            ptr++;\n        }\n        bubble(arr, n - 1);\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        int arr[] = new int[n];\n        for (int i = 0; i < n; i++) {\n            arr[i] = sc.nextInt();\n        }\n        bubble(arr, n);\n        for (int i = 0; i < n; i++) {\n            System.out.print(arr[i] + \" \");\n        }\n    }\n}"
+    }
+  },
+  "commentedCode": {
+    "C": {
+      "Iterative": "#include <stdio.h>\n\nint main() {\n    int n, i, k, temp;\n\n    // Step 1: Ask user for number of elements.\n    // This value tells us how many numbers we need to sort.\n    printf(\"Enter number of elements: \");\n    scanf(\"%d\", &n);\n\n    // Step 2: Create an array of size n.\n    // The array will store all input values.\n    int arr[n];\n\n    // Step 3: Read each element one by one.\n    printf(\"Enter elements:\\n\");\n    for (i = 0; i < n; i++) {\n        // Ask for the next number.\n        printf(\"Enter value: \");\n\n        // Store the current input at index i.\n        scanf(\"%d\", &arr[i]);\n    }\n\n    // Step 4: Perform Bubble Sort in descending order.\n    // The outer loop controls how many passes we make.\n    for (k = 1; k <= n - 1; k++) {\n        int ptr = 0;\n\n        // The inner loop compares adjacent elements.\n        // After each pass, one more element reaches its correct place.\n        while (ptr <= n - k - 1) {\n            // If the left value is smaller, swap them.\n            if (arr[ptr] < arr[ptr + 1]) {\n                // Use a temporary variable to swap safely.\n                temp = arr[ptr];\n                arr[ptr] = arr[ptr + 1];\n                arr[ptr + 1] = temp;\n            }\n\n            // Move to the next adjacent pair.\n            ptr++;\n        }\n    }\n\n    // Step 5: Print the sorted array.\n    printf(\"Sorted array:\\n\");\n    for (i = 0; i < n; i++) {\n        printf(\"%d \", arr[i]);\n    }\n\n    return 0;\n}"
+  }
+}

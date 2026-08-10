@@ -1,0 +1,36 @@
+{
+  "id": "quicksort",
+  "title": "Quicksort",
+  "definition": "Quicksort partitions the array around a pivot and sorts the left and right parts recursively.",
+  "realLifeExample": "It is like choosing one card as a pivot and splitting smaller and larger cards around it.",
+  "complexity": {
+    "best": "O(n log n)",
+    "average": "O(n log n)",
+    "worst": "O(n^2)",
+    "space": "O(log n)"
+  },
+  "sampleInput": [10, 7, 8, 9, 1, 5],
+  "sampleTarget": 0,
+  "visualizationType": "sorting",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Sorting",
+    "sourceReference": "Quicksort",
+    "updatedAt": "2026-04-17",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "1. Choose a pivot.\n2. Partition the array so smaller values come before the pivot.\n3. Repeat for left and right sections using a stack.\n4. Continue until all sections are sorted.",
+    "Functions": "1. Partition the array around a pivot.\n2. Recursively sort the left part.\n3. Recursively sort the right part.\n4. Return the sorted array.",
+    "Recursion": "1. If the range has one or zero elements, stop.\n2. Partition around the pivot.\n3. Recurse on left and right ranges."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "public void quickSort(int[] arr) {\n    quickSort(arr, 0, arr.length - 1);\n}\n\nprivate void quickSort(int[] arr, int low, int high) {\n    if (low < high) {\n        int pivotIndex = partition(arr, low, high);\n        quickSort(arr, low, pivotIndex - 1);\n        quickSort(arr, pivotIndex + 1, high);\n    }\n}\n\nprivate int partition(int[] arr, int low, int high) {\n    int pivot = arr[high];\n    int i = low - 1;\n    for (int j = low; j < high; j++) {\n        if (arr[j] <= pivot) {\n            i++;\n            int temp = arr[i];\n            arr[i] = arr[j];\n            arr[j] = temp;\n        }\n    }\n    int temp = arr[i + 1];\n    arr[i + 1] = arr[high];\n    arr[high] = temp;\n    return i + 1;\n}",
+      "Functions": "public void quickSort(int[] arr) {\n    quickSort(arr, 0, arr.length - 1);\n}\n\nprivate void quickSort(int[] arr, int low, int high) {\n    if (low < high) {\n        int pivotIndex = partition(arr, low, high);\n        quickSort(arr, low, pivotIndex - 1);\n        quickSort(arr, pivotIndex + 1, high);\n    }\n}\n\nprivate int partition(int[] arr, int low, int high) {\n    int pivot = arr[high];\n    int i = low - 1;\n    for (int j = low; j < high; j++) {\n        if (arr[j] <= pivot) {\n            i++;\n            int temp = arr[i];\n            arr[i] = arr[j];\n            arr[j] = temp;\n        }\n    }\n    int temp = arr[i + 1];\n    arr[i + 1] = arr[high];\n    arr[high] = temp;\n    return i + 1;\n}",
+      "Recursion": "public void quickSortRecursive(int[] arr, int low, int high) {\n    if (low >= high) {\n        return;\n    }\n    int pivotIndex = partition(arr, low, high);\n    quickSortRecursive(arr, low, pivotIndex - 1);\n    quickSortRecursive(arr, pivotIndex + 1, high);\n}\n\nprivate int partition(int[] arr, int low, int high) {\n    int pivot = arr[high];\n    int i = low - 1;\n    for (int j = low; j < high; j++) {\n        if (arr[j] <= pivot) {\n            i++;\n            int temp = arr[i];\n            arr[i] = arr[j];\n            arr[j] = temp;\n        }\n    }\n    int temp = arr[i + 1];\n    arr[i + 1] = arr[high];\n    arr[high] = temp;\n    return i + 1;\n}"
+    }
+  }
+}

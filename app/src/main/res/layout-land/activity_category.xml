@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/category_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/main_background"
+    android:clipToPadding="false"
+    android:orientation="horizontal"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="16dp"
+        android:layout_weight="32"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/category_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:text="@string/category_title_default"
+            android:textColor="@color/text_primary_bright"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Pick a topic and continue learning."
+            android:textColor="@color/text_muted"
+            android:textSize="13sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.DSA.TextInputLayout.Search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/search_techniques_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/category_search_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary_bright" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/technique_recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="68"
+        android:clipToPadding="false"
+        android:paddingEnd="6dp"
+        android:paddingBottom="10dp" />
+</LinearLayout>

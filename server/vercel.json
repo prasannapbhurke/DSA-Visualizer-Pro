@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/admin",
+      "dest": "/api"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/api"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "/api"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

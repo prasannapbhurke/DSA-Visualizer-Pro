@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:name=".DsaApplication"
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="DSA Visualizer Pro"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:resizeableActivity="true"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.DSA"
+        android:usesCleartextTraffic="${usesCleartextTraffic}">
+
+        <activity
+            android:name=".TechniqueDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".CategoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ThirdActivity"
+            android:exported="false"
+            android:label="@string/third_activity_title" />
+
+        <activity
+            android:name=".SplashActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".OwnerUsersActivity"
+            android:exported="false"
+            android:label="@string/owner_users_title" />
+
+        <activity
+            android:name=".ClassroomActivity"
+            android:exported="false"
+            android:label="@string/classroom_title" />
+
+        <activity
+            android:name=".ClassStudentsActivity"
+            android:exported="false"
+            android:label="@string/class_students_title" />
+
+        <activity
+            android:name=".OwnerFeedbackActivity"
+            android:exported="false"
+            android:label="@string/feedback_inbox_title" />
+
+        <activity
+            android:name=".TeacherFeedbackActivity"
+            android:exported="false"
+            android:label="@string/teacher_feedback_title" />
+
+        <activity
+            android:name=".StudentDetailActivity"
+            android:exported="false"
+            android:label="@string/student_detail_title" />
+
+        <activity
+            android:name=".ClassResourcesActivity"
+            android:exported="false"
+            android:label="@string/class_resources_title" />
+
+        <activity
+            android:name=".OwnerAnalyticsActivity"
+            android:exported="false"
+            android:label="@string/owner_analytics_title" />
+
+        <activity
+            android:name=".MasteryMapActivity"
+            android:exported="false"
+            android:label="Mastery Map" />
+
+    </application>
+
+</manifest>

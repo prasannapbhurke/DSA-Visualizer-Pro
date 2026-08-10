@@ -1,0 +1,36 @@
+{
+  "id": "merge_sort",
+  "title": "Merge Sort",
+  "definition": "Merge Sort divides the array into smaller parts, sorts them, and merges them back together.",
+  "realLifeExample": "It is like dividing a pile of papers into small sorted piles and then combining them in order.",
+  "complexity": {
+    "best": "O(n log n)",
+    "average": "O(n log n)",
+    "worst": "O(n log n)",
+    "space": "O(n)"
+  },
+  "sampleInput": [38, 27, 43, 3, 9, 82, 10],
+  "sampleTarget": 0,
+  "visualizationType": "sorting",
+  "metadata": {
+    "contentVersion": 1,
+    "formatVersion": 2,
+    "sourceTitle": "Lipschutz Data Structures",
+    "sourceChapter": "Sorting",
+    "sourceReference": "Merge Sort",
+    "updatedAt": "2026-04-17",
+    "overrideOf": ""
+  },
+  "algorithm": {
+    "Iterative": "1. Treat each element as a sorted run.\n2. Merge adjacent runs repeatedly.\n3. Double the run size after each pass.\n4. Stop when one full sorted run remains.",
+    "Functions": "1. Split the array into halves.\n2. Recursively sort each half.\n3. Merge the sorted halves.\n4. Return the merged result.",
+    "Recursion": "1. If the array has one element, return.\n2. Divide it into left and right halves.\n3. Recursively sort both halves.\n4. Merge them into sorted order."
+  },
+  "code": {
+    "Java": {
+      "Iterative": "public void mergeSort(int[] arr) {\n    int[] temp = new int[arr.length];\n    for (int size = 1; size < arr.length; size *= 2) {\n        for (int left = 0; left < arr.length - size; left += 2 * size) {\n            int mid = left + size - 1;\n            int right = Math.min(left + 2 * size - 1, arr.length - 1);\n            merge(arr, temp, left, mid, right);\n        }\n    }\n}\n\nprivate void merge(int[] arr, int[] temp, int left, int mid, int right) {\n    int i = left;\n    int j = mid + 1;\n    int k = left;\n    while (i <= mid && j <= right) {\n        temp[k++] = arr[i] <= arr[j] ? arr[i++] : arr[j++];\n    }\n    while (i <= mid) {\n        temp[k++] = arr[i++];\n    }\n    while (j <= right) {\n        temp[k++] = arr[j++];\n    }\n    for (int index = left; index <= right; index++) {\n        arr[index] = temp[index];\n    }\n}",
+      "Functions": "public void mergeSort(int[] arr) {\n    mergeSort(arr, 0, arr.length - 1, new int[arr.length]);\n}\n\nprivate void mergeSort(int[] arr, int left, int right, int[] temp) {\n    if (left >= right) {\n        return;\n    }\n    int mid = (left + right) / 2;\n    mergeSort(arr, left, mid, temp);\n    mergeSort(arr, mid + 1, right, temp);\n    merge(arr, temp, left, mid, right);\n}\n\nprivate void merge(int[] arr, int[] temp, int left, int mid, int right) {\n    int i = left;\n    int j = mid + 1;\n    int k = left;\n    while (i <= mid && j <= right) {\n        temp[k++] = arr[i] <= arr[j] ? arr[i++] : arr[j++];\n    }\n    while (i <= mid) {\n        temp[k++] = arr[i++];\n    }\n    while (j <= right) {\n        temp[k++] = arr[j++];\n    }\n    for (int index = left; index <= right; index++) {\n        arr[index] = temp[index];\n    }\n}",
+      "Recursion": "public void mergeSortRecursive(int[] arr, int left, int right, int[] temp) {\n    if (left >= right) {\n        return;\n    }\n    int mid = (left + right) / 2;\n    mergeSortRecursive(arr, left, mid, temp);\n    mergeSortRecursive(arr, mid + 1, right, temp);\n    merge(arr, temp, left, mid, right);\n}\n\nprivate void merge(int[] arr, int[] temp, int left, int mid, int right) {\n    int i = left;\n    int j = mid + 1;\n    int k = left;\n    while (i <= mid && j <= right) {\n        temp[k++] = arr[i] <= arr[j] ? arr[i++] : arr[j++];\n    }\n    while (i <= mid) {\n        temp[k++] = arr[i++];\n    }\n    while (j <= right) {\n        temp[k++] = arr[j++];\n    }\n    for (int index = left; index <= right; index++) {\n        arr[index] = temp[index];\n    }\n}"
+    }
+  }
+}
