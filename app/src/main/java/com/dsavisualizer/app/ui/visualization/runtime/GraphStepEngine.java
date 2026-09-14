@@ -24,9 +24,9 @@ public final class GraphStepEngine extends BaseStepEngine {
         if ("warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
             || "shortest_paths".equals(techniqueId)) {
-            host.advanceMatrixStep();
+            MatrixAlgorithmEngine.advance(host);
         } else if ("dijkstra_algorithm".equals(techniqueId)) {
-            host.advanceDijkstraStep();
+            DijkstraStepEngine.advance(host);
         } else {
             advanceTraversalStep(host);
         }

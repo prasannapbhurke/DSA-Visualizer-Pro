@@ -10,7 +10,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,17 +22,13 @@ import com.dsavisualizer.app.model.ClassWeakTopicSummaryItem;
 import com.dsavisualizer.app.model.ClassroomStudentSummary;
 import com.dsavisualizer.app.ui.SafeInsetHelper;
 import com.dsavisualizer.app.ui.adapter.ClassroomStudentAdapter;
+import com.dsavisualizer.app.ui.viewmodel.ClassStudentsViewModel;
 import com.google.android.material.button.MaterialButton;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import com.dsavisualizer.app.data.ApiClient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +50,7 @@ public class ClassStudentsActivity extends AppCompatActivity {
     private MaterialButton copyCodeButton;
     private MaterialButton resourcesButton;
     private String joinCode = "";
+    private ClassStudentsViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +80,28 @@ public class ClassStudentsActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ClassroomStudentAdapter(this::openStudentDetail);
         recyclerView.setAdapter(adapter);
+
+        viewModel = new ViewModelProvider(this).get(ClassStudentsViewModel.class);
+        viewModel.getStudents().observe(this, list -> {
+            students.clear();
+            if (list != null) {
+                students.addAll(list);
+            }
+            adapter.submitList(students);
+            emptyText.setVisibility(students.isEmpty() ? View.VISIBLE : View.GONE);
+        });
+        viewModel.getWeakTopics().observe(this, this::bindWeakTopicSummary);
+        viewModel.getStudentCount().observe(this, count -> {
+            summaryText.setText(getString(R.string.class_students_summary, count != null ? count : 0));
+        });
+        viewModel.getLoading().observe(this, this::setLoading);
+        viewModel.getErrorMessage().observe(this, error -> {
+            if (error != null) {
+                emptyText.setText(R.string.class_students_load_failed);
+                emptyText.setVisibility(View.VISIBLE);
+                Toast.makeText(this, R.string.class_students_load_failed, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override
@@ -90,106 +111,17 @@ public class ClassStudentsActivity extends AppCompatActivity {
             openOwnStudentDetail();
             return;
         }
-        fetchStudents();
+        fetchStudents(false);
     }
 
-    private void fetchStudents() {
+    private void fetchStudents(boolean forceRefresh) {
         String classId = getIntent().getStringExtra(EXTRA_CLASS_ID);
         if (classId == null || classId.trim().isEmpty()) {
             Toast.makeText(this, R.string.class_students_load_failed, Toast.LENGTH_LONG).show();
             finish();
             return;
         }
-
-        setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes/" + classId + "/students");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
-                JSONObject data = payload.optJSONObject("data");
-                JSONObject classroom = data == null ? null : data.optJSONObject("classroom");
-                List<ClassWeakTopicSummaryItem> weakTopicSummary = new ArrayList<>();
-                JSONArray weakTopicArray = classroom == null ? null : classroom.optJSONArray("weakTopicSummary");
-                if (weakTopicArray != null) {
-                    for (int i = 0; i < weakTopicArray.length(); i++) {
-                        JSONObject item = weakTopicArray.optJSONObject(i);
-                        if (item == null) {
-                            continue;
-                        }
-                        weakTopicSummary.add(new ClassWeakTopicSummaryItem(
-                            item.optString("techniqueId", ""),
-                            item.optInt("studentCount", 0),
-                            item.optInt("lowestBestScore", 0)
-                        ));
-                    }
-                }
-                JSONArray items = data == null ? null : data.optJSONArray("students");
-                List<ClassroomStudentSummary> loaded = new ArrayList<>();
-                if (items != null) {
-                    for (int i = 0; i < items.length(); i++) {
-                        JSONObject item = items.optJSONObject(i);
-                        if (item == null) {
-                            continue;
-                        }
-                        loaded.add(parseStudent(item));
-                    }
-                }
-
-                runOnUiThread(() -> {
-                    students.clear();
-                    students.addAll(loaded);
-                    adapter.submitList(students);
-                    int count = classroom == null ? loaded.size() : classroom.optInt("studentCount", loaded.size());
-                    summaryText.setText(getString(R.string.class_students_summary, count));
-                    bindWeakTopicSummary(weakTopicSummary);
-                    emptyText.setVisibility(students.isEmpty() ? View.VISIBLE : View.GONE);
-                    setLoading(false);
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    emptyText.setText(R.string.class_students_load_failed);
-                    emptyText.setVisibility(View.VISIBLE);
-                    setLoading(false);
-                    Toast.makeText(this, R.string.class_students_load_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-            }
-        }).start();
-    }
-
-    private ClassroomStudentSummary parseStudent(JSONObject item) {
-        JSONObject user = item.optJSONObject("user");
-        JSONObject summary = item.optJSONObject("summary");
-        return new ClassroomStudentSummary(
-            user == null ? "" : user.optString("id", ""),
-            user == null ? "" : user.optString("displayName", ""),
-            user == null ? "" : user.optString("email", ""),
-            summary == null ? 0 : summary.optInt("totalTechniquesStarted", 0),
-            summary == null ? 0 : summary.optInt("completedTechniques", 0),
-            summary == null ? 0 : summary.optInt("totalPracticeSessions", 0),
-            summary == null ? 0 : summary.optInt("streakDays", 0),
-            item.optString("lastActiveAt", ""),
-            item.optString("joinedAt", "")
-        );
+        viewModel.loadStudents(classId, appPreferences.getAuthToken(), forceRefresh);
     }
 
     private void setLoading(boolean loading) {
@@ -266,20 +198,6 @@ public class ClassStudentsActivity extends AppCompatActivity {
             builder.append(Character.toUpperCase(part.charAt(0)));
             if (part.length() > 1) {
                 builder.append(part.substring(1));
-            }
-        }
-        return builder.toString();
-    }
-
-    private String readStream(InputStream stream) throws Exception {
-        if (stream == null) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
             }
         }
         return builder.toString();

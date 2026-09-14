@@ -47,6 +47,11 @@
             android:exported="false" />
 
         <activity
+            android:name=".skilltree.SkillTreeActivity"
+            android:exported="false"
+            android:label="DSA Skill Tree" />
+
+        <activity
             android:name=".OwnerUsersActivity"
             android:exported="false"
             android:label="@string/owner_users_title" />

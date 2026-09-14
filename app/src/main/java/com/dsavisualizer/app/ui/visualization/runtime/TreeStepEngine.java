@@ -18,13 +18,13 @@ public final class TreeStepEngine extends BaseStepEngine {
     public static void advance(VisualizationRuntimeHost host) {
         String techniqueId = host.getTechniqueId();
         if ("max_heap_insertion".equals(techniqueId) || "max_heap_deletion".equals(techniqueId)) {
-            host.advanceHeapOperationStep();
+            HeapOperationStepEngine.advance(host);
         } else if ("huffman_algorithm".equals(techniqueId)) {
-            host.advanceHuffmanStep();
+            HuffmanStepEngine.advance(host);
         } else if ("avl_tree".equals(techniqueId)) {
-            host.advanceAvlStep();
+            AvlTreeStepEngine.advance(host);
         } else if ("trie".equals(techniqueId)) {
-            host.advanceTrieStep();
+            TrieStepEngine.advance(host);
         } else {
             advanceTraversalStep(host);
         }

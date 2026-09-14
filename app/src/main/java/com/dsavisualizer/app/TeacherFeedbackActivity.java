@@ -7,6 +7,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -23,16 +24,9 @@ import com.google.android.material.button.MaterialButton;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import com.dsavisualizer.app.data.ApiClient;
+
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,26 +99,9 @@ public class TeacherFeedbackActivity extends AppCompatActivity {
     }
 
     private void fetchClasses() {
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
+        ApiClient.getInstance().get("/api/classes", appPreferences.getAuthToken(), new ApiClient.Callback() {
+            @Override
+            public void onSuccess(@NonNull JSONObject payload) {
                 JSONObject data = payload.optJSONObject("data");
                 JSONArray classArray = data == null ? null : data.optJSONArray("classes");
                 List<ClassFilterItem> loaded = new ArrayList<>();
@@ -142,162 +119,120 @@ public class TeacherFeedbackActivity extends AppCompatActivity {
                     }
                 }
 
-                runOnUiThread(() -> {
-                    classes.clear();
-                    classes.addAll(loaded);
-                    if (!selectedClassId.isEmpty()) {
-                        for (ClassFilterItem item : classes) {
-                            if (selectedClassId.equals(item.id)) {
-                                selectedClassLabel = item.name;
-                                break;
-                            }
+                classes.clear();
+                classes.addAll(loaded);
+                if (!selectedClassId.isEmpty()) {
+                    for (ClassFilterItem item : classes) {
+                        if (selectedClassId.equals(item.id)) {
+                            selectedClassLabel = item.name;
+                            break;
                         }
                     }
-                    updateFilterLabels();
-                });
-            } catch (Exception ignored) {
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
                 }
+                updateFilterLabels();
             }
-        }).start();
+
+            @Override
+            public void onError(@NonNull Exception error) {
+                // Ignore silent class list loading errors
+            }
+        });
     }
 
     private void fetchFeedback() {
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                StringBuilder urlBuilder = new StringBuilder(ApiConfig.getBaseUrl() + "/api/teacher/feedback");
-                List<String> params = new ArrayList<>();
-                if (!selectedClassId.trim().isEmpty()) {
-                    params.add("classId=" + URLEncoder.encode(selectedClassId, "UTF-8"));
-                }
-                if (!selectedType.trim().isEmpty()) {
-                    params.add("type=" + URLEncoder.encode(selectedType, "UTF-8"));
-                }
-                String topic = topicFilterInput.getText() == null ? "" : topicFilterInput.getText().toString().trim();
-                if (!topic.isEmpty()) {
-                    params.add("techniqueId=" + URLEncoder.encode(topic, "UTF-8"));
-                }
-                if (!params.isEmpty()) {
-                    urlBuilder.append('?').append(String.join("&", params));
-                }
+        try {
+            StringBuilder urlBuilder = new StringBuilder("/api/teacher/feedback");
+            List<String> params = new ArrayList<>();
+            if (!selectedClassId.trim().isEmpty()) {
+                params.add("classId=" + URLEncoder.encode(selectedClassId, "UTF-8"));
+            }
+            if (!selectedType.trim().isEmpty()) {
+                params.add("type=" + URLEncoder.encode(selectedType, "UTF-8"));
+            }
+            String topic = topicFilterInput.getText() == null ? "" : topicFilterInput.getText().toString().trim();
+            if (!topic.isEmpty()) {
+                params.add("techniqueId=" + URLEncoder.encode(topic, "UTF-8"));
+            }
+            if (!params.isEmpty()) {
+                urlBuilder.append('?').append(String.join("&", params));
+            }
 
-                URL url = new URL(urlBuilder.toString());
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
-                JSONObject data = payload.optJSONObject("data");
-                JSONArray feedback = data == null ? null : data.optJSONArray("feedback");
-                List<FeedbackInboxItem> loaded = new ArrayList<>();
-                if (feedback != null) {
-                    for (int i = 0; i < feedback.length(); i++) {
-                        JSONObject item = feedback.optJSONObject(i);
-                        if (item == null) {
-                            continue;
+            ApiClient.getInstance().get(urlBuilder.toString(), appPreferences.getAuthToken(), new ApiClient.Callback() {
+                @Override
+                public void onSuccess(@NonNull JSONObject payload) {
+                    JSONObject data = payload.optJSONObject("data");
+                    JSONArray feedback = data == null ? null : data.optJSONArray("feedback");
+                    List<FeedbackInboxItem> loaded = new ArrayList<>();
+                    if (feedback != null) {
+                        for (int i = 0; i < feedback.length(); i++) {
+                            JSONObject item = feedback.optJSONObject(i);
+                            if (item == null) {
+                                continue;
+                            }
+                            loaded.add(new FeedbackInboxItem(
+                                item.optString("id", ""),
+                                item.optString("type", ""),
+                                item.optString("message", ""),
+                                item.optString("techniqueId", ""),
+                                item.optString("screen", ""),
+                                item.optString("difficulty", ""),
+                                item.optString("createdAt", ""),
+                                item.optString("userDisplayName", ""),
+                                item.optString("userEmail", ""),
+                                item.optString("userRole", ""),
+                                item.optString("classId", ""),
+                                item.optString("className", ""),
+                                item.optString("reviewedAt", ""),
+                                item.optString("reviewedBy", "")
+                            ));
                         }
-                        loaded.add(new FeedbackInboxItem(
-                            item.optString("id", ""),
-                            item.optString("type", ""),
-                            item.optString("message", ""),
-                            item.optString("techniqueId", ""),
-                            item.optString("screen", ""),
-                            item.optString("difficulty", ""),
-                            item.optString("createdAt", ""),
-                            item.optString("userDisplayName", ""),
-                            item.optString("userEmail", ""),
-                            item.optString("userRole", ""),
-                            item.optString("classId", ""),
-                            item.optString("className", ""),
-                            item.optString("reviewedAt", ""),
-                            item.optString("reviewedBy", "")
-                        ));
                     }
-                }
 
-                runOnUiThread(() -> {
                     items.clear();
                     items.addAll(loaded);
                     adapter.submitList(items);
                     summaryText.setText(getString(R.string.feedback_inbox_summary, items.size()));
                     emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                     setLoading(false);
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
+                }
+
+                @Override
+                public void onError(@NonNull Exception error) {
                     emptyText.setText(R.string.feedback_inbox_load_failed);
                     emptyText.setVisibility(View.VISIBLE);
                     setLoading(false);
-                    Toast.makeText(this, R.string.feedback_inbox_load_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
+                    Toast.makeText(TeacherFeedbackActivity.this, R.string.feedback_inbox_load_failed, Toast.LENGTH_LONG).show();
                 }
-            }
-        }).start();
+            });
+        } catch (Exception e) {
+            setLoading(false);
+            Toast.makeText(this, R.string.feedback_inbox_load_failed, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void markReviewed(FeedbackInboxItem item) {
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/teacher/feedback/" + item.id + "/review");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("PATCH");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                JSONObject body = new JSONObject();
-                body.put("reviewed", true);
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(body.toString());
-                }
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                runOnUiThread(() -> {
-                    Toast.makeText(this, R.string.teacher_feedback_mark_reviewed_done, Toast.LENGTH_SHORT).show();
+        try {
+            JSONObject body = new JSONObject();
+            body.put("reviewed", true);
+            ApiClient.getInstance().patch("/api/teacher/feedback/" + item.id + "/review", body, appPreferences.getAuthToken(), new ApiClient.Callback() {
+                @Override
+                public void onSuccess(@NonNull JSONObject response) {
+                    Toast.makeText(TeacherFeedbackActivity.this, R.string.teacher_feedback_mark_reviewed_done, Toast.LENGTH_SHORT).show();
                     fetchFeedback();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.teacher_feedback_mark_reviewed_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
                 }
-            }
-        }).start();
+
+                @Override
+                public void onError(@NonNull Exception error) {
+                    setLoading(false);
+                    Toast.makeText(TeacherFeedbackActivity.this, R.string.teacher_feedback_mark_reviewed_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            setLoading(false);
+            Toast.makeText(this, R.string.teacher_feedback_mark_reviewed_failed, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void openClassFilterDialog() {
@@ -373,58 +308,23 @@ public class TeacherFeedbackActivity extends AppCompatActivity {
 
     private void deleteFeedback(FeedbackInboxItem item) {
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/feedback/" + item.id);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("DELETE");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                runOnUiThread(() -> {
-                    Toast.makeText(this, R.string.feedback_inbox_delete_done, Toast.LENGTH_SHORT).show();
-                    fetchFeedback();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.feedback_inbox_delete_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
+        ApiClient.getInstance().delete("/api/feedback/" + item.id, appPreferences.getAuthToken(), new ApiClient.Callback() {
+            @Override
+            public void onSuccess(@NonNull JSONObject response) {
+                Toast.makeText(TeacherFeedbackActivity.this, R.string.feedback_inbox_delete_done, Toast.LENGTH_SHORT).show();
+                fetchFeedback();
             }
-        }).start();
+
+            @Override
+            public void onError(@NonNull Exception error) {
+                setLoading(false);
+                Toast.makeText(TeacherFeedbackActivity.this, R.string.feedback_inbox_delete_failed, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void setLoading(boolean loading) {
         loadingIndicator.setVisibility(loading ? View.VISIBLE : View.GONE);
-    }
-
-    private String readStream(InputStream stream) throws Exception {
-        if (stream == null) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-        }
-        return builder.toString();
     }
 
     private static class ClassFilterItem {

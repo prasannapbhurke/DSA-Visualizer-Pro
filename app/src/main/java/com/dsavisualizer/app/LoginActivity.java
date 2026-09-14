@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.dsavisualizer.app.data.ApiClient;
 import com.dsavisualizer.app.data.ApiConfig;
 import com.dsavisualizer.app.data.AppPreferences;
 import com.dsavisualizer.app.ui.SafeInsetHelper;
@@ -240,65 +241,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private JSONObject performGoogleAuthExchange(String idToken) throws Exception {
-        Exception lastError = null;
-        for (int attempt = 1; attempt <= AUTH_MAX_ATTEMPTS; attempt++) {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/auth/google");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(AUTH_CONNECT_TIMEOUT_MS);
-                connection.setReadTimeout(AUTH_READ_TIMEOUT_MS);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                connection.setRequestProperty("Accept", "application/json");
-
-                JSONObject body = new JSONObject();
-                body.put("idToken", idToken);
-
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(body.toString());
-                }
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-
-                if (statusCode >= 200 && statusCode < 300) {
-                    JSONObject payload = new JSONObject(responseBody);
-                    JSONObject data = payload.optJSONObject("data");
-                    return data == null ? new JSONObject() : data;
-                }
-
-                boolean shouldRetry = statusCode >= 500 || statusCode == 408 || statusCode == 429;
-                IllegalStateException error = new IllegalStateException(
-                    "Google auth exchange failed with status " + statusCode + ": " + responseBody
-                );
-                if (!shouldRetry || attempt == AUTH_MAX_ATTEMPTS) {
-                    throw error;
-                }
-                lastError = error;
-            } catch (Exception error) {
-                lastError = error;
-                if (attempt == AUTH_MAX_ATTEMPTS) {
-                    throw error;
-                }
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-            }
-
-            try {
-                Thread.sleep(250L * attempt);
-            } catch (InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-                throw interruptedException;
-            }
-        }
-        throw lastError == null ? new IllegalStateException("Google auth exchange failed") : lastError;
+        return ApiClient.getInstance().performGoogleAuthExchange(idToken);
     }
 
     private boolean isUserAuthenticated() {

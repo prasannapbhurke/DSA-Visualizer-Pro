@@ -359,6 +359,23 @@ public class RemoteSyncManager {
         });
     }
 
+    public void deleteAccount(@Nullable CompletionCallback callback) {
+        executor.execute(() -> {
+            boolean success = false;
+            try {
+                String token = preferences.getAuthToken();
+                if (token != null && !token.trim().isEmpty()) {
+                    performJsonRequest("DELETE", "/api/users/me", token, null, false);
+                }
+                success = true;
+            } catch (Exception ignored) {
+                success = false;
+            } finally {
+                dispatchCompletion(callback, success);
+            }
+        });
+    }
+
     private TechniqueProgress loadTechniqueProgress(String token, String techniqueId) throws IOException, JSONException {
         JSONObject response = performJsonRequest("GET", "/api/techniques/" + techniqueId + "/progress", token, null);
         JSONObject data = response.optJSONObject("data");

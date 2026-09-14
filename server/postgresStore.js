@@ -481,6 +481,48 @@ const createPostgresStore = (databaseUrl) => {
     }
   };
 
+  const deleteUser = async (userId) => {
+    await ready;
+    const client = await pool.connect();
+    try {
+      await client.query('begin');
+      await client.query('update feedback_entries set reviewed_by = null where reviewed_by = $1', [userId]);
+      await client.query('update audit_logs set actor_id = null where actor_id = $1', [userId]);
+      const res = await client.query('delete from app_users where id = $1 returning *', [userId]);
+      await client.query('commit');
+      return res.rowCount > 0;
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
+
+  const deleteUserByEmail = async (email) => {
+    await ready;
+    const client = await pool.connect();
+    try {
+      await client.query('begin');
+      const userRes = await client.query('select id from app_users where lower(email) = lower($1)', [email]);
+      if (userRes.rowCount === 0) {
+        await client.query('rollback');
+        return false;
+      }
+      const userId = userRes.rows[0].id;
+      await client.query('update feedback_entries set reviewed_by = null where reviewed_by = $1', [userId]);
+      await client.query('update audit_logs set actor_id = null where actor_id = $1', [userId]);
+      await client.query('delete from app_users where id = $1', [userId]);
+      await client.query('commit');
+      return true;
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
+
   return {
     query: (text, params) => pool.query(text, params),
     findUserByToken,
@@ -488,6 +530,8 @@ const createPostgresStore = (databaseUrl) => {
     refreshUserSession,
     logoutUser,
     updateUserRole,
+    deleteUser,
+    deleteUserByEmail,
     close: () => pool.end(),
   };
 };

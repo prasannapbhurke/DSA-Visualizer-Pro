@@ -38,4 +38,16 @@ dist/
 out/
 build/
 
+# Android Keystores and Certificates
+*.jks
+*.keystore
 
+# Logs and Crash Dumps
+*.log
+hs_err_pid*
+replay_pid*
+
+# IDE settings
+.vscode/
+.kotlin/
+.idea/

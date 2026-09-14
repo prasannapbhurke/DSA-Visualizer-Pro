@@ -60,6 +60,67 @@ public interface VisualizationRuntimeHost {
     void setTraversalOrder(int[] values);
     int[] buildTraversalOrder();
 
+    // Dijkstra state
+    int[] getDijkstraDistances();
+    void setDijkstraDistances(int[] distances);
+    boolean[] getDijkstraSettled();
+    void setDijkstraSettled(boolean[] settled);
+    int getDijkstraCurrentNode();
+    void setDijkstraCurrentNode(int node);
+    int getDijkstraPhase();
+    void setDijkstraPhase(int phase);
+    int getDijkstraNeighborIndex();
+    void setDijkstraNeighborIndex(int index);
+    int[][] getDijkstraWeights();
+    void setDijkstraWeights(int[][] weights);
+    void setDijkstraState(int[] distances, boolean[] settled, int currentNode);
+    void initializeDijkstraPreview();
+
+    // Huffman state
+    int[] getHuffmanQueueWeights();
+    void setHuffmanQueueWeights(int[] weights);
+    int getHuffmanMergedWeight();
+    void setHuffmanMergedWeight(int weight);
+    void setHuffmanState(int[] queueWeights, int mergedWeight);
+    void initializeHuffmanPreview();
+
+    // AVL & Trie
+    void setActiveNodes(int primary, int secondary);
+
+    // Matrix state
+    int[][] getMatrixValues();
+    void setMatrixValues(int[][] values);
+    int getMatrixK();
+    void setMatrixK(int k);
+    int getMatrixRow();
+    void setMatrixRow(int row);
+    int getMatrixCol();
+    void setMatrixCol(int col);
+    void setMatrixState(int[][] values, int k, int row, int col, String label);
+    String resolveMatrixLabel();
+    void initializeCustomSortPreview();
+
+    // Heap operation phase
+    int getHeapModePhase();
+    void setHeapModePhase(int phase);
+
+    // Union-Find state
+    int[] getUnionParents();
+    void setUnionParents(int[] parents);
+    int[] getUnionPath();
+    void setUnionPath(int[] path);
+    int getUnionPathStep();
+    void setUnionPathStep(int step);
+    int getUnionFocusNode();
+    void setUnionFocusNode(int node);
+    int getUnionRootNode();
+    void setUnionRootNode(int node);
+    void setUnionFindState(int[] parents, int focusNode, int rootNode);
+    void initializeUnionFindPreview();
+
+    // Graph
+    int[][] getGraphEdges();
+
     void advancePatternMatchingStep();
     void advanceBinarySearchStep();
     void advanceJumpSearchStep();

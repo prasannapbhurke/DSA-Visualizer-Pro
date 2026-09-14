@@ -277,6 +277,14 @@
     <string name="home_continue_learning_ready_with_level">Tap to continue from your latest %1$s session.</string>
     <string name="home_continue_learning_arrow">&#8250;</string>
     <string name="home_feedback_button">Feedback</string>
+    <string name="home_privacy_policy_button">Privacy Policy</string>
+    <string name="home_delete_account_button">Delete Account</string>
+    <string name="dialog_delete_account_title">Delete Account &amp; Data</string>
+    <string name="dialog_delete_account_message">Are you sure you want to permanently delete your account? This will immediately erase all your learning progress, quiz scores, streaks, and bookmarks from both your device and cloud servers. This action cannot be undone.</string>
+    <string name="dialog_delete_account_confirm">Delete Permanently</string>
+    <string name="dialog_delete_account_cancel">Cancel</string>
+    <string name="toast_delete_account_success">Your account and data have been permanently deleted.</string>
+    <string name="toast_delete_account_failed">Server request failed. Local session cleared.</string>
     <string name="home_feedback_title">Send feedback</string>
     <string name="home_feedback_bug">Report a bug</string>
     <string name="home_feedback_content">Improve explanation or quiz</string>

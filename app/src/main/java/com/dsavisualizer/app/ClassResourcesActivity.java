@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.dsavisualizer.app.data.ApiClient;
 import com.dsavisualizer.app.data.ApiConfig;
 import com.dsavisualizer.app.data.AppPreferences;
 import com.dsavisualizer.app.model.ClassResourceItem;
@@ -132,69 +133,51 @@ public class ClassResourcesActivity extends AppCompatActivity {
     private void fetchResources() {
         String classId = getIntent().getStringExtra(EXTRA_CLASS_ID);
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes/" + classId + "/resources");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
-                JSONObject data = payload.optJSONObject("data");
-                JSONArray resources = data == null ? null : data.optJSONArray("resources");
-                List<ClassResourceItem> loaded = new ArrayList<>();
-                if (resources != null) {
-                    for (int i = 0; i < resources.length(); i++) {
-                        JSONObject item = resources.optJSONObject(i);
-                        if (item == null) {
-                            continue;
+        ApiClient.getInstance().get(
+            "/api/classes/" + classId + "/resources",
+            appPreferences.getAuthToken(),
+            new ApiClient.Callback() {
+                @Override
+                public void onSuccess(@NonNull JSONObject payload) {
+                    JSONObject data = payload.optJSONObject("data");
+                    JSONArray resources = data == null ? null : data.optJSONArray("resources");
+                    List<ClassResourceItem> loaded = new ArrayList<>();
+                    if (resources != null) {
+                        for (int i = 0; i < resources.length(); i++) {
+                            JSONObject item = resources.optJSONObject(i);
+                            if (item == null) {
+                                continue;
+                            }
+                            loaded.add(new ClassResourceItem(
+                                item.optString("id", ""),
+                                item.optString("title", ""),
+                                item.optString("type", ""),
+                                item.optString("fileName", ""),
+                                item.optString("mimeType", ""),
+                                item.optInt("sizeBytes", 0),
+                                item.optString("createdAt", ""),
+                                item.optString("downloadPath", ""),
+                                item.optString("uploaderName", "")
+                            ));
                         }
-                        loaded.add(new ClassResourceItem(
-                            item.optString("id", ""),
-                            item.optString("title", ""),
-                            item.optString("type", ""),
-                            item.optString("fileName", ""),
-                            item.optString("mimeType", ""),
-                            item.optInt("sizeBytes", 0),
-                            item.optString("createdAt", ""),
-                            item.optString("downloadPath", ""),
-                            item.optString("uploaderName", "")
-                        ));
                     }
-                }
 
-                runOnUiThread(() -> {
                     items.clear();
                     items.addAll(loaded);
                     adapter.submitList(items);
                     emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                     setLoading(false);
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
+                }
+
+                @Override
+                public void onError(@NonNull Exception error) {
                     emptyText.setText(R.string.class_resources_load_failed);
                     emptyText.setVisibility(View.VISIBLE);
                     setLoading(false);
-                    Toast.makeText(this, R.string.class_resources_load_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
+                    Toast.makeText(ClassResourcesActivity.this, R.string.class_resources_load_failed, Toast.LENGTH_LONG).show();
                 }
             }
-        }).start();
+        );
     }
 
     private void openUploadMetadataDialog(@NonNull Uri uri) {
@@ -311,46 +294,21 @@ public class ClassResourcesActivity extends AppCompatActivity {
         @NonNull String mimeType,
         long sizeBytes
     ) throws Exception {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes/" + classId + "/resources/upload-url");
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(15000);
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
+        JSONObject body = new JSONObject();
+        body.put("title", title);
+        body.put("type", type);
+        body.put("fileName", fileName);
+        body.put("mimeType", mimeType);
+        body.put("sizeBytes", sizeBytes);
 
-            JSONObject body = new JSONObject();
-            body.put("title", title);
-            body.put("type", type);
-            body.put("fileName", fileName);
-            body.put("mimeType", mimeType);
-            body.put("sizeBytes", sizeBytes);
-
-            try (OutputStream outputStream = connection.getOutputStream();
-                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                writer.write(body.toString());
-            }
-
-            int statusCode = connection.getResponseCode();
-            String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                ? connection.getInputStream()
-                : connection.getErrorStream());
-            if (statusCode < 200 || statusCode >= 300) {
-                throw buildServerException(responseBody, statusCode, "Upload session failed");
-            }
-
-            JSONObject payload = new JSONObject(responseBody);
-            JSONObject data = payload.optJSONObject("data");
-            return data == null ? new JSONObject() : data;
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
+        JSONObject payload = ApiClient.getInstance().execute(
+            "POST",
+            "/api/classes/" + classId + "/resources/upload-url",
+            body,
+            appPreferences.getAuthToken()
+        );
+        JSONObject data = payload.optJSONObject("data");
+        return data == null ? new JSONObject() : data;
     }
 
     private void uploadBinaryToSignedUrl(
@@ -432,43 +390,20 @@ public class ClassResourcesActivity extends AppCompatActivity {
         @NonNull String mimeType,
         long sizeBytes
     ) throws Exception {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes/" + classId + "/resources/complete");
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(15000);
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
+        JSONObject body = new JSONObject();
+        body.put("resourceId", resourceId);
+        body.put("title", title);
+        body.put("type", type);
+        body.put("fileName", fileName);
+        body.put("mimeType", mimeType);
+        body.put("sizeBytes", sizeBytes);
 
-            JSONObject body = new JSONObject();
-            body.put("resourceId", resourceId);
-            body.put("title", title);
-            body.put("type", type);
-            body.put("fileName", fileName);
-            body.put("mimeType", mimeType);
-            body.put("sizeBytes", sizeBytes);
-
-            try (OutputStream outputStream = connection.getOutputStream();
-                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                writer.write(body.toString());
-            }
-
-            int statusCode = connection.getResponseCode();
-            String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                ? connection.getInputStream()
-                : connection.getErrorStream());
-            if (statusCode < 200 || statusCode >= 300) {
-                throw buildServerException(responseBody, statusCode, "Upload finalize failed");
-            }
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
+        ApiClient.getInstance().execute(
+            "POST",
+            "/api/classes/" + classId + "/resources/complete",
+            body,
+            appPreferences.getAuthToken()
+        );
     }
 
     private String resolveDisplayName(@NonNull Uri uri) {

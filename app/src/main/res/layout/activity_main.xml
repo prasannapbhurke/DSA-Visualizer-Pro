@@ -552,6 +552,31 @@
                 app:iconGravity="textStart"
                 app:iconPadding="10dp" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/privacy_policy_button"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/home_privacy_policy_button"
+                app:icon="@drawable/ic_shield_privacy"
+                app:iconGravity="textStart"
+                app:iconPadding="10dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/delete_account_button"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/home_delete_account_button"
+                android:textColor="@color/text_error"
+                app:strokeColor="@color/text_error"
+                app:icon="@drawable/ic_delete_forever"
+                app:iconGravity="textStart"
+                app:iconPadding="10dp"
+                app:iconTint="@color/text_error" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

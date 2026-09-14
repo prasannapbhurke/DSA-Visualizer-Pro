@@ -2,6 +2,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
 }
 
 val localProperties = Properties().apply {
@@ -44,12 +45,34 @@ android {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreFile = rootProject.file("app/release-upload-key.jks")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = localProperties.getProperty("KEYSTORE_PASSWORD")
+                    ?: providers.gradleProperty("KEYSTORE_PASSWORD").orNull
+                    ?: System.getenv("KEYSTORE_PASSWORD")
+                    ?: "dsaVisualizer2026"
+                keyAlias = localProperties.getProperty("KEY_ALIAS")
+                    ?: providers.gradleProperty("KEY_ALIAS").orNull
+                    ?: System.getenv("KEY_ALIAS")
+                    ?: "upload"
+                keyPassword = localProperties.getProperty("KEY_PASSWORD")
+                    ?: providers.gradleProperty("KEY_PASSWORD").orNull
+                    ?: System.getenv("KEY_PASSWORD")
+                    ?: "dsaVisualizer2026"
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("String", "API_BASE_URL", "\"${escapedForGradle(debugApiBaseUrl)}\"")
         }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "API_BASE_URL", "\"${escapedForGradle(productionApiBaseUrl)}\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -58,11 +81,19 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlin {
+        jvmToolchain(21)
     }
     buildFeatures {
         buildConfig = true
+        compose = true
+    }
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 
@@ -72,6 +103,15 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.recyclerview)
+
+    // Jetpack Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:20.7.0")

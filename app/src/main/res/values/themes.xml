@@ -1,17 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.DSA" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/sky_400</item>
+        <!-- Brand & Accents -->
+        <item name="colorPrimary">@color/brand_blue</item>
         <item name="colorSecondary">@color/amber_500</item>
-        <item name="colorTertiary">@color/emerald_400</item>
-        <item name="android:statusBarColor">@color/slate_950</item>
-        <item name="android:navigationBarColor">@color/slate_950</item>
-        <item name="android:windowBackground">@color/slate_950</item>
-        <item name="android:colorBackground">@color/slate_950</item>
-        <item name="colorSurface">@color/slate_900</item>
-        <item name="colorOnSurface">@color/slate_100</item>
-        <item name="android:textColor">@color/slate_100</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="colorTertiary">@color/emerald_500</item>
+
+        <!-- Full Edge-to-Edge System Bars (Modern Light Theme) -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+
+        <!-- Background & Surface Hierarchy -->
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorBackground">@color/window_background</item>
+        <item name="colorSurface">@color/surface_card</item>
+        <item name="colorOnSurface">@color/text_primary_bright</item>
+        <item name="android:textColor">@color/text_primary_bright</item>
+        <item name="android:textColorPrimary">@color/text_primary_bright</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
     </style>
 
     <style name="Theme.DSA" parent="Base.Theme.DSA" />

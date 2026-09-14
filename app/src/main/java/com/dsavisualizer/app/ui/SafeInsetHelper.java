@@ -1,24 +1,42 @@
 package com.dsavisualizer.app.ui;
 
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.Configuration;
 import android.view.View;
 
+import androidx.activity.ComponentActivity;
+import androidx.activity.EdgeToEdge;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 /**
- * Applies system bar insets so content does not overlap with the camera cutout or notification bar.
+ * Applies full edge-to-edge rendering and system bar insets so content
+ * does not overlap with the camera cutout, status bar, or navigation bar.
  */
 public final class SafeInsetHelper {
 
     private SafeInsetHelper() {
     }
 
+    public static void enableEdgeToEdge(ComponentActivity activity) {
+        if (activity != null) {
+            EdgeToEdge.enable(activity);
+        }
+    }
+
     public static void applyTopAndBottomInsets(View root, int leftPadding, int topPadding, int rightPadding, int bottomPadding) {
         if (root == null) {
             return;
         }
+
+        // Automatically enable full edge-to-edge if hosted within a ComponentActivity
+        ComponentActivity activity = findComponentActivity(root.getContext());
+        if (activity != null) {
+            EdgeToEdge.enable(activity);
+        }
+
         Configuration configuration = root.getResources().getConfiguration();
         boolean compactPhone = configuration.smallestScreenWidthDp < 600 && configuration.screenWidthDp <= 360;
         if (compactPhone) {
@@ -43,5 +61,15 @@ public final class SafeInsetHelper {
             return windowInsets;
         });
         ViewCompat.requestApplyInsets(root);
+    }
+
+    private static ComponentActivity findComponentActivity(Context context) {
+        while (context instanceof ContextWrapper) {
+            if (context instanceof ComponentActivity) {
+                return (ComponentActivity) context;
+            }
+            context = ((ContextWrapper) context).getBaseContext();
+        }
+        return null;
     }
 }

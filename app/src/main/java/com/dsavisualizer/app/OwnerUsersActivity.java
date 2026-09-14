@@ -27,15 +27,8 @@ import com.google.android.material.button.MaterialButton;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import com.dsavisualizer.app.data.ApiClient;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,9 +36,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class OwnerUsersActivity extends AppCompatActivity {
-    private static final int USERS_CONNECT_TIMEOUT_MS = 12000;
-    private static final int USERS_READ_TIMEOUT_MS = 15000;
-    private static final int USERS_MAX_ATTEMPTS = 2;
     private final List<ManagedUser> users = new ArrayList<>();
 
     private AppPreferences appPreferences;
@@ -89,98 +79,42 @@ public class OwnerUsersActivity extends AppCompatActivity {
 
     private void fetchUsers() {
         setLoading(true);
-        new Thread(() -> {
-            try {
-                JSONObject payload = performUsersRequest();
+        ApiClient.getInstance().get("/api/users", appPreferences.getAuthToken(), new ApiClient.Callback() {
+            @Override
+            public void onSuccess(@NonNull JSONObject payload) {
                 JSONObject data = payload.optJSONObject("data");
                 JSONArray items = data == null ? null : data.optJSONArray("users");
                 List<ManagedUser> loadedUsers = new ArrayList<>();
                 if (items != null) {
                     for (int i = 0; i < items.length(); i++) {
                         JSONObject item = items.optJSONObject(i);
-                        if (item == null) {
-                            continue;
+                        if (item != null) {
+                            loadedUsers.add(parseManagedUser(item));
                         }
-                        loadedUsers.add(parseManagedUser(item));
                     }
                 }
+                users.clear();
+                users.addAll(loadedUsers);
+                sortAndSubmitUsers();
+                bindSummary();
+                bindEmptyState(false);
+                setLoading(false);
+            }
 
-                runOnUiThread(() -> {
-                    users.clear();
-                    users.addAll(loadedUsers);
-                    sortAndSubmitUsers();
-                    bindSummary();
-                    bindEmptyState(false);
-                    setLoading(false);
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    bindEmptyState(true);
-                    setLoading(false);
-                    if (error instanceof AuthRejectedException) {
+            @Override
+            public void onError(@NonNull Exception error) {
+                bindEmptyState(true);
+                setLoading(false);
+                if (error instanceof ApiClient.ApiException) {
+                    int code = ((ApiClient.ApiException) error).getStatusCode();
+                    if (code == 401 || code == 403) {
                         handleRejectedOwnerSession();
                         return;
                     }
-                    Toast.makeText(this, R.string.owner_users_load_failed, Toast.LENGTH_LONG).show();
-                });
+                }
+                Toast.makeText(OwnerUsersActivity.this, R.string.owner_users_load_failed, Toast.LENGTH_LONG).show();
             }
-        }).start();
-    }
-
-    private JSONObject performUsersRequest() throws Exception {
-        Exception lastError = null;
-        for (int attempt = 1; attempt <= USERS_MAX_ATTEMPTS; attempt++) {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/users");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(USERS_CONNECT_TIMEOUT_MS);
-                connection.setReadTimeout(USERS_READ_TIMEOUT_MS);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-
-                if (statusCode >= 200 && statusCode < 300) {
-                    return new JSONObject(responseBody);
-                }
-                if (statusCode == 401 || statusCode == 403) {
-                    throw new AuthRejectedException("Owner session rejected");
-                }
-
-                boolean shouldRetry = statusCode >= 500 || statusCode == 408 || statusCode == 429;
-                IllegalStateException error = new IllegalStateException(
-                    "Owner users request failed with status " + statusCode + ": " + responseBody
-                );
-                if (!shouldRetry || attempt == USERS_MAX_ATTEMPTS) {
-                    throw error;
-                }
-                lastError = error;
-            } catch (AuthRejectedException error) {
-                throw error;
-            } catch (Exception error) {
-                lastError = error;
-                if (attempt == USERS_MAX_ATTEMPTS) {
-                    throw error;
-                }
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-            }
-
-            try {
-                Thread.sleep(900L * attempt);
-            } catch (InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-                throw interruptedException;
-            }
-        }
-        throw lastError == null ? new IllegalStateException("Owner users request failed") : lastError;
+        });
     }
 
     private void toggleUserRole(@NonNull ManagedUser user) {
@@ -190,72 +124,47 @@ public class OwnerUsersActivity extends AppCompatActivity {
         String nextRole = "teacher".equalsIgnoreCase(user.role) ? "student" : "teacher";
         adapter.setPendingUserId(user.id);
 
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/users/" + user.id + "/role");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("PUT");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
+        try {
+            JSONObject body = new JSONObject();
+            body.put("role", nextRole);
 
-                JSONObject body = new JSONObject();
-                body.put("role", nextRole);
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(body.toString());
-                }
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-
-                if (statusCode < 200 || statusCode >= 300) {
-                    if (statusCode == 401 || statusCode == 403) {
-                        throw new AuthRejectedException("Owner session rejected");
-                    }
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
-                JSONObject data = payload.optJSONObject("data");
-                JSONObject userObject = data == null ? null : data.optJSONObject("user");
-                ManagedUser updatedUser = userObject == null ? null : parseManagedUser(userObject);
-
-                runOnUiThread(() -> {
+            ApiClient.getInstance().put("/api/users/" + user.id + "/role", body, appPreferences.getAuthToken(), new ApiClient.Callback() {
+                @Override
+                public void onSuccess(@NonNull JSONObject payload) {
                     adapter.setPendingUserId("");
+                    JSONObject data = payload.optJSONObject("data");
+                    JSONObject userObject = data == null ? null : data.optJSONObject("user");
+                    ManagedUser updatedUser = userObject == null ? null : parseManagedUser(userObject);
                     if (updatedUser != null) {
                         replaceUser(updatedUser);
                         bindSummary();
                     }
                     Toast.makeText(
-                        this,
+                        OwnerUsersActivity.this,
                         getString("teacher".equalsIgnoreCase(nextRole)
                             ? R.string.owner_users_promote_success
                             : R.string.owner_users_demote_success, user.getPrimaryLabel()),
                         Toast.LENGTH_SHORT
                     ).show();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    adapter.setPendingUserId("");
-                    if (error instanceof AuthRejectedException) {
-                        handleRejectedOwnerSession();
-                        return;
-                    }
-                    Toast.makeText(this, R.string.owner_users_role_update_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
                 }
-            }
-        }).start();
+
+                @Override
+                public void onError(@NonNull Exception error) {
+                    adapter.setPendingUserId("");
+                    if (error instanceof ApiClient.ApiException) {
+                        int code = ((ApiClient.ApiException) error).getStatusCode();
+                        if (code == 401 || code == 403) {
+                            handleRejectedOwnerSession();
+                            return;
+                        }
+                    }
+                    Toast.makeText(OwnerUsersActivity.this, R.string.owner_users_role_update_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            adapter.setPendingUserId("");
+            Toast.makeText(this, R.string.owner_users_role_update_failed, Toast.LENGTH_LONG).show();
+        }
     }
 
     private ManagedUser parseManagedUser(JSONObject item) {
@@ -399,25 +308,5 @@ public class OwnerUsersActivity extends AppCompatActivity {
             return typedValue.data;
         }
         return ContextCompat.getColor(this, fallbackColorResId);
-    }
-
-    private String readStream(InputStream stream) throws Exception {
-        if (stream == null) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-        }
-        return builder.toString();
-    }
-
-    private static final class AuthRejectedException extends Exception {
-        AuthRejectedException(String message) {
-            super(message);
-        }
     }
 }

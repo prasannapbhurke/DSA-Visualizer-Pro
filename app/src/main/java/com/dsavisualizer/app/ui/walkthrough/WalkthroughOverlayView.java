@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import com.dsavisualizer.app.R;
 import com.google.android.material.button.MaterialButton;
@@ -71,9 +72,14 @@ public class WalkthroughOverlayView extends FrameLayout {
         borderPaint.setStyle(Paint.Style.STROKE);
         borderPaint.setStrokeWidth(dpToPx(2));
 
+        int cardBg = ContextCompat.getColor(context, R.color.surface_card);
+        int cardStroke = ContextCompat.getColor(context, R.color.surface_stroke_accent);
+        int titleColor = ContextCompat.getColor(context, R.color.text_primary_bright);
+        int bodyColor = ContextCompat.getColor(context, R.color.text_secondary);
+
         messageCard = new MaterialCardView(context);
-        messageCard.setCardBackgroundColor(Color.parseColor("#13253A"));
-        messageCard.setStrokeColor(Color.parseColor("#6CA8FF"));
+        messageCard.setCardBackgroundColor(cardBg);
+        messageCard.setStrokeColor(cardStroke);
         messageCard.setStrokeWidth(dpToPx(1));
         messageCard.setRadius(dpToPx(20));
 
@@ -82,7 +88,7 @@ public class WalkthroughOverlayView extends FrameLayout {
         content.setPadding(dpToPx(18), dpToPx(18), dpToPx(18), dpToPx(18));
 
         titleView = new TextView(context);
-        titleView.setTextColor(Color.WHITE);
+        titleView.setTextColor(titleColor);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         titleView.setTypeface(titleView.getTypeface(), android.graphics.Typeface.BOLD);
 
@@ -93,7 +99,7 @@ public class WalkthroughOverlayView extends FrameLayout {
         );
         bodyParams.topMargin = dpToPx(10);
         bodyView.setLayoutParams(bodyParams);
-        bodyView.setTextColor(Color.parseColor("#D7E5F6"));
+        bodyView.setTextColor(bodyColor);
         bodyView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         bodyView.setLineSpacing(0f, 1.15f);
 

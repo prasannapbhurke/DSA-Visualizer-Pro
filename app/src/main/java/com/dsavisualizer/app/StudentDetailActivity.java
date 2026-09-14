@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -26,15 +27,7 @@ import com.google.android.material.button.MaterialButton;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import com.dsavisualizer.app.data.ApiClient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -116,30 +109,14 @@ public class StudentDetailActivity extends AppCompatActivity {
         }
 
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes/" + classId + "/students/" + studentId);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
+        ApiClient.getInstance().get("/api/classes/" + classId + "/students/" + studentId, appPreferences.getAuthToken(), new ApiClient.Callback() {
+            @Override
+            public void onSuccess(@NonNull JSONObject payload) {
                 JSONObject data = payload.optJSONObject("data");
                 JSONObject student = data == null ? null : data.optJSONObject("student");
                 if (student == null) {
-                    throw new IllegalStateException("Missing student payload");
+                    onError(new IllegalStateException("Missing student payload"));
+                    return;
                 }
                 String viewerRole = student.optString("viewerRole", "teacher");
 
@@ -215,26 +192,21 @@ public class StudentDetailActivity extends AppCompatActivity {
                 }
 
                 JSONObject summary = student.optJSONObject("summary");
-                runOnUiThread(() -> {
-                    addFeedbackButton.setVisibility("teacher".equalsIgnoreCase(viewerRole) ? View.VISIBLE : View.GONE);
-                    bindSummary(summary, student.optString("joinedAt", ""));
-                    bindWeakTopics(weakTopics);
-                    bindRecentActivity(recentActivity);
-                    bindProgressEntries(progressEntries);
-                    bindTeacherNotes(notes);
-                    setLoading(false);
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.student_detail_load_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
+                addFeedbackButton.setVisibility("teacher".equalsIgnoreCase(viewerRole) ? View.VISIBLE : View.GONE);
+                bindSummary(summary, student.optString("joinedAt", ""));
+                bindWeakTopics(weakTopics);
+                bindRecentActivity(recentActivity);
+                bindProgressEntries(progressEntries);
+                bindTeacherNotes(notes);
+                setLoading(false);
             }
-        }).start();
+
+            @Override
+            public void onError(@NonNull Exception error) {
+                setLoading(false);
+                Toast.makeText(StudentDetailActivity.this, R.string.student_detail_load_failed, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void bindSummary(JSONObject summary, String joinedAt) {
@@ -360,49 +332,28 @@ public class StudentDetailActivity extends AppCompatActivity {
         String classId = getIntent().getStringExtra(EXTRA_CLASS_ID);
         String studentId = getIntent().getStringExtra(EXTRA_STUDENT_ID);
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes/" + classId + "/students/" + studentId + "/feedback");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
+        try {
+            JSONObject body = new JSONObject();
+            body.put("message", message);
+            body.put("status", status);
 
-                JSONObject body = new JSONObject();
-                body.put("message", message);
-                body.put("status", status);
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(body.toString());
-                }
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-                runOnUiThread(() -> {
-                    Toast.makeText(this, R.string.student_detail_feedback_saved, Toast.LENGTH_SHORT).show();
+            ApiClient.getInstance().post("/api/classes/" + classId + "/students/" + studentId + "/feedback", body, appPreferences.getAuthToken(), new ApiClient.Callback() {
+                @Override
+                public void onSuccess(@NonNull JSONObject response) {
+                    Toast.makeText(StudentDetailActivity.this, R.string.student_detail_feedback_saved, Toast.LENGTH_SHORT).show();
                     fetchStudentDetail();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.student_detail_feedback_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
                 }
-            }
-        }).start();
+
+                @Override
+                public void onError(@NonNull Exception error) {
+                    setLoading(false);
+                    Toast.makeText(StudentDetailActivity.this, R.string.student_detail_feedback_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            setLoading(false);
+            Toast.makeText(this, R.string.student_detail_feedback_failed, Toast.LENGTH_LONG).show();
+        }
     }
 
     private String prettifyTechniqueId(String techniqueId) {
@@ -450,19 +401,5 @@ public class StudentDetailActivity extends AppCompatActivity {
             return typedValue.data;
         }
         return ContextCompat.getColor(this, fallbackColorResId);
-    }
-
-    private String readStream(InputStream stream) throws Exception {
-        if (stream == null) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-        }
-        return builder.toString();
     }
 }

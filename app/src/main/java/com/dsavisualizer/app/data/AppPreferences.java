@@ -103,6 +103,14 @@ public class AppPreferences {
         preferences.edit().putStringSet(scopedKey(KEY_PROGRESS), viewed).apply();
     }
 
+    public Set<String> getVisitedTopics() {
+        return new LinkedHashSet<>(preferences.getStringSet(scopedKey(KEY_PROGRESS), new LinkedHashSet<>()));
+    }
+
+    public boolean isVisited(String topicId) {
+        return topicId != null && getVisitedTopics().contains(topicId);
+    }
+
     public int getVisitedCount() {
         return preferences.getStringSet(scopedKey(KEY_PROGRESS), new LinkedHashSet<>()).size();
     }

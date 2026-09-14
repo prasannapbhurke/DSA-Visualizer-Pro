@@ -67,6 +67,13 @@ import com.dsavisualizer.app.ui.visualization.runtime.SortStepEngine;
 import com.dsavisualizer.app.ui.visualization.runtime.StepEngine;
 import com.dsavisualizer.app.ui.visualization.runtime.StructureStepEngine;
 import com.dsavisualizer.app.ui.visualization.runtime.TreeStepEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.DijkstraStepEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.HeapOperationStepEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.MatrixAlgorithmEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.TrieStepEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.UnionFindStepEngine;
 import com.dsavisualizer.app.ui.visualization.runtime.VisualizationRuntimeHost;
 import com.dsavisualizer.app.ui.visualization.playback.SnapshotTimeline;
 import com.google.android.material.button.MaterialButton;
@@ -1683,7 +1690,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         return buildTreeInorder(); // Default for AVL, Trie, Heap, etc.
     }
 
-    private int[][] getGraphEdges() {
+    @Override
+    public int[][] getGraphEdges() {
         return new int[][]{
             {0, 1}, {1, 2}, {0, 3}, {1, 3}, {1, 4}, {2, 4}, {3, 4}
         };
@@ -3835,271 +3843,252 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
 
     @Override
     public void advanceMatrixStep() {
-        if (matrixValues.length == 0) {
-            initializeCustomSortPreview();
-        }
-        if (matrixValues.length == 0) {
-            finish("Matrix is empty");
-            return;
-        }
-
-        if (matrixK == -1) {
-            matrixK = 0;
-            matrixRow = 0;
-            matrixCol = 0;
-        }
-
-        if (matrixK >= matrixValues.length) {
-            finish(("warshall_algorithm".equals(techniqueId) ? "Warshall" : "Floyd") + " completed");
-            return;
-        }
-
-        if ("warshall_algorithm".equals(techniqueId)) {
-            int candidate = (matrixValues[matrixRow][matrixK] == 1 && matrixValues[matrixK][matrixCol] == 1) ? 1 : 0;
-            matrixValues[matrixRow][matrixCol] = Math.max(matrixValues[matrixRow][matrixCol], candidate);
-            setHighlightedLines(3, 1);
-            updateStatusText("Checking whether path " + matrixRow + " -> " + matrixK + " -> " + matrixCol + " creates reachability.");
-        } else {
-            int via = safeAdd(matrixValues[matrixRow][matrixK], matrixValues[matrixK][matrixCol]);
-            if (via < matrixValues[matrixRow][matrixCol]) {
-                matrixValues[matrixRow][matrixCol] = via;
-            }
-            setHighlightedLines(3, 1);
-            updateStatusText("Checking whether going through " + matrixK + " improves the cost from " + matrixRow + " to " + matrixCol + ".");
-        }
-        visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, resolveMatrixLabel());
-
-        matrixCol++;
-        if (matrixCol >= matrixValues.length) {
-            matrixCol = 0;
-            matrixRow++;
-        }
-        if (matrixRow >= matrixValues.length) {
-            matrixRow = 0;
-            matrixK++;
-        }
+        MatrixAlgorithmEngine.advance(this);
     }
 
     @Override
     public void advanceHeapOperationStep() {
-        if (workingValues.length == 0) {
-            finish("Heap is empty");
-            return;
-        }
-
-        if (stepIndex == -1) {
-            heapSize = workingValues.length;
-            heapModePhase = 0;
-            stepIndex = "max_heap_insertion".equals(techniqueId) ? heapSize - 1 : 0;
-        }
-
-        if ("max_heap_insertion".equals(techniqueId)) {
-            int parent = (stepIndex - 1) / 2;
-            if (stepIndex <= 0 || workingValues[parent] >= workingValues[stepIndex]) {
-                finish("Heap insertion completed");
-                return;
-            }
-            swap(parent, stepIndex);
-            visualizerView.setActiveEdge(parent, stepIndex);
-            updateArrayVisualization(parent, stepIndex, -1);
-            setHighlightedLines(4, 2);
-            updateStatusText("Percolate up: swap " + workingValues[stepIndex] + " with parent " + workingValues[parent] + ".");
-            stepIndex = parent;
-            return;
-        }
-
-        if (heapModePhase == 0) {
-            swap(0, heapSize - 1);
-            visualizerView.setActiveEdge(0, heapSize - 1);
-            updateArrayVisualization(0, heapSize - 1, -1);
-            setHighlightedLines(2, 1);
-            updateStatusText("Move the maximum value to the end of the heap.");
-            heapSize--;
-            stepIndex = 0;
-            heapModePhase = 1;
-            return;
-        }
-
-        int left = (2 * stepIndex) + 1;
-        int right = (2 * stepIndex) + 2;
-        if (left >= heapSize) {
-            heapModePhase = 0;
-            if (heapSize <= 1) {
-                finish("Heap deletion completed");
-            } else {
-                updateStatusText("Heap order restored after deletion.");
-            }
-            return;
-        }
-        int largest = left;
-        if (right < heapSize && workingValues[right] > workingValues[left]) {
-            largest = right;
-        }
-        if (workingValues[stepIndex] >= workingValues[largest]) {
-            heapModePhase = 0;
-            updateStatusText("Heap property already holds at node " + stepIndex + ".");
-            return;
-        }
-        swap(stepIndex, largest);
-        visualizerView.setActiveEdge(stepIndex, largest);
-        updateArrayVisualization(stepIndex, largest, -1);
-        setHighlightedLines(4, 2);
-        updateStatusText("Percolate down: swap node " + stepIndex + " with child " + largest + ".");
-        stepIndex = largest;
+        HeapOperationStepEngine.advance(this);
     }
 
     @Override
     public void advanceUnionFindStep() {
-        if (unionParents.length == 0) {
-            initializeUnionFindPreview();
-        }
-        if (unionPath.length == 0) {
-            finish("Union-Find has no nodes to traverse.");
-            return;
-        }
-        unionPathStep++;
-        if (unionPathStep >= unionPath.length) {
-            finish("Find completed. Root is " + unionRootNode + ".");
-            return;
-        }
-        unionFocusNode = unionPath[unionPathStep];
-        unionRootNode = unionPath[unionPath.length - 1];
-        visualizerView.setUnionFindState(unionParents, unionFocusNode, unionRootNode);
-        if (unionPathStep == unionPath.length - 1) {
-            setHighlightedLines(4, 2);
-            updateStatusText("Reached root " + unionRootNode + ".");
-            finish("Find completed. Root is " + unionRootNode + ".");
-            return;
-        }
-        setHighlightedLines(2, 1);
-        updateStatusText("Move from node " + unionFocusNode + " to parent " + unionParents[unionFocusNode] + ".");
+        UnionFindStepEngine.advance(this);
     }
 
     @Override
     public void advanceDijkstraStep() {
-        if (stepIndex == -1) {
-            initializeDijkstraPreview();
-            stepIndex = 0;
-            setHighlightedLines(1, 0);
-            updateStatusText("Initialize distances and settled set.");
-            return;
-        }
-        if (dijkstraPhase == 0) {
-            int next = findNextDijkstraNode();
-            if (next == -1) {
-                finish("Dijkstra completed.");
-                return;
-            }
-            dijkstraCurrentNode = next;
-            dijkstraNeighborIndex = 0;
-            dijkstraPhase = 1;
-            visualizerView.clearActiveEdge();
-            visualizerView.setDijkstraState(dijkstraDistances, dijkstraSettled, dijkstraCurrentNode);
-            setHighlightedLines(3, 1);
-            updateStatusText("Pick node " + next + " with the smallest tentative distance.");
-            return;
-        }
-        int neighbor = findNextDijkstraNeighbor(dijkstraCurrentNode, dijkstraNeighborIndex);
-        if (neighbor == -1) {
-            dijkstraSettled[dijkstraCurrentNode] = true;
-            dijkstraPhase = 0;
-            visualizerView.clearActiveEdge();
-            visualizerView.setDijkstraState(dijkstraDistances, dijkstraSettled, dijkstraCurrentNode);
-            setHighlightedLines(7, 2);
-            updateStatusText("Node " + dijkstraCurrentNode + " is now settled.");
-            return;
-        }
-        int weight = dijkstraWeights[dijkstraCurrentNode][neighbor];
-        int candidate = safeAdd(dijkstraDistances[dijkstraCurrentNode], weight);
-        if (candidate < dijkstraDistances[neighbor]) {
-            dijkstraDistances[neighbor] = candidate;
-        }
-        dijkstraNeighborIndex = neighbor + 1;
-        visualizerView.setActiveEdge(dijkstraCurrentNode, neighbor);
-        visualizerView.setDijkstraState(dijkstraDistances, dijkstraSettled, dijkstraCurrentNode);
-        setHighlightedLines(5, 2);
-        updateStatusText("Relax edge " + dijkstraCurrentNode + " -> " + neighbor + ".");
+        DijkstraStepEngine.advance(this);
     }
 
     @Override
     public void advanceHuffmanStep() {
-        if (stepIndex == -1) {
-            initializeHuffmanPreview();
-            stepIndex = 0;
-            setHighlightedLines(1, 0);
-            updateStatusText("Initialize the priority queue with leaf weights.");
-            return;
-        }
-        if (huffmanQueueWeights.length <= 1) {
-            finish("Huffman tree completed.");
-            return;
-        }
-        int first = huffmanQueueWeights[0];
-        int second = huffmanQueueWeights[1];
-        int merged = first + second;
-        huffmanMergedWeight = merged;
-        int[] mergedQueue = new int[huffmanQueueWeights.length - 1];
-        mergedQueue[0] = merged;
-        if (huffmanQueueWeights.length > 2) {
-            System.arraycopy(huffmanQueueWeights, 2, mergedQueue, 1, huffmanQueueWeights.length - 2);
-        }
-        Arrays.sort(mergedQueue);
-        huffmanQueueWeights = mergedQueue;
-        visualizerView.setHuffmanState(huffmanQueueWeights, huffmanMergedWeight);
-        setHighlightedLines(3, 1);
-        updateStatusText("Merge weights " + first + " and " + second + " into " + merged + ".");
+        HuffmanStepEngine.advance(this);
     }
 
     @Override
     public void advanceAvlStep() {
-        if (stepIndex == -1) {
-            stepIndex = 0;
-            visualizerView.setActiveNodes(1, 3);
-            setHighlightedLines(2, 1);
-            updateStatusText("Insert 10 and check balance at node 20.");
-            return;
-        }
-        if (stepIndex == 0) {
-            stepIndex = 1;
-            visualizerView.setActiveNodes(0, 1);
-            setHighlightedLines(4, 2);
-            updateStatusText("Perform right rotation to balance the AVL tree.");
-            return;
-        }
-        finish("AVL rotation completed.");
+        AvlTreeStepEngine.advance(this);
     }
 
     @Override
     public void advanceTrieStep() {
-        if (stepIndex == -1) {
-            stepIndex = 0;
-            visualizerView.setActiveNodes(0, -1);
-            setHighlightedLines(1, 0);
-            updateStatusText("Start at the root for the word \"cat\".");
-            return;
+        TrieStepEngine.advance(this);
+    }
+
+    @Override
+    public int[] getDijkstraDistances() {
+        return dijkstraDistances;
+    }
+
+    @Override
+    public void setDijkstraDistances(int[] distances) {
+        this.dijkstraDistances = distances;
+    }
+
+    @Override
+    public boolean[] getDijkstraSettled() {
+        return dijkstraSettled;
+    }
+
+    @Override
+    public void setDijkstraSettled(boolean[] settled) {
+        this.dijkstraSettled = settled;
+    }
+
+    @Override
+    public int getDijkstraCurrentNode() {
+        return dijkstraCurrentNode;
+    }
+
+    @Override
+    public void setDijkstraCurrentNode(int node) {
+        this.dijkstraCurrentNode = node;
+    }
+
+    @Override
+    public int getDijkstraPhase() {
+        return dijkstraPhase;
+    }
+
+    @Override
+    public void setDijkstraPhase(int phase) {
+        this.dijkstraPhase = phase;
+    }
+
+    @Override
+    public int getDijkstraNeighborIndex() {
+        return dijkstraNeighborIndex;
+    }
+
+    @Override
+    public void setDijkstraNeighborIndex(int index) {
+        this.dijkstraNeighborIndex = index;
+    }
+
+    @Override
+    public int[][] getDijkstraWeights() {
+        return dijkstraWeights;
+    }
+
+    @Override
+    public void setDijkstraWeights(int[][] weights) {
+        this.dijkstraWeights = weights;
+    }
+
+    @Override
+    public void setDijkstraState(int[] distances, boolean[] settled, int currentNode) {
+        if (visualizerView != null) {
+            visualizerView.setDijkstraState(distances, settled, currentNode);
         }
-        if (stepIndex == 0) {
-            stepIndex = 1;
-            visualizerView.setActiveNodes(1, -1);
-            setHighlightedLines(3, 1);
-            updateStatusText("Create or move to node 'c'.");
-            return;
+    }
+
+    @Override
+    public int[] getHuffmanQueueWeights() {
+        return huffmanQueueWeights;
+    }
+
+    @Override
+    public void setHuffmanQueueWeights(int[] weights) {
+        this.huffmanQueueWeights = weights;
+    }
+
+    @Override
+    public int getHuffmanMergedWeight() {
+        return huffmanMergedWeight;
+    }
+
+    @Override
+    public void setHuffmanMergedWeight(int weight) {
+        this.huffmanMergedWeight = weight;
+    }
+
+    @Override
+    public void setHuffmanState(int[] queueWeights, int mergedWeight) {
+        if (visualizerView != null) {
+            visualizerView.setHuffmanState(queueWeights, mergedWeight);
         }
-        if (stepIndex == 1) {
-            stepIndex = 2;
-            visualizerView.setActiveNodes(2, -1);
-            setHighlightedLines(3, 1);
-            updateStatusText("Create or move to node 'a'.");
-            return;
+    }
+
+    @Override
+    public void setActiveNodes(int primary, int secondary) {
+        if (visualizerView != null) {
+            visualizerView.setActiveNodes(primary, secondary);
         }
-        if (stepIndex == 2) {
-            stepIndex = 3;
-            visualizerView.setActiveNodes(3, -1);
-            setHighlightedLines(3, 1);
-            updateStatusText("Create or move to node 't' and mark end.");
-            return;
+    }
+
+    @Override
+    public int[][] getMatrixValues() {
+        return matrixValues;
+    }
+
+    @Override
+    public void setMatrixValues(int[][] values) {
+        this.matrixValues = values;
+    }
+
+    @Override
+    public int getMatrixK() {
+        return matrixK;
+    }
+
+    @Override
+    public void setMatrixK(int k) {
+        this.matrixK = k;
+    }
+
+    @Override
+    public int getMatrixRow() {
+        return matrixRow;
+    }
+
+    @Override
+    public void setMatrixRow(int row) {
+        this.matrixRow = row;
+    }
+
+    @Override
+    public int getMatrixCol() {
+        return matrixCol;
+    }
+
+    @Override
+    public void setMatrixCol(int col) {
+        this.matrixCol = col;
+    }
+
+    @Override
+    public void setMatrixState(int[][] values, int k, int row, int col, String label) {
+        if (visualizerView != null) {
+            visualizerView.setMatrixState(values, k, row, col, label);
         }
-        finish("Trie insertion completed.");
+    }
+
+    @Override
+    public int getHeapModePhase() {
+        return heapModePhase;
+    }
+
+    @Override
+    public void setHeapModePhase(int phase) {
+        this.heapModePhase = phase;
+    }
+
+    @Override
+    public int[] getUnionParents() {
+        return unionParents;
+    }
+
+    @Override
+    public void setUnionParents(int[] parents) {
+        this.unionParents = parents;
+    }
+
+    @Override
+    public int[] getUnionPath() {
+        return unionPath;
+    }
+
+    @Override
+    public void setUnionPath(int[] path) {
+        this.unionPath = path;
+    }
+
+    @Override
+    public int getUnionPathStep() {
+        return unionPathStep;
+    }
+
+    @Override
+    public void setUnionPathStep(int step) {
+        this.unionPathStep = step;
+    }
+
+    @Override
+    public int getUnionFocusNode() {
+        return unionFocusNode;
+    }
+
+    @Override
+    public void setUnionFocusNode(int node) {
+        this.unionFocusNode = node;
+    }
+
+    @Override
+    public int getUnionRootNode() {
+        return unionRootNode;
+    }
+
+    @Override
+    public void setUnionRootNode(int node) {
+        this.unionRootNode = node;
+    }
+
+    @Override
+    public void setUnionFindState(int[] parents, int focusNode, int rootNode) {
+        if (visualizerView != null) {
+            visualizerView.setUnionFindState(parents, focusNode, rootNode);
+        }
     }
 
     @Override
@@ -4190,90 +4179,19 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         return Arrays.copyOf(path, count);
     }
 
-    private void initializeUnionFindPreview() {
-        unionParents = new int[] {0, 0, 1, 2, 3, 4};
-        unionPath = buildUnionPath(unionParents, unionParents.length - 1);
-        unionPathStep = -1;
-        unionFocusNode = unionPath.length > 0 ? unionPath[0] : -1;
-        unionRootNode = unionPath.length > 0 ? unionPath[unionPath.length - 1] : -1;
-        visualizerView.setUnionFindState(unionParents, unionFocusNode, unionRootNode);
+    @Override
+    public void initializeUnionFindPreview() {
+        UnionFindStepEngine.initializePreview(this);
     }
 
-    private int[] buildUnionPath(int[] parents, int startNode) {
-        if (parents.length == 0 || startNode < 0 || startNode >= parents.length) {
-            return new int[0];
-        }
-        int[] temp = new int[parents.length + 1];
-        int count = 0;
-        int node = startNode;
-        while (node >= 0 && node < parents.length) {
-            temp[count++] = node;
-            if (parents[node] == node) {
-                break;
-            }
-            node = parents[node];
-        }
-        return Arrays.copyOf(temp, count);
+    @Override
+    public void initializeDijkstraPreview() {
+        DijkstraStepEngine.initializePreview(this);
     }
 
-    private void initializeDijkstraPreview() {
-        int nodeCount = workingValues.length;
-        if (nodeCount == 0) nodeCount = 5;
-        dijkstraWeights = new int[nodeCount][nodeCount];
-        for (int i = 0; i < nodeCount; i++) {
-            for (int j = 0; j < nodeCount; j++) {
-                dijkstraWeights[i][j] = 9999;
-            }
-            dijkstraWeights[i][i] = 0;
-        }
-        int[][] edges = getGraphEdges();
-        int[] edgeWeights = {2, 1, 4, 7, 3, 5, 2};
-        for (int i = 0; i < Math.min(edges.length, edgeWeights.length); i++) {
-            if (edges[i][0] < nodeCount && edges[i][1] < nodeCount) {
-                dijkstraWeights[edges[i][0]][edges[i][1]] = edgeWeights[i];
-                dijkstraWeights[edges[i][1]][edges[i][0]] = edgeWeights[i];
-            }
-        }
-        
-        dijkstraDistances = new int[nodeCount];
-        for (int i = 0; i < nodeCount; i++) dijkstraDistances[i] = 9999;
-        dijkstraDistances[0] = 0;
-        dijkstraSettled = new boolean[nodeCount];
-        dijkstraCurrentNode = 0;
-        dijkstraPhase = 0;
-        dijkstraNeighborIndex = 0;
-        visualizerView.setDijkstraState(dijkstraDistances, dijkstraSettled, dijkstraCurrentNode);
-    }
-
-    private int findNextDijkstraNode() {
-        int bestNode = -1;
-        int bestDistance = Integer.MAX_VALUE;
-        for (int i = 0; i < dijkstraDistances.length; i++) {
-            if (!dijkstraSettled[i] && dijkstraDistances[i] < bestDistance) {
-                bestDistance = dijkstraDistances[i];
-                bestNode = i;
-            }
-        }
-        return bestNode;
-    }
-
-    private int findNextDijkstraNeighbor(int node, int startIndex) {
-        if (node < 0 || node >= dijkstraWeights.length) {
-            return -1;
-        }
-        for (int i = Math.max(0, startIndex); i < dijkstraWeights[node].length; i++) {
-            int weight = dijkstraWeights[node][i];
-            if (weight > 0 && weight < 9999 && !dijkstraSettled[i]) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private void initializeHuffmanPreview() {
-        huffmanQueueWeights = new int[] {5, 9, 12, 13, 16, 45};
-        huffmanMergedWeight = -1;
-        visualizerView.setHuffmanState(huffmanQueueWeights, huffmanMergedWeight);
+    @Override
+    public void initializeHuffmanPreview() {
+        HuffmanStepEngine.initializePreview(this);
     }
 
     private int[] parseArray(String raw) {
@@ -5950,7 +5868,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         workingValues[right] = temp;
     }
 
-    private void initializeCustomSortPreview() {
+    @Override
+    public void initializeCustomSortPreview() {
         if ("warshall_algorithm".equals(techniqueId)) {
             matrixValues = new int[][] {
                 {0, 1, 0, 1},
@@ -6158,7 +6077,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         return SortVisualizationEngine.safeAdd(left, right);
     }
 
-    private String resolveMatrixLabel() {
+    @Override
+    public String resolveMatrixLabel() {
         return GraphVisualizationController.resolveMatrixLabel(techniqueId);
     }
 

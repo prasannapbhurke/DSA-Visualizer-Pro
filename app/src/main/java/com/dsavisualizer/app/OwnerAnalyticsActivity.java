@@ -14,24 +14,18 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.dsavisualizer.app.data.ApiConfig;
 import com.dsavisualizer.app.data.AppPreferences;
 import com.dsavisualizer.app.ui.SafeInsetHelper;
+import com.dsavisualizer.app.ui.viewmodel.OwnerAnalyticsViewModel;
 import com.google.android.material.button.MaterialButton;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import com.dsavisualizer.app.data.ApiClient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +39,7 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
     private MaterialButton refreshButton;
     private MaterialButton exportBackupButton;
     private MaterialButton restoreBackupButton;
+    private OwnerAnalyticsViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +64,69 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
         exportBackupButton = findViewById(R.id.owner_analytics_export_button);
         restoreBackupButton = findViewById(R.id.owner_analytics_restore_button);
 
-        refreshButton.setOnClickListener(v -> fetchOwnerAnalytics());
+        viewModel = new ViewModelProvider(this).get(OwnerAnalyticsViewModel.class);
+        viewModel.getUiState().observe(this, state -> {
+            if (state == null) {
+                return;
+            }
+            summaryText.setText(getString(
+                R.string.owner_analytics_summary,
+                state.totalUsers,
+                state.activeTeachers,
+                state.totalClasses,
+                state.activeClasses,
+                state.totalResources,
+                state.totalFeedback,
+                state.totalPracticeSessions
+            ));
+
+            List<String> topicLines = new ArrayList<>();
+            for (OwnerAnalyticsViewModel.TopicItem topic : state.topics) {
+                topicLines.add(getString(
+                    R.string.owner_analytics_topic_line,
+                    prettifyTechniqueId(topic.techniqueId),
+                    topic.uses
+                ));
+            }
+            topicsText.setText(topicLines.isEmpty()
+                ? getString(R.string.owner_analytics_topics_empty)
+                : android.text.TextUtils.join("\n", topicLines));
+
+            List<String> issueLines = new ArrayList<>();
+            for (OwnerAnalyticsViewModel.IssueItem issue : state.issues) {
+                issueLines.add(getString(
+                    R.string.owner_analytics_issue_line,
+                    prettifyTechniqueId(issue.techniqueId),
+                    issue.type,
+                    issue.count
+                ));
+            }
+            issuesText.setText(issueLines.isEmpty()
+                ? getString(R.string.owner_analytics_issues_empty)
+                : android.text.TextUtils.join("\n", issueLines));
+
+            List<String> auditLines = new ArrayList<>();
+            for (OwnerAnalyticsViewModel.AuditItem audit : state.auditLogs) {
+                auditLines.add(getString(
+                    R.string.owner_analytics_audit_line,
+                    audit.action,
+                    audit.actorName,
+                    audit.targetName,
+                    audit.createdAt
+                ));
+            }
+            auditLogsText.setText(auditLines.isEmpty()
+                ? getString(R.string.owner_analytics_audit_empty)
+                : android.text.TextUtils.join("\n\n", auditLines));
+        });
+        viewModel.getLoading().observe(this, this::setLoading);
+        viewModel.getErrorMessage().observe(this, error -> {
+            if (error != null) {
+                Toast.makeText(this, R.string.owner_analytics_load_failed, Toast.LENGTH_LONG).show();
+            }
+        });
+
+        refreshButton.setOnClickListener(v -> fetchOwnerAnalytics(true));
         exportBackupButton.setOnClickListener(v -> exportBackup());
         restoreBackupButton.setOnClickListener(v -> openRestoreDialog());
     }
@@ -77,107 +134,15 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        fetchOwnerAnalytics();
+        fetchOwnerAnalytics(false);
     }
 
     private void fetchOwnerAnalytics() {
-        setLoading(true);
-        new Thread(() -> {
-            try {
-                JSONObject analyticsResponse = performAuthorizedRequest("GET", "/api/admin/analytics", null);
-                JSONObject auditResponse = performAuthorizedRequest("GET", "/api/admin/audit-logs", null);
-
-                JSONObject analytics = analyticsResponse.optJSONObject("data") == null
-                    ? null
-                    : analyticsResponse.optJSONObject("data").optJSONObject("analytics");
-                JSONArray mostUsedTopics = analytics == null ? null : analytics.optJSONArray("mostUsedTopics");
-                JSONArray mostReportedIssues = analytics == null ? null : analytics.optJSONArray("mostReportedContentIssues");
-                JSONObject summary = analytics == null ? null : analytics.optJSONObject("summary");
-                JSONArray auditLogs = auditResponse.optJSONObject("data") == null
-                    ? null
-                    : auditResponse.optJSONObject("data").optJSONArray("auditLogs");
-
-                List<String> topicLines = new ArrayList<>();
-                if (mostUsedTopics != null) {
-                    for (int i = 0; i < mostUsedTopics.length(); i++) {
-                        JSONObject item = mostUsedTopics.optJSONObject(i);
-                        if (item == null) {
-                            continue;
-                        }
-                        topicLines.add(getString(
-                            R.string.owner_analytics_topic_line,
-                            prettifyTechniqueId(item.optString("techniqueId", "")),
-                            item.optInt("uses", 0)
-                        ));
-                    }
-                }
-
-                List<String> issueLines = new ArrayList<>();
-                if (mostReportedIssues != null) {
-                    for (int i = 0; i < mostReportedIssues.length(); i++) {
-                        JSONObject item = mostReportedIssues.optJSONObject(i);
-                        if (item == null) {
-                            continue;
-                        }
-                        issueLines.add(getString(
-                            R.string.owner_analytics_issue_line,
-                            prettifyTechniqueId(item.optString("techniqueId", "")),
-                            item.optString("type", "general"),
-                            item.optInt("count", 0)
-                        ));
-                    }
-                }
-
-                List<String> auditLines = new ArrayList<>();
-                if (auditLogs != null) {
-                    for (int i = 0; i < auditLogs.length() && i < 8; i++) {
-                        JSONObject item = auditLogs.optJSONObject(i);
-                        if (item == null) {
-                            continue;
-                        }
-                        auditLines.add(getString(
-                            R.string.owner_analytics_audit_line,
-                            item.optString("action", ""),
-                            item.optString("actorName", ""),
-                            item.optString("targetName", ""),
-                            item.optString("createdAt", "")
-                        ));
-                    }
-                }
-
-                runOnUiThread(() -> {
-                    bindSummary(summary);
-                    topicsText.setText(topicLines.isEmpty()
-                        ? getString(R.string.owner_analytics_topics_empty)
-                        : android.text.TextUtils.join("\n", topicLines));
-                    issuesText.setText(issueLines.isEmpty()
-                        ? getString(R.string.owner_analytics_issues_empty)
-                        : android.text.TextUtils.join("\n", issueLines));
-                    auditLogsText.setText(auditLines.isEmpty()
-                        ? getString(R.string.owner_analytics_audit_empty)
-                        : android.text.TextUtils.join("\n\n", auditLines));
-                    setLoading(false);
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.owner_analytics_load_failed, Toast.LENGTH_LONG).show();
-                });
-            }
-        }).start();
+        fetchOwnerAnalytics(true);
     }
 
-    private void bindSummary(JSONObject summary) {
-        summaryText.setText(getString(
-            R.string.owner_analytics_summary,
-            summary == null ? 0 : summary.optInt("totalUsers", 0),
-            summary == null ? 0 : summary.optInt("activeTeachers", 0),
-            summary == null ? 0 : summary.optInt("totalClasses", 0),
-            summary == null ? 0 : summary.optInt("activeClasses", 0),
-            summary == null ? 0 : summary.optInt("totalResources", 0),
-            summary == null ? 0 : summary.optInt("totalFeedback", 0),
-            summary == null ? 0 : summary.optInt("totalPracticeSessions", 0)
-        ));
+    private void fetchOwnerAnalytics(boolean forceRefresh) {
+        viewModel.loadAnalytics(appPreferences.getAuthToken(), forceRefresh);
     }
 
     private void exportBackup() {
@@ -254,36 +219,7 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
     }
 
     private JSONObject performAuthorizedRequest(String method, String endpoint, JSONObject body) throws Exception {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(ApiConfig.getBaseUrl() + endpoint);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod(method);
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(15000);
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-            if (body != null) {
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(body.toString());
-                }
-            }
-            int statusCode = connection.getResponseCode();
-            String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                ? connection.getInputStream()
-                : connection.getErrorStream());
-            if (statusCode < 200 || statusCode >= 300) {
-                throw new IllegalStateException(responseBody);
-            }
-            return responseBody.trim().isEmpty() ? new JSONObject() : new JSONObject(responseBody);
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
+        return ApiClient.getInstance().execute(method, endpoint, body, appPreferences.getAuthToken());
     }
 
     private String prettifyTechniqueId(String techniqueId) {
@@ -320,19 +256,5 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
             return typedValue.data;
         }
         return ContextCompat.getColor(this, fallbackColorResId);
-    }
-
-    private String readStream(InputStream stream) throws Exception {
-        if (stream == null) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-        }
-        return builder.toString();
     }
 }

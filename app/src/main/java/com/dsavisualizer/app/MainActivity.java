@@ -17,12 +17,14 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.net.Uri;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -57,6 +59,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
 import org.json.JSONObject;
+import com.dsavisualizer.app.data.ApiClient;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -169,6 +172,8 @@ public class MainActivity extends AppCompatActivity {
         continueLearningCard = findViewById(R.id.continue_learning_card);
         menuButton.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
         findViewById(R.id.feedback_button).setOnClickListener(v -> openFeedbackDialog());
+        findViewById(R.id.privacy_policy_button).setOnClickListener(v -> openPrivacyPolicy());
+        findViewById(R.id.delete_account_button).setOnClickListener(v -> confirmAccountDeletion());
         findViewById(R.id.switch_account_button).setOnClickListener(v -> switchGoogleAccount());
         findViewById(R.id.sign_out_button).setOnClickListener(v -> signOutAndReturnToLogin());
         walkthroughButton.setOnClickListener(v -> resumeWalkthroughFromDrawer());
@@ -357,65 +362,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private JSONObject performGoogleAuthExchange(String idToken) throws Exception {
-        Exception lastError = null;
-        for (int attempt = 1; attempt <= AUTH_MAX_ATTEMPTS; attempt++) {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/auth/google");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(AUTH_CONNECT_TIMEOUT_MS);
-                connection.setReadTimeout(AUTH_READ_TIMEOUT_MS);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                connection.setRequestProperty("Accept", "application/json");
-
-                JSONObject requestBody = new JSONObject();
-                requestBody.put("idToken", idToken);
-
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(requestBody.toString());
-                }
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-
-                if (statusCode >= 200 && statusCode < 300) {
-                    JSONObject payload = new JSONObject(responseBody);
-                    JSONObject data = payload.optJSONObject("data");
-                    return data == null ? new JSONObject() : data;
-                }
-
-                boolean shouldRetry = statusCode >= 500 || statusCode == 408 || statusCode == 429;
-                IllegalStateException error = new IllegalStateException(
-                    "Google auth exchange failed with status " + statusCode + ": " + responseBody
-                );
-                if (!shouldRetry || attempt == AUTH_MAX_ATTEMPTS) {
-                    throw error;
-                }
-                lastError = error;
-            } catch (Exception error) {
-                lastError = error;
-                if (attempt == AUTH_MAX_ATTEMPTS) {
-                    throw error;
-                }
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-            }
-
-            try {
-                Thread.sleep(900L * attempt);
-            } catch (InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-                throw interruptedException;
-            }
-        }
-        throw lastError == null ? new IllegalStateException("Google auth exchange failed") : lastError;
+        return ApiClient.getInstance().performGoogleAuthExchange(idToken);
     }
 
     private String toReadableAuthError(Exception error) {
@@ -485,6 +432,42 @@ public class MainActivity extends AppCompatActivity {
         appPreferences.clearAuthSession();
         googleSignInClient.signOut().addOnCompleteListener(this, task -> {
             Toast.makeText(this, R.string.home_sign_out_done, Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+    }
+
+    private void openPrivacyPolicy() {
+        String url = ApiConfig.getBaseUrl() + "/privacy-policy";
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not open browser for Privacy Policy", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void confirmAccountDeletion() {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.dialog_delete_account_title)
+            .setMessage(R.string.dialog_delete_account_message)
+            .setNegativeButton(R.string.dialog_delete_account_cancel, null)
+            .setPositiveButton(R.string.dialog_delete_account_confirm, (dialog, which) -> executeAccountDeletion())
+            .show();
+    }
+
+    private void executeAccountDeletion() {
+        Toast.makeText(this, "Deleting account...", Toast.LENGTH_SHORT).show();
+        RemoteSyncManager.getInstance(this).deleteAccount(success -> {
+            appPreferences.clearAuthSession();
+            try {
+                googleSignInClient.revokeAccess();
+                googleSignInClient.signOut();
+            } catch (Exception ignored) {
+            }
+            Toast.makeText(this, R.string.toast_delete_account_success, Toast.LENGTH_LONG).show();
             Intent intent = new Intent(this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);

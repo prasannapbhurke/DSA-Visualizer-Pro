@@ -1,67 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="surface_panel">#0D111E</color>
-    <color name="surface_panel_alt">#090D16</color>
-    <color name="surface_panel_muted">#0C101A</color>
-    <color name="surface_panel_deep">#06080E</color>
-    <color name="surface_panel_info">#0E1726</color>
-    <color name="code_surface">#0F1320</color>
-    <color name="code_surface_alt">#141A29</color>
-    <color name="code_surface_stroke">#1E293B</color>
-    <color name="surface_card">#111827</color>
-    <color name="surface_card_overlay">#CC111827</color>
-    <color name="surface_card_frosted">#C91A2635</color>
-    <color name="surface_stroke_accent">#3838BDF8</color>
-    <color name="surface_stroke_muted">#5B7FA7</color>
-    <color name="surface_chip">#183149</color>
+    <!-- Window & Main Background (High-Contrast Cyber-Dark) -->
+    <color name="window_background">#030712</color>
+    <color name="window_bg_start">#0A0F1D</color>
+    <color name="window_bg_end">#030712</color>
+
+    <!-- Glassmorphic Surfaces & Panels -->
+    <color name="surface_panel">#0A1124</color>
+    <color name="surface_panel_alt">#060B18</color>
+    <color name="surface_panel_muted">#0E172C</color>
+    <color name="surface_panel_deep">#040711</color>
+    <color name="surface_panel_info">#0D1933</color>
+    <color name="code_surface">#060A14</color>
+    <color name="code_surface_alt">#090E1D</color>
+    <color name="code_surface_stroke">#1B273E</color>
+    <color name="surface_card">#0B132B</color>
+    <color name="surface_card_overlay">#E60B132B</color>
+    <color name="surface_card_frosted">#CC111D38</color>
+    <color name="surface_stroke_accent">#38BDF8</color>
+    <color name="surface_stroke_muted">#1E2E4A</color>
+    <color name="surface_chip">#13203D</color>
+    <color name="surface_chip_algorithm_active">#152A4A</color>
+    <color name="surface_chip_algorithm_inactive">#0C162A</color>
+    <color name="surface_chip_code_active">#2A1B44</color>
+    <color name="surface_chip_code_inactive">#0C162A</color>
+    <color name="surface_chip_algorithm_stroke">#38BDF8</color>
+    <color name="surface_chip_code_stroke">#A78BFA</color>
+    <color name="surface_toggle_algorithm_active">#0E203B</color>
+    <color name="surface_toggle_algorithm_stroke">#38BDF8</color>
+    <color name="surface_toggle_visual_active">#082B2E</color>
+    <color name="surface_toggle_visual_stroke">#2DD4BF</color>
+    <color name="surface_toggle_quiz_active">#2F1E0B</color>
+    <color name="surface_toggle_quiz_stroke">#F59E0B</color>
+    <color name="surface_toggle_code_active">#23153A</color>
+    <color name="surface_toggle_code_stroke">#A78BFA</color>
+    <color name="surface_toggle_inactive">#0B132B</color>
+    <color name="surface_toggle_inactive_stroke">#1E2E4A</color>
+    <color name="surface_orb">#0E1B33</color>
+    <color name="surface_orb_stroke">#253D66</color>
+
+    <!-- Electric Neon Brand Accents -->
+    <color name="brand_blue">#38BDF8</color>
+    <color name="brand_blue_dark">#0284C7</color>
+    <color name="brand_teal_dark">#2DD4BF</color>
+    <color name="brand_violet">#A78BFA</color>
+    <color name="brand_amber_dark">#FBBF24</color>
+    <color name="progress_track">#1E293B</color>
+
+    <!-- Luminous Typography -->
     <color name="text_primary_bright">#F8FAFC</color>
-    <color name="text_primary_soft">#F8FBFF</color>
-    <color name="text_secondary">#DDE7F1</color>
-    <color name="text_secondary_soft">#DDE7F4</color>
-    <color name="text_muted">#C1D1E2</color>
-    <color name="text_muted_soft">#CADBF0</color>
-    <color name="text_support">#D7E1EC</color>
-    <color name="text_support_soft">#CCDAE8</color>
-    <color name="text_body_soft">#E2ECF6</color>
-    <color name="text_chip_blue">#EFF6FF</color>
-    <color name="text_chip_teal">#ECFEFF</color>
-    <color name="text_chip_violet">#F5F3FF</color>
+    <color name="text_primary_soft">#F1F5F9</color>
+    <color name="text_secondary">#CBD5E1</color>
+    <color name="text_secondary_soft">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
+    <color name="text_muted_soft">#475569</color>
+    <color name="text_support">#94A3B8</color>
+    <color name="text_support_soft">#64748B</color>
+    <color name="text_body_soft">#CBD5E1</color>
+    <color name="text_chip_blue">#E0F2FE</color>
+    <color name="text_chip_teal">#CCFBF1</color>
+    <color name="text_chip_violet">#EDE9FE</color>
     <color name="text_chip_amber">#FEF3C7</color>
-    <color name="text_hint_blue">#BDE0FE</color>
-    <color name="text_success">#86EFAC</color>
-    <color name="text_warning">#FCD34D</color>
-    <color name="text_error">#FDA4AF</color>
-    <color name="text_info">#7DD3FC</color>
-    <color name="category_card_surface">#132234</color>
+    <color name="text_hint_blue">#7DD3FC</color>
+    <color name="text_success">#4ADE80</color>
+    <color name="text_warning">#FBBF24</color>
+    <color name="text_error">#F87171</color>
+    <color name="text_info">#38BDF8</color>
+    <color name="text_on_orb">#E0F2FE</color>
+    <color name="text_option_badge">#E2E8F0</color>
+
+    <!-- Mastery Indicators -->
+    <color name="mastery_none">#475569</color>
+    <color name="mastery_beginner">#F87171</color>
+    <color name="mastery_intermediate">#FBBF24</color>
+    <color name="mastery_expert">#34D399</color>
+
+    <!-- Topic & Technique Cards -->
+    <color name="category_card_surface">#0B132B</color>
     <color name="category_badge_text">#FFFFFF</color>
     <color name="category_card_title">#F8FAFC</color>
-    <color name="category_card_subtitle">#A9BCD0</color>
-    <color name="technique_card_surface">#132234</color>
-    <color name="technique_card_stroke">#27405C</color>
+    <color name="category_card_subtitle">#94A3B8</color>
+    <color name="technique_card_surface">#0B132B</color>
+    <color name="technique_card_stroke">#1E2E4A</color>
     <color name="technique_card_title">#F8FAFC</color>
-    <color name="technique_card_subtitle">#A9BCD0</color>
-    <color name="technique_card_difficulty">#FCD34D</color>
+    <color name="technique_card_subtitle">#94A3B8</color>
+    <color name="technique_card_difficulty">#FBBF24</color>
     <color name="algorithm_option_badge_text">#E2E8F0</color>
     <color name="algorithm_option_title">#F8FAFC</color>
     <color name="algorithm_option_subtitle">#94A3B8</color>
     <color name="algorithm_option_difficulty">#CBD5E1</color>
-    <color name="player_dock_start">#1F2937</color>
-    <color name="player_dock_end">#111827</color>
-    <color name="player_strip_surface">#111827</color>
-    <color name="player_strip_stroke">#374151</color>
-    <color name="player_control_surface">#1F2937</color>
-    <color name="player_control_pressed_surface">#374151</color>
-    <color name="player_control_text">#FFFFFF</color>
-    <color name="player_control_disabled_surface">#0F172A</color>
+
+    <!-- Badges -->
+    <color name="badge_gradient_start">#0F243A</color>
+    <color name="badge_gradient_end">#1E3A5F</color>
+    <color name="badge_stroke">#2D5F92</color>
+
+    <!-- Player & Visualizer Dock Controls -->
+    <color name="player_dock_start">#0E172C</color>
+    <color name="player_dock_end">#070D1C</color>
+    <color name="player_strip_surface">#0B132B</color>
+    <color name="player_strip_stroke">#1E2E4A</color>
+    <color name="player_control_surface">#111D38</color>
+    <color name="player_control_pressed_surface">#1E2E4A</color>
+    <color name="player_control_text">#F8FAFC</color>
+    <color name="player_control_disabled_surface">#070D1C</color>
     <color name="player_control_disabled_text">#475569</color>
-    <color name="player_control_neutral_stroke">#475569</color>
-    <color name="player_control_disabled_stroke">#1E293B</color>
-    <color name="player_play_surface">#166B41</color>
-    <color name="player_play_active_surface">#128047</color>
-    <color name="player_play_pressed_surface">#0E5F38</color>
+    <color name="player_control_neutral_stroke">#1E2E4A</color>
+    <color name="player_control_disabled_stroke">#0E172C</color>
+    <color name="player_play_surface">#15803D</color>
+    <color name="player_play_active_surface">#22C55E</color>
+    <color name="player_play_pressed_surface">#166534</color>
     <color name="player_play_stroke">#4ADE80</color>
-    <color name="player_reset_surface">#2C2215</color>
-    <color name="player_reset_pressed_surface">#3A2D1A</color>
-    <color name="player_reset_text">#F5D18D</color>
-    <color name="player_reset_stroke">#A87A2B</color>
+    <color name="player_reset_surface">#2D1E08</color>
+    <color name="player_reset_pressed_surface">#3D290B</color>
+    <color name="player_reset_text">#FDE68A</color>
+    <color name="player_reset_stroke">#B45309</color>
 </resources>

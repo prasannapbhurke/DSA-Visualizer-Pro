@@ -6,6 +6,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,12 +22,7 @@ import com.google.android.material.button.MaterialButton;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import com.dsavisualizer.app.data.ApiClient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,26 +70,9 @@ public class OwnerFeedbackActivity extends AppCompatActivity {
 
     private void fetchFeedback() {
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/feedback");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
+        ApiClient.getInstance().get("/api/feedback", appPreferences.getAuthToken(), new ApiClient.Callback() {
+            @Override
+            public void onSuccess(@NonNull JSONObject payload) {
                 JSONObject data = payload.optJSONObject("data");
                 JSONArray feedback = data == null ? null : data.optJSONArray("feedback");
                 List<FeedbackInboxItem> loaded = new ArrayList<>();
@@ -122,27 +101,22 @@ public class OwnerFeedbackActivity extends AppCompatActivity {
                     }
                 }
 
-                runOnUiThread(() -> {
-                    items.clear();
-                    items.addAll(loaded);
-                    adapter.submitList(items);
-                    summaryText.setText(getString(R.string.feedback_inbox_summary, items.size()));
-                    emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-                    setLoading(false);
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    emptyText.setText(R.string.feedback_inbox_load_failed);
-                    emptyText.setVisibility(View.VISIBLE);
-                    setLoading(false);
-                    Toast.makeText(this, R.string.feedback_inbox_load_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
+                items.clear();
+                items.addAll(loaded);
+                adapter.submitList(items);
+                summaryText.setText(getString(R.string.feedback_inbox_summary, items.size()));
+                emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                setLoading(false);
             }
-        }).start();
+
+            @Override
+            public void onError(@NonNull Exception error) {
+                emptyText.setText(R.string.feedback_inbox_load_failed);
+                emptyText.setVisibility(View.VISIBLE);
+                setLoading(false);
+                Toast.makeText(OwnerFeedbackActivity.this, R.string.feedback_inbox_load_failed, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void confirmDeleteFeedback(FeedbackInboxItem item) {
@@ -156,57 +130,22 @@ public class OwnerFeedbackActivity extends AppCompatActivity {
 
     private void deleteFeedback(FeedbackInboxItem item) {
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/feedback/" + item.id);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("DELETE");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                runOnUiThread(() -> {
-                    Toast.makeText(this, R.string.feedback_inbox_delete_done, Toast.LENGTH_SHORT).show();
-                    fetchFeedback();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.feedback_inbox_delete_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
+        ApiClient.getInstance().delete("/api/feedback/" + item.id, appPreferences.getAuthToken(), new ApiClient.Callback() {
+            @Override
+            public void onSuccess(@NonNull JSONObject response) {
+                Toast.makeText(OwnerFeedbackActivity.this, R.string.feedback_inbox_delete_done, Toast.LENGTH_SHORT).show();
+                fetchFeedback();
             }
-        }).start();
+
+            @Override
+            public void onError(@NonNull Exception error) {
+                setLoading(false);
+                Toast.makeText(OwnerFeedbackActivity.this, R.string.feedback_inbox_delete_failed, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void setLoading(boolean loading) {
         loadingIndicator.setVisibility(loading ? View.VISIBLE : View.GONE);
-    }
-
-    private String readStream(InputStream stream) throws Exception {
-        if (stream == null) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-        }
-        return builder.toString();
     }
 }

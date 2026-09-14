@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,6 +30,7 @@ import com.dsavisualizer.app.model.ClassroomInfo;
 import com.dsavisualizer.app.ui.CompactUiHelper;
 import com.dsavisualizer.app.ui.SafeInsetHelper;
 import com.dsavisualizer.app.ui.adapter.ClassroomAdapter;
+import com.dsavisualizer.app.ui.viewmodel.ClassroomViewModel;
 import com.dsavisualizer.app.ui.walkthrough.WalkthroughManager;
 import com.dsavisualizer.app.ui.walkthrough.WalkthroughOverlayView;
 import com.google.android.material.button.MaterialButton;
@@ -37,15 +39,7 @@ import com.google.android.material.snackbar.Snackbar;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import com.dsavisualizer.app.data.ApiClient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +55,7 @@ public class ClassroomActivity extends AppCompatActivity {
     private MaterialButton joinClassButton;
     private WalkthroughOverlayView walkthroughOverlay;
     private RemoteSyncManager remoteSyncManager;
+    private ClassroomViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +90,26 @@ public class ClassroomActivity extends AppCompatActivity {
         adapter = new ClassroomAdapter(this::handleClassroomClicked);
         recyclerView.setAdapter(adapter);
 
+        viewModel = new ViewModelProvider(this).get(ClassroomViewModel.class);
+        viewModel.getClassrooms().observe(this, list -> {
+            classrooms.clear();
+            if (list != null) {
+                classrooms.addAll(list);
+            }
+            adapter.submitList(classrooms);
+            emptyText.setVisibility(classrooms.isEmpty() ? View.VISIBLE : View.GONE);
+            maybeStartWalkthrough();
+            maybeShowMiniTip();
+        });
+        viewModel.getLoading().observe(this, this::setLoading);
+        viewModel.getErrorMessage().observe(this, error -> {
+            if (error != null) {
+                emptyText.setText(R.string.classroom_load_failed);
+                emptyText.setVisibility(View.VISIBLE);
+                Toast.makeText(this, R.string.classroom_load_failed, Toast.LENGTH_LONG).show();
+            }
+        });
+
         bindRoleActions();
         createClassButton.setOnClickListener(v -> openCreateClassDialog());
         joinClassButton.setOnClickListener(v -> openJoinClassDialog());
@@ -109,7 +124,7 @@ public class ClassroomActivity extends AppCompatActivity {
     private void refreshRoleThenFetchClasses() {
         remoteSyncManager.refreshCurrentUser(success -> {
             bindRoleActions();
-            fetchClasses();
+            viewModel.loadClasses(appPreferences.getAuthToken(), false);
         });
     }
 
@@ -131,62 +146,7 @@ public class ClassroomActivity extends AppCompatActivity {
     }
 
     private void fetchClasses() {
-        setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
-                JSONObject data = payload.optJSONObject("data");
-                JSONArray items = data == null ? null : data.optJSONArray("classes");
-                List<ClassroomInfo> loaded = new ArrayList<>();
-                if (items != null) {
-                    for (int i = 0; i < items.length(); i++) {
-                        JSONObject item = items.optJSONObject(i);
-                        if (item == null) {
-                            continue;
-                        }
-                        loaded.add(parseClassroom(item));
-                    }
-                }
-
-                runOnUiThread(() -> {
-                    classrooms.clear();
-                    classrooms.addAll(loaded);
-                    adapter.submitList(classrooms);
-                    emptyText.setVisibility(classrooms.isEmpty() ? View.VISIBLE : View.GONE);
-                    setLoading(false);
-                    maybeStartWalkthrough();
-                    maybeShowMiniTip();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    emptyText.setText(R.string.classroom_load_failed);
-                    emptyText.setVisibility(View.VISIBLE);
-                    setLoading(false);
-                    Toast.makeText(this, R.string.classroom_load_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-            }
-        }).start();
+        viewModel.loadClasses(appPreferences.getAuthToken(), true);
     }
 
     private void openCreateClassDialog() {
@@ -239,61 +199,37 @@ public class ClassroomActivity extends AppCompatActivity {
 
     private void createClass(@NonNull String name, @NonNull String description) {
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
+        try {
+            JSONObject body = new JSONObject();
+            body.put("name", name);
+            body.put("description", description);
 
-                JSONObject body = new JSONObject();
-                body.put("name", name);
-                body.put("description", description);
+            ApiClient.getInstance().post("/api/classes", body, appPreferences.getAuthToken(), new ApiClient.Callback() {
+                @Override
+                public void onSuccess(@NonNull JSONObject payload) {
+                    JSONObject data = payload.optJSONObject("data");
+                    JSONObject classroom = data == null ? null : data.optJSONObject("classroom");
+                    ClassroomInfo createdClassroom = classroom == null ? null : parseClassroom(classroom);
 
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(body.toString());
-                }
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                JSONObject payload = new JSONObject(responseBody);
-                JSONObject data = payload.optJSONObject("data");
-                JSONObject classroom = data == null ? null : data.optJSONObject("classroom");
-                ClassroomInfo createdClassroom = classroom == null ? null : parseClassroom(classroom);
-
-                runOnUiThread(() -> {
-                    Toast.makeText(this, R.string.classroom_create_success, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ClassroomActivity.this, R.string.classroom_create_success, Toast.LENGTH_SHORT).show();
                     if (createdClassroom != null) {
                         copyJoinCode(createdClassroom.joinCode, true);
                         Snackbar.make(findViewById(R.id.classroom_root), R.string.classroom_copy_code_ready, Snackbar.LENGTH_LONG).show();
                         showCreatedClassDialog(createdClassroom);
                     }
                     fetchClasses();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.classroom_create_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
                 }
-            }
-        }).start();
+
+                @Override
+                public void onError(@NonNull Exception error) {
+                    setLoading(false);
+                    Toast.makeText(ClassroomActivity.this, R.string.classroom_create_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            setLoading(false);
+            Toast.makeText(this, R.string.classroom_create_failed, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void openJoinClassDialog() {
@@ -320,50 +256,28 @@ public class ClassroomActivity extends AppCompatActivity {
 
     private void joinClass(@NonNull String joinCode) {
         setLoading(true);
-        new Thread(() -> {
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(ApiConfig.getBaseUrl() + "/api/classes/join");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(7000);
-                connection.setReadTimeout(7000);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + appPreferences.getAuthToken());
+        try {
+            JSONObject body = new JSONObject();
+            body.put("joinCode", joinCode);
 
-                JSONObject body = new JSONObject();
-                body.put("joinCode", joinCode);
-                try (OutputStream outputStream = connection.getOutputStream();
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
-                    writer.write(body.toString());
-                }
-
-                int statusCode = connection.getResponseCode();
-                String responseBody = readStream(statusCode >= 200 && statusCode < 300
-                    ? connection.getInputStream()
-                    : connection.getErrorStream());
-                if (statusCode < 200 || statusCode >= 300) {
-                    throw new IllegalStateException(responseBody);
-                }
-
-                runOnUiThread(() -> {
-                    Toast.makeText(this, R.string.classroom_join_success, Toast.LENGTH_SHORT).show();
+            ApiClient.getInstance().post("/api/classes/join", body, appPreferences.getAuthToken(), new ApiClient.Callback() {
+                @Override
+                public void onSuccess(@NonNull JSONObject response) {
+                    Toast.makeText(ClassroomActivity.this, R.string.classroom_join_success, Toast.LENGTH_SHORT).show();
                     Snackbar.make(findViewById(R.id.classroom_root), R.string.classroom_join_sync_ready, Snackbar.LENGTH_LONG).show();
                     fetchClasses();
-                });
-            } catch (Exception error) {
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, R.string.classroom_join_failed, Toast.LENGTH_LONG).show();
-                });
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
                 }
-            }
-        }).start();
+
+                @Override
+                public void onError(@NonNull Exception error) {
+                    setLoading(false);
+                    Toast.makeText(ClassroomActivity.this, R.string.classroom_join_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            setLoading(false);
+            Toast.makeText(this, R.string.classroom_join_failed, Toast.LENGTH_LONG).show();
+        }
     }
 
     private ClassroomInfo parseClassroom(JSONObject item) {
@@ -429,19 +343,6 @@ public class ClassroomActivity extends AppCompatActivity {
         return ContextCompat.getColor(this, fallbackColorResId);
     }
 
-    private String readStream(InputStream stream) throws Exception {
-        if (stream == null) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-        }
-        return builder.toString();
-    }
 
     private void maybeStartWalkthrough() {
         String stage = appPreferences.getWalkthroughStage();
