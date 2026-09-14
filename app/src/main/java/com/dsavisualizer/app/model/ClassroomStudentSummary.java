@@ -4,6 +4,8 @@ public class ClassroomStudentSummary {
     public final String userId;
     public final String displayName;
     public final String email;
+    public final String rollNumber;
+    public final String studentBatch;
     public final int totalTechniquesStarted;
     public final int completedTechniques;
     public final int totalPracticeSessions;
@@ -15,6 +17,8 @@ public class ClassroomStudentSummary {
         String userId,
         String displayName,
         String email,
+        String rollNumber,
+        String studentBatch,
         int totalTechniquesStarted,
         int completedTechniques,
         int totalPracticeSessions,
@@ -25,6 +29,8 @@ public class ClassroomStudentSummary {
         this.userId = userId == null ? "" : userId;
         this.displayName = displayName == null ? "" : displayName;
         this.email = email == null ? "" : email;
+        this.rollNumber = rollNumber == null ? "" : rollNumber;
+        this.studentBatch = studentBatch == null ? "" : studentBatch;
         this.totalTechniquesStarted = totalTechniquesStarted;
         this.completedTechniques = completedTechniques;
         this.totalPracticeSessions = totalPracticeSessions;

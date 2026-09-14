@@ -114,8 +114,11 @@
     <string name="classroom_create_name_hint">Class name</string>
     <string name="classroom_create_description_hint">Short description (optional)</string>
     <string name="classroom_join_code_hint">Enter join code</string>
+    <string name="classroom_join_roll_hint">Roll Number / PRN (e.g. CS21B045)</string>
+    <string name="classroom_join_batch_hint">Batch / Section (e.g. Batch A1, Sec B)</string>
     <string name="classroom_create_name_required">Enter a class name first.</string>
     <string name="classroom_join_code_required">Enter the join code first.</string>
+    <string name="classroom_join_roll_required">Enter your roll number / PRN.</string>
     <string name="classroom_create_success">Class created successfully.</string>
     <string name="classroom_create_failed">The class could not be created right now.</string>
     <string name="classroom_join_success">Class joined successfully.</string>
@@ -138,6 +141,14 @@
     <string name="class_students_empty">No students have joined this class yet.</string>
     <string name="class_students_load_failed">The student progress list could not be loaded right now.</string>
     <string name="class_students_weak_topics_empty">Class weak-topic summary will appear after students start attempting quizzes.</string>
+    <string name="class_students_export_button">Export Marks CSV</string>
+    <string name="class_students_exporting">Preparing roster marksheet...</string>
+    <string name="class_students_export_success">Roster marksheet ready to save / share.</string>
+    <string name="class_students_export_failed">Failed to export class marksheet.</string>
+    <string name="class_students_sort_button">Sort</string>
+    <string name="class_students_sort_title">Sort Roster</string>
+    <string name="class_students_sort_roll">By Roll Number</string>
+    <string name="class_students_sort_name">By Student Name</string>
     <string name="class_students_weak_topics_line">%1$s • %2$d students struggling • lowest best %3$d</string>
     <string name="class_resources_button">Resources</string>
     <string name="classroom_student_default_name">Student</string>
@@ -636,4 +647,37 @@
     <string name="walkthrough_prompt_action_quiz">Open Quiz</string>
     <string name="classroom_join_sync_ready">Your progress now syncs with your teacher.</string>
     <string name="classroom_copy_code_ready">Join code copied. Share it with students now.</string>
+
+    <!-- DSA Control Centre -->
+    <string name="home_control_centre">DSA Control Centre</string>
+    <string name="control_centre_title">DSA Control Centre</string>
+    <string name="control_centre_owner_subtitle">Administrator Command Deck</string>
+    <string name="control_centre_teacher_subtitle">Teacher Command Deck</string>
+    <string name="control_centre_kpi_classes">Classes</string>
+    <string name="control_centre_kpi_students">Students</string>
+    <string name="control_centre_kpi_sessions">Practice Runs</string>
+    <string name="control_centre_kpi_feedback">Inquiries</string>
+    <string name="control_centre_kpi_users">Total Users</string>
+    <string name="control_centre_kpi_teachers">Teachers</string>
+    <string name="control_centre_quick_actions_title">Command Desk</string>
+    <string name="control_centre_action_classroom">Classrooms &amp; Rosters</string>
+    <string name="control_centre_action_feedback">Review Feedback</string>
+    <string name="control_centre_action_users">Manage User Roles</string>
+    <string name="control_centre_action_analytics">Telemetry &amp; Audit Logs</string>
+    <string name="control_centre_live_title">Live Broadcast ("Follow-Me")</string>
+    <string name="control_centre_live_desc">Broadcast your visualizer playback step-by-step to student screens in real time.</string>
+    <string name="control_centre_live_start">Start Broadcast</string>
+    <string name="control_centre_live_stop">Stop Broadcast</string>
+    <string name="control_centre_live_active">Live broadcast active for class %1$s (%2$s)</string>
+    <string name="control_centre_live_inactive">No broadcast running. Select a classroom to stream.</string>
+    <string name="control_centre_settings_title">Platform Feature Controls</string>
+    <string name="control_centre_flag_avl">AVL Tree Visualizer</string>
+    <string name="control_centre_flag_huffman">Huffman Coding Engine</string>
+    <string name="control_centre_flag_trie">Trie Visualizer</string>
+    <string name="control_centre_flag_dijkstra">Dijkstra Pathfinding</string>
+    <string name="control_centre_announcement_button">Broadcast Notice</string>
+    <string name="control_centre_recent_title">Recent Class Activity</string>
+    <string name="control_centre_unauthorized">Access restricted to teachers and administrators.</string>
+    <string name="control_centre_refresh">Refresh</string>
+    <string name="control_centre_load_error">Could not load Control Centre data. Please check connection.</string>
 </resources>

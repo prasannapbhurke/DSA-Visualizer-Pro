@@ -5,6 +5,10 @@ const { statusResponseDto } = require('../dto');
 const createPublicRouter = () => {
   const router = express.Router();
 
+  router.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  });
+
   router.get('/openapi.json', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'openapi.json'));
   });

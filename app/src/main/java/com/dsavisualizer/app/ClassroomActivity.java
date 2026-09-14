@@ -233,32 +233,73 @@ public class ClassroomActivity extends AppCompatActivity {
     }
 
     private void openJoinClassDialog() {
-        EditText input = new EditText(this);
-        input.setHint(R.string.classroom_join_code_hint);
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
-        input.setTextColor(resolveThemeColor(android.R.attr.textColorPrimary, R.color.text_primary_bright));
-        input.setHintTextColor(resolveThemeColor(android.R.attr.textColorHint, R.color.text_muted));
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        int padding = dpToPx(20);
+        container.setPadding(padding, dpToPx(8), padding, 0);
+
+        EditText codeInput = new EditText(this);
+        codeInput.setHint(R.string.classroom_join_code_hint);
+        codeInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        codeInput.setTextColor(resolveThemeColor(android.R.attr.textColorPrimary, R.color.text_primary_bright));
+        codeInput.setHintTextColor(resolveThemeColor(android.R.attr.textColorHint, R.color.text_muted));
+
+        EditText rollInput = new EditText(this);
+        LinearLayout.LayoutParams rollParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        rollParams.topMargin = dpToPx(12);
+        rollInput.setLayoutParams(rollParams);
+        rollInput.setHint(R.string.classroom_join_roll_hint);
+        rollInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        rollInput.setTextColor(resolveThemeColor(android.R.attr.textColorPrimary, R.color.text_primary_bright));
+        rollInput.setHintTextColor(resolveThemeColor(android.R.attr.textColorHint, R.color.text_muted));
+
+        EditText batchInput = new EditText(this);
+        LinearLayout.LayoutParams batchParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        batchParams.topMargin = dpToPx(12);
+        batchInput.setLayoutParams(batchParams);
+        batchInput.setHint(R.string.classroom_join_batch_hint);
+        batchInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        batchInput.setTextColor(resolveThemeColor(android.R.attr.textColorPrimary, R.color.text_primary_bright));
+        batchInput.setHintTextColor(resolveThemeColor(android.R.attr.textColorHint, R.color.text_muted));
+
+        container.addView(codeInput);
+        container.addView(rollInput);
+        container.addView(batchInput);
 
         new AlertDialog.Builder(this)
             .setTitle(R.string.classroom_join_title)
-            .setView(input)
+            .setView(container)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(R.string.classroom_join_button_text, (dialog, which) -> {
-                String joinCode = input.getText() == null ? "" : input.getText().toString().trim().toUpperCase();
+                String joinCode = codeInput.getText() == null ? "" : codeInput.getText().toString().trim().toUpperCase();
+                String rollNumber = rollInput.getText() == null ? "" : rollInput.getText().toString().trim();
+                String studentBatch = batchInput.getText() == null ? "" : batchInput.getText().toString().trim();
                 if (joinCode.isEmpty()) {
                     Toast.makeText(this, R.string.classroom_join_code_required, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                joinClass(joinCode);
+                if (rollNumber.isEmpty()) {
+                    Toast.makeText(this, R.string.classroom_join_roll_required, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                joinClass(joinCode, rollNumber, studentBatch);
             })
             .show();
     }
 
-    private void joinClass(@NonNull String joinCode) {
+    private void joinClass(@NonNull String joinCode, @NonNull String rollNumber, @NonNull String studentBatch) {
         setLoading(true);
         try {
             JSONObject body = new JSONObject();
             body.put("joinCode", joinCode);
+            body.put("rollNumber", rollNumber);
+            body.put("studentBatch", studentBatch);
 
             ApiClient.getInstance().post("/api/classes/join", body, appPreferences.getAuthToken(), new ApiClient.Callback() {
                 @Override

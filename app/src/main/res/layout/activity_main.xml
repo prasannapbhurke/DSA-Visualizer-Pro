@@ -280,6 +280,18 @@
                 android:text="@string/home_about_button" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/control_centre_button"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/home_control_centre"
+                app:icon="@drawable/ic_shield_privacy"
+                app:iconGravity="textStart"
+                app:iconPadding="10dp"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/classroom_button"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"

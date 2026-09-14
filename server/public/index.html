@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA Visualizer Pro — Desktop App</title>
+  <meta name="description" content="Official DSA Visualizer Pro Desktop Application. Interactive Data Structures & Algorithms, Skill Tree, Classroom, and Control Centre." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#070B12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DSA Pro" />
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-base: #070B12;
+      --bg-surface: #0D1424;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(26, 38, 66, 0.85);
+      --border-color: rgba(99, 140, 255, 0.16);
+      --border-glow: rgba(99, 140, 255, 0.4);
+      --text-main: #F8FAFC;
+      --text-sub: #94A3B8;
+      --text-muted: #64748B;
+      --accent-gradient: linear-gradient(135deg, #6366F1 0%, #38BDF8 100%);
+      --accent-purple: #8B5CF6;
+      --accent-cyan: #38BDF8;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-rose: #F43F5E;
+      --radius-xl: 18px;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --radius-sm: 4px;
+      --font-title: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Ambient lighting */
+    .ambient-glow {
+      position: fixed;
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1200px;
+      height: 500px;
+      background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.18) 0%, rgba(56, 189, 248, 0.06) 50%, transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top App Navigation */
+    header.desktop-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      background: rgba(7, 11, 18, 0.88);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    .brand-icon svg { width: 22px; height: 22px; fill: #fff; }
+    .brand-meta h1 {
+      font-family: var(--font-title);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #FFFFFF 60%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-meta span.desktop-tag {
+      font-size: 0.65rem;
+      font-family: var(--font-body);
+      font-weight: 700;
+      color: #38BDF8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 2px 6px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Tab switcher */
+    .tab-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(13, 20, 36, 0.8);
+      padding: 4px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn.active {
+      background: var(--accent-gradient);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+    .tab-btn.badge-special {
+      position: relative;
+    }
+
+    /* Right Action Bar */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .role-selector {
+      display: flex;
+      align-items: center;
+      background: rgba(13, 20, 36, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .role-pill {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .role-pill.active {
+      background: rgba(99, 102, 241, 0.25);
+      color: #A5B4FC;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+    }
+    .role-pill.role-owner.active {
+      background: rgba(244, 63, 94, 0.25);
+      color: #FDA4AF;
+      border: 1px solid rgba(244, 63, 94, 0.4);
+    }
+    .role-pill.role-teacher.active {
+      background: rgba(56, 189, 248, 0.25);
+      color: #7DD3FC;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .btn-install-desktop {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #FFF;
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+      transition: transform 0.15s ease;
+    }
+    .btn-install-desktop:hover { transform: translateY(-1px); }
+
+    /* Content Area */
+    main.app-viewport {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+      padding: 24px;
+      max-width: 1540px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .view-panel { display: none; }
+    .view-panel.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ========================================================
+       VIEW 1: VISUALIZER STUDIO
+    ======================================================== */
+    .studio-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 1300px) {
+      .studio-layout { grid-template-columns: 280px 1fr; }
+      .side-info-panel { grid-column: span 2; }
+    }
+    @media (max-width: 900px) {
+      .studio-layout { grid-template-columns: 1fr; }
+      .side-info-panel { grid-column: span 1; }
+    }
+
+    /* Left Sidebar: Catalog & Categories */
+    .catalog-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+    .catalog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+    .catalog-header h3 {
+      font-family: var(--font-title);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .category-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .category-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 6px;
+      padding-left: 4px;
+    }
+    .algo-item-btn {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid transparent;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+    }
+    .algo-item-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: rgba(99, 140, 255, 0.2);
+    }
+    .algo-item-btn.selected {
+      background: rgba(99, 102, 241, 0.15);
+      color: #A5B4FC;
+      border-color: rgba(99, 102, 241, 0.4);
+      font-weight: 600;
+    }
+    .badge-diff {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .diff-easy { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+    .diff-med { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+    .diff-hard { background: rgba(244, 63, 94, 0.15); color: #FB7185; }
+
+    /* Center: Stage & Canvas */
+    .stage-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      min-height: 540px;
+    }
+    .stage-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .current-algo-title h2 {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+    .current-algo-title p {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    /* Live Canvas Area */
+    .visualizer-canvas-container {
+      flex: 1;
+      min-height: 340px;
+      background: rgba(7, 11, 18, 0.6);
+      border: 1px solid rgba(99, 140, 255, 0.1);
+      border-radius: var(--radius-lg);
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 24px 20px 20px 20px;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    /* Array bar elements */
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: height 0.15s ease, background 0.15s ease;
+      flex: 1;
+      max-width: 50px;
+      min-width: 24px;
+    }
+    .bar-rect {
+      width: 100%;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      background: linear-gradient(180deg, #6366F1 0%, #4338CA 100%);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+      transition: height 0.12s ease, background 0.12s ease;
+    }
+    .bar-rect.compare {
+      background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%) !important;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.5) !important;
+      transform: scale(1.04);
+    }
+    .bar-rect.swap {
+      background: linear-gradient(180deg, #38BDF8 0%, #0284C7 100%) !important;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.5) !important;
+      transform: scale(1.04);
+    }
+    .bar-rect.sorted {
+      background: linear-gradient(180deg, #10B981 0%, #059669 100%) !important;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.4) !important;
+    }
+    .bar-val {
+      font-size: 0.75rem;
+      font-family: var(--font-code);
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    /* Node & Pointer view (For Lists, Stacks, Trees) */
+    .nodes-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      width: 100%;
+      height: 100%;
+      min-height: 280px;
+      align-content: center;
+    }
+    .node-box {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.15);
+      border: 2px solid #6366F1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-code);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      position: relative;
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.25);
+      transition: all 0.2s ease;
+    }
+    .node-box.active {
+      border-color: #38BDF8;
+      background: rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+      transform: scale(1.1);
+    }
+    .node-arrow {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    /* Controls Deck */
+    .stage-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      background: rgba(13, 20, 36, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 12px 18px;
+    }
+    .playback-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-ctrl {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-ctrl:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-glow);
+    }
+    .btn-ctrl.btn-primary {
+      background: var(--accent-gradient);
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    .speed-deck {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+    .speed-deck input[type="range"] {
+      width: 100px;
+      accent-color: #6366F1;
+      cursor: pointer;
+    }
+
+    /* Execution Log & Step Feed */
+    .step-telemetry-banner {
+      background: rgba(16, 24, 40, 0.8);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-left: 4px solid #38BDF8;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-family: var(--font-code);
+      font-size: 0.82rem;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Right Sidebar: Pseudocode & Complexity */
+    .side-info-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+    .info-card h4 {
+      font-family: var(--font-title);
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .complexity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .c-metric {
+      background: rgba(7, 11, 18, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .c-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    .c-val { font-family: var(--font-code); font-size: 0.9rem; font-weight: 700; color: #38BDF8; }
+
+    .code-box {
+      background: #050810;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      font-family: var(--font-code);
+      font-size: 0.78rem;
+      color: #94A3B8;
+      line-height: 1.6;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .code-line {
+      padding: 2px 4px;
+      border-radius: 2px;
+      transition: all 0.1s ease;
+    }
+    .code-line.active-line {
+      background: rgba(56, 189, 248, 0.2);
+      color: #FFFFFF;
+      font-weight: 600;
+      border-left: 2px solid #38BDF8;
+    }
+
+    /* ========================================================
+       VIEW 2: SKILL TREE & MASTERY MAP
+    ======================================================== */
+    .skilltree-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .tree-hero {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .tree-hero-text h2 {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .tree-hero-text p {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+    }
+    .tree-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .tree-node-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .tree-node-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-glow);
+      background: var(--bg-card-hover);
+    }
+    .tree-node-card.locked {
+      opacity: 0.55;
+      filter: grayscale(0.5);
+    }
+    .node-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .node-icon-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .progress-track {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent-gradient);
+    }
+
+    /* ========================================================
+       VIEW 3: CLASSROOM & RESOURCES
+    ======================================================== */
+    .classroom-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .classrooms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+    .class-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .class-card h3 {
+      font-family: var(--font-title);
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+    .resource-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .resource-item {
+      background: rgba(7, 11, 18, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    /* ========================================================
+       VIEW 4: CONTROL CENTRE (EMBEDDED COMMAND HUB)
+    ======================================================== */
+    .control-center-frame {
+      width: 100%;
+      height: calc(100vh - 120px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .control-center-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Footer */
+    footer.app-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 12px 24px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(7, 11, 18, 0.95);
+    }
+    .footer-left { display: flex; align-items: center; gap: 8px; }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <!-- Header / Navigation -->
+  <header class="desktop-header">
+    <div class="brand-box" onclick="switchTab('visualizer')">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg>
+      </div>
+      <div class="brand-meta">
+        <h1>DSA Visualizer Pro <span class="desktop-tag">Desktop Edition</span></h1>
+      </div>
+    </div>
+
+    <!-- Center Navigation Tabs -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" id="tab-visualizer" onclick="switchTab('visualizer')">
+        <span>📊</span> Visualizer Studio
+      </button>
+      <button class="tab-btn" id="tab-skilltree" onclick="switchTab('skilltree')">
+        <span>🗺️</span> Skill Tree
+      </button>
+      <button class="tab-btn" id="tab-classroom" onclick="switchTab('classroom')">
+        <span>🏫</span> Classroom
+      </button>
+      <button class="tab-btn badge-special" id="tab-control-center" onclick="switchTab('control-center')">
+        <span>⚡</span> Control Centre
+      </button>
+    </nav>
+
+    <!-- Right Profile / Role Bar -->
+    <div class="header-right">
+      <button class="btn-install-desktop" id="btn-install" onclick="installDesktopApp()">
+        <span>⬇️</span> Install Desktop App
+      </button>
+
+      <!-- Role Switcher -->
+      <div class="role-selector" title="Switch between User Modes">
+        <button class="role-pill active" id="pill-student" onclick="setRole('student')">🎓 Student</button>
+        <button class="role-pill role-teacher" id="pill-teacher" onclick="setRole('teacher')">👨‍🏫 Teacher</button>
+        <button class="role-pill role-owner" id="pill-owner" onclick="setRole('owner')">🛡️ Owner</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Viewport Area -->
+  <main class="app-viewport">
+
+    <!-- ==========================================
+         PANEL 1: VISUALIZER STUDIO
+    ========================================== -->
+    <section class="view-panel active" id="panel-visualizer">
+      <div class="studio-layout">
+
+        <!-- Left Column: Algorithm Catalog -->
+        <aside class="catalog-card">
+          <div class="catalog-header">
+            <h3>Algorithm Catalog</h3>
+            <span style="font-size:0.75rem; color:var(--text-muted);" id="algo-count-badge">26 Algos</span>
+          </div>
+
+          <div class="category-group">
+            <div class="category-label">Sorting Algorithms</div>
+            <button class="algo-item-btn selected" onclick="loadAlgo('bubble')">
+              <span>Bubble Sort</span>
+              <span class="badge-diff diff-easy">Easy</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('quick')">
+              <span>Quick Sort</span>
+              <span class="badge-diff diff-hard">Hard</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('merge')">
+              <span>Merge Sort</span>
+              <span class="badge-diff diff-med">Medium</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('insertion')">
+              <span>Insertion Sort</span>
+              <span class="badge-diff diff-easy">Easy</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('selection')">
+              <span>Selection Sort</span>
+              <span class="badge-diff diff-easy">Easy</span>
+            </button>
+
+            <div class="category-label">Searching Algorithms</div>
+            <button class="algo-item-btn" onclick="loadAlgo('binary_search')">
+              <span>Binary Search</span>
+              <span class="badge-diff diff-med">Medium</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('linear_search')">
+              <span>Linear Search</span>
+              <span class="badge-diff diff-easy">Easy</span>
+            </button>
+
+            <div class="category-label">Linked Structures</div>
+            <button class="algo-item-btn" onclick="loadAlgo('singly_linked_list')">
+              <span>Singly Linked List</span>
+              <span class="badge-diff diff-easy">Easy</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('doubly_linked_list')">
+              <span>Doubly Linked List</span>
+              <span class="badge-diff diff-med">Medium</span>
+            </button>
+
+            <div class="category-label">Stack & Queue</div>
+            <button class="algo-item-btn" onclick="loadAlgo('stack')">
+              <span>Stack (LIFO)</span>
+              <span class="badge-diff diff-easy">Easy</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('queue')">
+              <span>Queue (FIFO)</span>
+              <span class="badge-diff diff-easy">Easy</span>
+            </button>
+
+            <div class="category-label">Trees & Graphs</div>
+            <button class="algo-item-btn" onclick="loadAlgo('bst')">
+              <span>Binary Search Tree</span>
+              <span class="badge-diff diff-med">Medium</span>
+            </button>
+            <button class="algo-item-btn" onclick="loadAlgo('bfs')">
+              <span>Graph BFS</span>
+              <span class="badge-diff diff-med">Medium</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Center Column: Visualization Canvas & Player -->
+        <div class="stage-card">
+          <div class="stage-top">
+            <div class="current-algo-title">
+              <h2 id="stage-algo-title">Bubble Sort</h2>
+              <p id="stage-algo-desc">Repeated passes compare adjacent elements and move the largest item toward the end.</p>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-ctrl" onclick="generateRandomData()">🎲 Randomize</button>
+            </div>
+          </div>
+
+          <!-- Canvas / Node Viewport -->
+          <div class="visualizer-canvas-container" id="visualizer-canvas">
+            <!-- Dynamically populated bars or nodes -->
+          </div>
+
+          <!-- Live Step Telemetry Banner -->
+          <div class="step-telemetry-banner" id="step-banner">
+            <span>⚡</span>
+            <span id="step-text">Ready to run. Click Play or Step to begin visual step-by-step trace.</span>
+          </div>
+
+          <!-- Controls Deck -->
+          <div class="stage-controls">
+            <div class="playback-buttons">
+              <button class="btn-ctrl btn-primary" id="btn-play" onclick="togglePlay()">
+                <span id="play-icon">▶</span> <span id="play-label">Play</span>
+              </button>
+              <button class="btn-ctrl" id="btn-step" onclick="stepForward()">
+                <span>⏭</span> Step
+              </button>
+              <button class="btn-ctrl" onclick="resetVisualizer()">
+                <span>🔄</span> Reset
+              </button>
+            </div>
+
+            <div class="speed-deck">
+              <span>Speed:</span>
+              <input type="range" id="speed-slider" min="50" max="1000" step="50" value="400" oninput="updateSpeed(this.value)" />
+              <span id="speed-display">1.0x</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Complexity & Pseudocode -->
+        <aside class="side-info-panel">
+          <div class="info-card">
+            <h4>Algorithm Telemetry</h4>
+            <div class="complexity-grid">
+              <div class="c-metric">
+                <span class="c-label">Best Time</span>
+                <span class="c-val" id="val-best-time">O(n)</span>
+              </div>
+              <div class="c-metric">
+                <span class="c-label">Worst Time</span>
+                <span class="c-val" id="val-worst-time">O(n²)</span>
+              </div>
+              <div class="c-metric">
+                <span class="c-label">Avg Time</span>
+                <span class="c-val" id="val-avg-time">O(n²)</span>
+              </div>
+              <div class="c-metric">
+                <span class="c-label">Space Complexity</span>
+                <span class="c-val" id="val-space">O(1)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h4>
+              <span>Pseudocode Trace</span>
+              <span style="font-size:0.7rem; color:#10B981;">Line Synchronized</span>
+            </h4>
+            <div class="code-box" id="code-trace-box">
+              <div class="code-line" id="code-line-1">procedure bubbleSort(list)</div>
+              <div class="code-line" id="code-line-2">  n = length(list)</div>
+              <div class="code-line" id="code-line-3">  for i = 0 to n - 1:</div>
+              <div class="code-line" id="code-line-4">    for j = 0 to n - i - 1:</div>
+              <div class="code-line" id="code-line-5">      if list[j] > list[j + 1]:</div>
+              <div class="code-line" id="code-line-6">        swap(list[j], list[j + 1])</div>
+              <div class="code-line" id="code-line-7">end procedure</div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PANEL 2: SKILL TREE & MASTERY MAP
+    ========================================== -->
+    <section class="view-panel" id="panel-skilltree">
+      <div class="skilltree-layout">
+        <div class="tree-hero">
+          <div class="tree-hero-text">
+            <h2>DSA Mastery Roadmap</h2>
+            <p>Interactive progression path designed to take you from core programming primitives to competitive algorithmic mastery.</p>
+          </div>
+          <div style="display:flex; gap:12px;">
+            <div class="c-metric" style="min-width:140px;">
+              <span class="c-label">Overall Mastery</span>
+              <span class="c-val" style="color:#10B981; font-size:1.2rem;">68%</span>
+            </div>
+            <div class="c-metric" style="min-width:140px;">
+              <span class="c-label">Topics Cleared</span>
+              <span class="c-val" style="color:#38BDF8; font-size:1.2rem;">6 / 8</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-grid">
+          <!-- Node 1 -->
+          <div class="tree-node-card" onclick="loadAlgo('linear_search'); switchTab('visualizer');">
+            <div class="node-card-top">
+              <div class="node-icon-badge">📐</div>
+              <span class="badge-diff diff-easy">Mastered</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">1. Language & Basics</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">Memory pointers, complexity bounds, primitive structures.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:100%;"></div></div>
+          </div>
+
+          <!-- Node 2 -->
+          <div class="tree-node-card" onclick="loadAlgo('bubble'); switchTab('visualizer');">
+            <div class="node-card-top">
+              <div class="node-icon-badge">📊</div>
+              <span class="badge-diff diff-easy">Mastered</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">2. Sorting Algorithms</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">Bubble, Insertion, Quick, Merge and Radix sort paradigms.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:100%;"></div></div>
+          </div>
+
+          <!-- Node 3 -->
+          <div class="tree-node-card" onclick="loadAlgo('binary_search'); switchTab('visualizer');">
+            <div class="node-card-top">
+              <div class="node-icon-badge">🔍</div>
+              <span class="badge-diff diff-easy">Mastered</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">3. Binary Search & Hashing</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">O(log n) range reduction, hash tables, and collision chaining.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:90%;"></div></div>
+          </div>
+
+          <!-- Node 4 -->
+          <div class="tree-node-card" onclick="loadAlgo('singly_linked_list'); switchTab('visualizer');">
+            <div class="node-card-top">
+              <div class="node-icon-badge">🔗</div>
+              <span class="badge-diff diff-med">In-Progress</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">4. Linked Structures</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">Singly and Doubly linked nodes with dynamic pointer manipulations.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:75%;"></div></div>
+          </div>
+
+          <!-- Node 5 -->
+          <div class="tree-node-card" onclick="loadAlgo('stack'); switchTab('visualizer');">
+            <div class="node-card-top">
+              <div class="node-icon-badge">📚</div>
+              <span class="badge-diff diff-med">In-Progress</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">5. Stacks, Queues & Recursion</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">LIFO/FIFO execution stacks, double-ended queues, Tower of Hanoi.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:60%;"></div></div>
+          </div>
+
+          <!-- Node 6 -->
+          <div class="tree-node-card" onclick="loadAlgo('bst'); switchTab('visualizer');">
+            <div class="node-card-top">
+              <div class="node-icon-badge">🌲</div>
+              <span class="badge-diff diff-med">In-Progress</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">6. Trees & BST</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">Binary Search Trees, Inorder/Preorder/Postorder traversals.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:45%;"></div></div>
+          </div>
+
+          <!-- Node 7 -->
+          <div class="tree-node-card locked">
+            <div class="node-card-top">
+              <div class="node-icon-badge">🕸️</div>
+              <span class="badge-diff diff-hard">Locked</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">7. Graphs & Networks</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">BFS, DFS, Dijkstra shortest path, and topological sort.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:10%;"></div></div>
+          </div>
+
+          <!-- Node 8 -->
+          <div class="tree-node-card locked">
+            <div class="node-card-top">
+              <div class="node-icon-badge">🧠</div>
+              <span class="badge-diff diff-hard">Locked</span>
+            </div>
+            <h3 style="font-family:var(--font-title); font-size:1.1rem;">8. Dynamic Programming</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);">Optimal substructure, memoization, and bottom-up tabulation.</p>
+            <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PANEL 3: CLASSROOM & RESOURCES
+    ========================================== -->
+    <section class="view-panel" id="panel-classroom">
+      <div class="classroom-layout">
+        <div class="tree-hero">
+          <div class="tree-hero-text">
+            <h2>Enrolled Classrooms & Learning Materials</h2>
+            <p>Access your live classes, teacher broadcast sessions, and verified algorithm study guides.</p>
+          </div>
+          <button class="btn-ctrl btn-primary" onclick="loadClassrooms()">🔄 Refresh Classes</button>
+        </div>
+
+        <div class="classrooms-grid" id="classrooms-container">
+          <!-- Populated dynamically -->
+          <div class="class-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="badge-diff diff-easy">Active Semester</span>
+              <span style="font-size:0.75rem; color:var(--text-muted);">CODE: DSA-401</span>
+            </div>
+            <h3>Computer Science 401: Data Structures</h3>
+            <p style="font-size:0.85rem; color:var(--text-sub);">Comprehensive university track covering tree structures, sorting heuristics, and memory complexity.</p>
+            <div class="resource-list">
+              <div class="resource-item">
+                <span>📄 Lecture 12: QuickSort Partitioning.pdf</span>
+                <span style="color:#38BDF8; cursor:pointer;">Download</span>
+              </div>
+              <div class="resource-item">
+                <span>📄 Cheatsheet: Big-O Complexity Graph.pdf</span>
+                <span style="color:#38BDF8; cursor:pointer;">Download</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="class-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="badge-diff diff-med">Weekly Lab</span>
+              <span style="font-size:0.75rem; color:var(--text-muted);">CODE: LAB-102</span>
+            </div>
+            <h3>Competitive Programming Lab</h3>
+            <p style="font-size:0.85rem; color:var(--text-sub);">Hands-on coding challenges and real-time visual tracing for LeetCode & Codeforces problems.</p>
+            <div class="resource-list">
+              <div class="resource-item">
+                <span>📄 Lab 04: Linked List Reversal.py</span>
+                <span style="color:#38BDF8; cursor:pointer;">Download</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PANEL 4: CONTROL CENTRE (STAFF HUB)
+    ========================================== -->
+    <section class="view-panel" id="panel-control-center">
+      <div class="control-center-frame">
+        <iframe id="cc-iframe" src="/admin/index.html"></iframe>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Desktop App Footer -->
+  <footer class="app-footer">
+    <div class="footer-left">
+      <div class="status-dot"></div>
+      <span>DSA Visualizer Pro Server Online (Port 5000)</span>
+      <span style="margin: 0 8px; color: var(--border-color);">|</span>
+      <span id="active-user-display">Active Mode: Student</span>
+    </div>
+    <div>
+      <span>DSA Visualizer Pro Desktop • Native Windows Standalone</span>
+    </div>
+  </footer>
+
+  <!-- Script: Visualizer Engine & App Logic -->
+  <script>
+    // PWA Install Event Handler
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBtn = document.getElementById('btn-install');
+      if (installBtn) installBtn.style.display = 'inline-flex';
+    });
+
+    function installDesktopApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User installed DSA Desktop App');
+          }
+          deferredPrompt = null;
+          document.getElementById('btn-install').style.display = 'none';
+        });
+      } else {
+        alert('To install this app on your desktop, click the Install icon (💻 or ⊕) in the right corner of your browser address bar.');
+      }
+    }
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.warn('SW registration failed:', err);
+      });
+    }
+
+    // Role Management & Tokens
+    const TOKENS = {
+      owner: 'ad807d8cbfeae12085d72eedd8118355ba2420987c53458bd568743fdaac6e78',
+      teacher: '240f152fc3ba167c7cb06c83878ff7412f9329c42902844ef6d8f6dab4e67f0b',
+      student: ''
+    };
+    let currentRole = 'student';
+
+    function setRole(role) {
+      currentRole = role;
+      document.querySelectorAll('.role-pill').forEach(el => el.classList.remove('active'));
+      document.getElementById(`pill-${role}`).classList.add('active');
+
+      const userDisplay = document.getElementById('active-user-display');
+      const iframe = document.getElementById('cc-iframe');
+
+      if (role === 'owner') {
+        userDisplay.textContent = 'Active Mode: Administrator (Prasanna • prasannapbhurke@gmail.com)';
+        if (iframe) {
+          iframe.src = `/admin/index.html?token=${TOKENS.owner}`;
+        }
+      } else if (role === 'teacher') {
+        userDisplay.textContent = 'Active Mode: Teacher (Prasanna • bhurkeprasanna@gmail.com)';
+        if (iframe) {
+          iframe.src = `/admin/index.html?token=${TOKENS.teacher}`;
+        }
+      } else {
+        userDisplay.textContent = 'Active Mode: Student';
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      const activePanel = document.getElementById(`panel-${tabId}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      if (activePanel) activePanel.classList.add('active');
+
+      if (tabId === 'control-center') {
+        // If in student mode, default to owner mode for full access
+        if (currentRole === 'student') {
+          setRole('owner');
+        } else {
+          const token = TOKENS[currentRole] || TOKENS.owner;
+          const iframe = document.getElementById('cc-iframe');
+          if (iframe && !iframe.src.includes('token=')) {
+            iframe.src = `/admin/index.html?token=${token}`;
+          }
+        }
+      }
+    }
+
+    // ========================================================
+    // INTERACTIVE ALGORITHM VISUALIZER ENGINE
+    // ========================================================
+    const ALGO_REGISTRY = {
+      bubble: {
+        title: 'Bubble Sort',
+        desc: 'Repeated passes compare adjacent elements and move the largest item toward the end.',
+        bestTime: 'O(n)',
+        avgTime: 'O(n²)',
+        worstTime: 'O(n²)',
+        space: 'O(1)',
+        type: 'bars',
+        data: [45, 12, 85, 32, 89, 39, 69, 22, 55, 18],
+        code: [
+          'procedure bubbleSort(list)',
+          '  n = length(list)',
+          '  for i = 0 to n - 1:',
+          '    for j = 0 to n - i - 1:',
+          '      if list[j] > list[j + 1]:',
+          '        swap(list[j], list[j + 1])',
+          'end procedure'
+        ]
+      },
+      quick: {
+        title: 'Quick Sort',
+        desc: 'Partitions the array around a pivot and recursively sorts subarrays.',
+        bestTime: 'O(n log n)',
+        avgTime: 'O(n log n)',
+        worstTime: 'O(n²)',
+        space: 'O(log n)',
+        type: 'bars',
+        data: [50, 23, 9, 18, 61, 32, 75, 42, 11, 88],
+        code: [
+          'procedure quickSort(A, lo, hi)',
+          '  if lo < hi then',
+          '    p = partition(A, lo, hi)',
+          '    quickSort(A, lo, p - 1)',
+          '    quickSort(A, p + 1, hi)',
+          'end procedure'
+        ]
+      },
+      merge: {
+        title: 'Merge Sort',
+        desc: 'Splits array in half, recursively sorts both halves, then merges them.',
+        bestTime: 'O(n log n)',
+        avgTime: 'O(n log n)',
+        worstTime: 'O(n log n)',
+        space: 'O(n)',
+        type: 'bars',
+        data: [38, 27, 43, 3, 9, 82, 10, 52, 16, 64],
+        code: [
+          'procedure mergeSort(A)',
+          '  if length(A) <= 1 return A',
+          '  mid = length(A) / 2',
+          '  left = mergeSort(A[0..mid])',
+          '  right = mergeSort(A[mid..])',
+          '  return merge(left, right)',
+          'end procedure'
+        ]
+      },
+      insertion: {
+        title: 'Insertion Sort',
+        desc: 'Builds sorted array one item at a time by shifting larger items right.',
+        bestTime: 'O(n)',
+        avgTime: 'O(n²)',
+        worstTime: 'O(n²)',
+        space: 'O(1)',
+        type: 'bars',
+        data: [64, 25, 12, 22, 11, 90, 45, 33, 72, 19],
+        code: [
+          'procedure insertionSort(A)',
+          '  for i = 1 to length(A) - 1:',
+          '    key = A[i]',
+          '    j = i - 1',
+          '    while j >= 0 and A[j] > key:',
+          '      A[j + 1] = A[j]; j = j - 1',
+          '    A[j + 1] = key',
+          'end procedure'
+        ]
+      },
+      selection: {
+        title: 'Selection Sort',
+        desc: 'Finds the minimum element from the unsorted part and swaps it to the front.',
+        bestTime: 'O(n²)',
+        avgTime: 'O(n²)',
+        worstTime: 'O(n²)',
+        space: 'O(1)',
+        type: 'bars',
+        data: [29, 10, 14, 37, 13, 80, 48, 25, 62, 5],
+        code: [
+          'procedure selectionSort(A)',
+          '  for i = 0 to length(A) - 2:',
+          '    minIdx = i',
+          '    for j = i + 1 to length(A) - 1:',
+          '      if A[j] < A[minIdx] minIdx = j',
+          '    swap(A[i], A[minIdx])',
+          'end procedure'
+        ]
+      },
+      binary_search: {
+        title: 'Binary Search',
+        desc: 'Finds target in sorted array by repeatedly halving the search interval.',
+        bestTime: 'O(1)',
+        avgTime: 'O(log n)',
+        worstTime: 'O(log n)',
+        space: 'O(1)',
+        type: 'bars',
+        data: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+        code: [
+          'procedure binarySearch(A, target)',
+          '  low = 0, high = length(A) - 1',
+          '  while low <= high:',
+          '    mid = (low + high) / 2',
+          '    if A[mid] == target return mid',
+          '    else if A[mid] < target low = mid + 1',
+          '    else high = mid - 1',
+          '  return -1',
+          'end procedure'
+        ]
+      },
+      linear_search: {
+        title: 'Linear Search',
+        desc: 'Sequentially checks each element of the list until a match is found.',
+        bestTime: 'O(1)',
+        avgTime: 'O(n)',
+        worstTime: 'O(n)',
+        space: 'O(1)',
+        type: 'bars',
+        data: [18, 42, 7, 95, 33, 61, 84, 29, 52, 10],
+        code: [
+          'procedure linearSearch(A, target)',
+          '  for i = 0 to length(A) - 1:',
+          '    if A[i] == target return i',
+          '  return -1',
+          'end procedure'
+        ]
+      },
+      singly_linked_list: {
+        title: 'Singly Linked List',
+        desc: 'Linear sequence of nodes where each node points to the next node.',
+        bestTime: 'O(1)',
+        avgTime: 'O(n)',
+        worstTime: 'O(n)',
+        space: 'O(n)',
+        type: 'nodes',
+        data: [12, 24, 36, 48, 60],
+        code: [
+          'struct Node { int val; Node* next; }',
+          'procedure traverse(head):',
+          '  curr = head',
+          '  while curr != null:',
+          '    visit(curr.val)',
+          '    curr = curr.next'
+        ]
+      },
+      doubly_linked_list: {
+        title: 'Doubly Linked List',
+        desc: 'Nodes have pointers to both next and previous elements for bidirectional travel.',
+        bestTime: 'O(1)',
+        avgTime: 'O(n)',
+        worstTime: 'O(n)',
+        space: 'O(n)',
+        type: 'nodes',
+        data: [15, 30, 45, 60, 75],
+        code: [
+          'struct DNode { int val; DNode* prev; DNode* next; }',
+          'procedure insertAtHead(head, val):',
+          '  newNode = new DNode(val)',
+          '  newNode.next = head',
+          '  if head != null head.prev = newNode',
+          '  return newNode'
+        ]
+      },
+      stack: {
+        title: 'Stack (LIFO)',
+        desc: 'Last-In, First-Out structure. Insert and remove both occur at the Top.',
+        bestTime: 'O(1)',
+        avgTime: 'O(1)',
+        worstTime: 'O(1)',
+        space: 'O(n)',
+        type: 'nodes',
+        data: [10, 20, 30, 40],
+        code: [
+          'procedure push(val):',
+          '  top = top + 1',
+          '  stack[top] = val',
+          'procedure pop():',
+          '  val = stack[top]',
+          '  top = top - 1',
+          '  return val'
+        ]
+      },
+      queue: {
+        title: 'Queue (FIFO)',
+        desc: 'First-In, First-Out structure. Enqueue at Rear, Dequeue from Front.',
+        bestTime: 'O(1)',
+        avgTime: 'O(1)',
+        worstTime: 'O(1)',
+        space: 'O(n)',
+        type: 'nodes',
+        data: [5, 10, 15, 20, 25],
+        code: [
+          'procedure enqueue(val):',
+          '  queue[rear++] = val',
+          'procedure dequeue():',
+          '  return queue[front++]'
+        ]
+      },
+      bst: {
+        title: 'Binary Search Tree (BST)',
+        desc: 'Left child is strictly smaller, right child is strictly greater.',
+        bestTime: 'O(log n)',
+        avgTime: 'O(log n)',
+        worstTime: 'O(n)',
+        space: 'O(h)',
+        type: 'nodes',
+        data: [50, 30, 70, 20, 40, 60, 80],
+        code: [
+          'procedure search(root, target):',
+          '  if root == null or root.val == target:',
+          '    return root',
+          '  if target < root.val:',
+          '    return search(root.left, target)',
+          '  return search(root.right, target)'
+        ]
+      },
+      bfs: {
+        title: 'Graph BFS Traversal',
+        desc: 'Level-by-level exploration using a FIFO queue to discover nearest neighbors.',
+        bestTime: 'O(V + E)',
+        avgTime: 'O(V + E)',
+        worstTime: 'O(V + E)',
+        space: 'O(V)',
+        type: 'nodes',
+        data: [1, 2, 3, 4, 5, 6],
+        code: [
+          'procedure BFS(start):',
+          '  q.enqueue(start); visited[start] = true',
+          '  while not q.isEmpty():',
+          '    u = q.dequeue()',
+          '    for neighbor v in adj[u]:',
+          '      if not visited[v]:',
+          '        visited[v] = true; q.enqueue(v)'
+        ]
+      }
+    };
+
+    let currentAlgoKey = 'bubble';
+    let currentData = [];
+    let traceSteps = [];
+    let currentStepIdx = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let playSpeedMs = 400;
+
+    function loadAlgo(key) {
+      if (!ALGO_REGISTRY[key]) return;
+      currentAlgoKey = key;
+      const algo = ALGO_REGISTRY[key];
+
+      // Update active button
+      document.querySelectorAll('.algo-item-btn').forEach(b => b.classList.remove('selected'));
+      const activeBtn = Array.from(document.querySelectorAll('.algo-item-btn')).find(b => b.textContent.includes(algo.title.split(' ')[0]));
+      if (activeBtn) activeBtn.classList.add('selected');
+
+      // Update info
+      document.getElementById('stage-algo-title').textContent = algo.title;
+      document.getElementById('stage-algo-desc').textContent = algo.desc;
+      document.getElementById('val-best-time').textContent = algo.bestTime;
+      document.getElementById('val-avg-time').textContent = algo.avgTime;
+      document.getElementById('val-worst-time').textContent = algo.worstTime;
+      document.getElementById('val-space').textContent = algo.space;
+
+      // Update Pseudocode
+      const codeBox = document.getElementById('code-trace-box');
+      codeBox.innerHTML = '';
+      algo.code.forEach((line, idx) => {
+        const div = document.createElement('div');
+        div.className = 'code-line';
+        div.id = `code-line-${idx + 1}`;
+        div.textContent = line;
+        codeBox.appendChild(div);
+      });
+
+      // Initialize data & trace
+      currentData = [...algo.data];
+      generateTrace();
+      renderCurrentState();
+    }
+
+    function generateRandomData() {
+      stopPlay();
+      if (ALGO_REGISTRY[currentAlgoKey].type === 'bars') {
+        currentData = Array.from({ length: 10 }, () => Math.floor(Math.random() * 85) + 15);
+      }
+      generateTrace();
+      renderCurrentState();
+    }
+
+    function generateTrace() {
+      stopPlay();
+      currentStepIdx = 0;
+      traceSteps = [];
+      const arr = [...currentData];
+
+      if (currentAlgoKey === 'bubble') {
+        traceSteps.push({ arr: [...arr], compare: [], swap: [], sorted: [], line: 3, msg: 'Starting Bubble Sort passes' });
+        const n = arr.length;
+        for (let i = 0; i < n - 1; i++) {
+          for (let j = 0; j < n - i - 1; j++) {
+            traceSteps.push({ arr: [...arr], compare: [j, j + 1], swap: [], sorted: [], line: 5, msg: `Comparing arr[${j}] (${arr[j]}) with arr[${j+1}] (${arr[j+1]})` });
+            if (arr[j] > arr[j + 1]) {
+              const temp = arr[j]; arr[j] = arr[j + 1]; arr[j + 1] = temp;
+              traceSteps.push({ arr: [...arr], compare: [], swap: [j, j + 1], sorted: [], line: 6, msg: `Swapped: ${arr[j]} and ${arr[j+1]}` });
+            }
+          }
+        }
+        traceSteps.push({ arr: [...arr], compare: [], swap: [], sorted: arr.map((_, idx) => idx), line: 7, msg: 'Array is completely sorted!' });
+      } else if (currentAlgoKey === 'selection') {
+        const n = arr.length;
+        for (let i = 0; i < n - 1; i++) {
+          let minIdx = i;
+          for (let j = i + 1; j < n; j++) {
+            traceSteps.push({ arr: [...arr], compare: [minIdx, j], swap: [], sorted: [], line: 5, msg: `Checking if arr[${j}] (${arr[j]}) < min (${arr[minIdx]})` });
+            if (arr[j] < arr[minIdx]) minIdx = j;
+          }
+          if (minIdx !== i) {
+            const temp = arr[i]; arr[i] = arr[minIdx]; arr[minIdx] = temp;
+            traceSteps.push({ arr: [...arr], compare: [], swap: [i, minIdx], sorted: [], line: 6, msg: `Swapped minimum element (${arr[i]}) into position ${i}` });
+          }
+        }
+        traceSteps.push({ arr: [...arr], compare: [], swap: [], sorted: arr.map((_, idx) => idx), line: 7, msg: 'Selection Sort completed!' });
+      } else if (currentAlgoKey === 'insertion') {
+        const n = arr.length;
+        for (let i = 1; i < n; i++) {
+          let key = arr[i];
+          let j = i - 1;
+          traceSteps.push({ arr: [...arr], compare: [i], swap: [], sorted: [], line: 3, msg: `Selected key ${key} at index ${i}` });
+          while (j >= 0 && arr[j] > key) {
+            traceSteps.push({ arr: [...arr], compare: [j, j + 1], swap: [], sorted: [], line: 5, msg: `Shifting ${arr[j]} right` });
+            arr[j + 1] = arr[j];
+            j--;
+          }
+          arr[j + 1] = key;
+          traceSteps.push({ arr: [...arr], compare: [], swap: [j + 1], sorted: [], line: 6, msg: `Inserted key ${key} at index ${j + 1}` });
+        }
+        traceSteps.push({ arr: [...arr], compare: [], swap: [], sorted: arr.map((_, idx) => idx), line: 7, msg: 'Insertion Sort completed!' });
+      } else if (currentAlgoKey === 'linear_search') {
+        const target = arr[Math.floor(arr.length / 2)];
+        for (let i = 0; i < arr.length; i++) {
+          traceSteps.push({ arr: [...arr], compare: [i], swap: [], sorted: [], line: 3, msg: `Checking index ${i}: is ${arr[i]} == target (${target})?` });
+          if (arr[i] === target) {
+            traceSteps.push({ arr: [...arr], compare: [], swap: [], sorted: [i], line: 4, msg: `Match found at index ${i}!` });
+            break;
+          }
+        }
+      } else {
+        // Generic step simulation for node structures
+        traceSteps.push({ arr: [...arr], compare: [], swap: [], sorted: [], line: 1, msg: 'Initialized structure' });
+        for (let i = 0; i < arr.length; i++) {
+          traceSteps.push({ arr: [...arr], compare: [i], swap: [], sorted: [], line: 3, msg: `Visiting node value: ${arr[i]}` });
+        }
+        traceSteps.push({ arr: [...arr], compare: [], swap: [], sorted: arr.map((_, idx) => idx), line: 5, msg: 'Traversal completed successfully' });
+      }
+    }
+
+    function renderCurrentState() {
+      const canvas = document.getElementById('visualizer-canvas');
+      canvas.innerHTML = '';
+
+      if (traceSteps.length === 0) return;
+      const step = traceSteps[currentStepIdx] || traceSteps[0];
+
+      // Update message banner
+      document.getElementById('step-text').textContent = step.msg;
+
+      // Update highlighted pseudocode line
+      document.querySelectorAll('.code-line').forEach(l => l.classList.remove('active-line'));
+      if (step.line) {
+        const activeLineEl = document.getElementById(`code-line-${step.line}`);
+        if (activeLineEl) activeLineEl.classList.add('active-line');
+      }
+
+      if (ALGO_REGISTRY[currentAlgoKey].type === 'bars') {
+        // Render Bars
+        const maxVal = Math.max(...step.arr, 100);
+        step.arr.forEach((val, idx) => {
+          const col = document.createElement('div');
+          col.className = 'bar-col';
+
+          const rect = document.createElement('div');
+          rect.className = 'bar-rect';
+          rect.style.height = `${(val / maxVal) * 260 + 20}px`;
+
+          if (step.compare && step.compare.includes(idx)) rect.classList.add('compare');
+          if (step.swap && step.swap.includes(idx)) rect.classList.add('swap');
+          if (step.sorted && step.sorted.includes(idx)) rect.classList.add('sorted');
+
+          const label = document.createElement('div');
+          label.className = 'bar-val';
+          label.textContent = val;
+
+          col.appendChild(rect);
+          col.appendChild(label);
+          canvas.appendChild(col);
+        });
+      } else {
+        // Render Nodes (Linked list, Stacks, Queues, BST)
+        const container = document.createElement('div');
+        container.className = 'nodes-container';
+
+        step.arr.forEach((val, idx) => {
+          const node = document.createElement('div');
+          node.className = 'node-box';
+          node.textContent = val;
+
+          if (step.compare && step.compare.includes(idx)) node.classList.add('active');
+          if (step.sorted && step.sorted.includes(idx)) {
+            node.style.borderColor = '#10B981';
+            node.style.background = 'rgba(16, 185, 129, 0.2)';
+          }
+
+          container.appendChild(node);
+
+          if (idx < step.arr.length - 1) {
+            const arrow = document.createElement('div');
+            arrow.className = 'node-arrow';
+            arrow.textContent = '→';
+            container.appendChild(arrow);
+          }
+        });
+
+        canvas.appendChild(container);
+      }
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        stopPlay();
+      } else {
+        startPlay();
+      }
+    }
+
+    function startPlay() {
+      if (currentStepIdx >= traceSteps.length - 1) {
+        currentStepIdx = 0;
+      }
+      isPlaying = true;
+      document.getElementById('play-icon').textContent = '⏸';
+      document.getElementById('play-label').textContent = 'Pause';
+      playInterval = setInterval(() => {
+        if (currentStepIdx < traceSteps.length - 1) {
+          currentStepIdx++;
+          renderCurrentState();
+        } else {
+          stopPlay();
+        }
+      }, playSpeedMs);
+    }
+
+    function stopPlay() {
+      isPlaying = false;
+      if (playInterval) clearInterval(playInterval);
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-label').textContent = 'Play';
+    }
+
+    function stepForward() {
+      stopPlay();
+      if (currentStepIdx < traceSteps.length - 1) {
+        currentStepIdx++;
+        renderCurrentState();
+      }
+    }
+
+    function resetVisualizer() {
+      stopPlay();
+      currentStepIdx = 0;
+      renderCurrentState();
+    }
+
+    function updateSpeed(val) {
+      playSpeedMs = 1050 - val;
+      const speedRatio = (400 / playSpeedMs).toFixed(1);
+      document.getElementById('speed-display').textContent = `${speedRatio}x`;
+      if (isPlaying) {
+        stopPlay();
+        startPlay();
+      }
+    }
+
+    async function loadClassrooms() {
+      try {
+        const res = await fetch('/api/class');
+        if (res.ok) {
+          const data = await res.json();
+          console.log('Classrooms fetched:', data);
+        }
+      } catch (err) {
+        console.warn('Class fetch error:', err);
+      }
+    }
+
+    // Startup Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAlgo('bubble');
+    });
+  </script>
+</body>
+</html>

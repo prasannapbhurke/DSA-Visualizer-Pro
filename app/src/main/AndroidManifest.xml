@@ -52,6 +52,11 @@
             android:label="DSA Skill Tree" />
 
         <activity
+            android:name=".ControlCentreActivity"
+            android:exported="false"
+            android:label="@string/control_centre_title" />
+
+        <activity
             android:name=".OwnerUsersActivity"
             android:exported="false"
             android:label="@string/owner_users_title" />
@@ -95,6 +100,16 @@
             android:name=".MasteryMapActivity"
             android:exported="false"
             android:label="Mastery Map" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

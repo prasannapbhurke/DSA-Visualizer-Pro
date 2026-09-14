@@ -4,8 +4,9 @@
   "description": "Backend for DSA Visualizer",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node --env-file=.env index.js",
     "test": "node index.test.js",
+    "test:control-center": "node control-center.test.js",
     "db:schema": "node scripts/apply-postgres-schema.js",
     "db:migrate-json": "node scripts/migrate-json-to-postgres.js",
     "env:check": "node scripts/check-production-env.js",

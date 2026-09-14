@@ -87,6 +87,12 @@ android {
     kotlin {
         jvmToolchain(21)
     }
+    testOptions {
+        unitTests.all {
+            it.jvmArgs("-Xmx256m", "-XX:MaxMetaspaceSize=128m")
+            it.maxParallelForks = 1
+        }
+    }
     buildFeatures {
         buildConfig = true
         compose = true

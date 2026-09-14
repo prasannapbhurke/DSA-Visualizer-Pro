@@ -25,6 +25,8 @@ const rowsToCamel = (rows) =>
     updatedAt: row.updated_at ? row.updated_at.toISOString() : '',
     classId: row.class_id,
     studentId: row.student_id,
+    rollNumber: row.roll_number || '',
+    studentBatch: row.student_batch || '',
     joinedAt: row.joined_at ? row.joined_at.toISOString() : '',
     userId: row.user_id,
     techniqueId: row.technique_id,
@@ -89,6 +91,9 @@ const createPostgresStore = (databaseUrl) => {
     await pool.query('alter table app_users add column if not exists refresh_token text');
     await pool.query('create index if not exists idx_app_users_token on app_users(token)');
     await pool.query('create index if not exists idx_app_users_refresh_token on app_users(refresh_token)');
+    await pool.query("alter table enrollments add column if not exists roll_number text not null default ''");
+    await pool.query("alter table enrollments add column if not exists student_batch text not null default ''");
+    await pool.query('create index if not exists idx_enrollments_roll_number on enrollments(class_id, roll_number)');
   })();
 
   const read = async () => {

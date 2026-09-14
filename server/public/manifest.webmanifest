@@ -1,0 +1,42 @@
+{
+  "name": "DSA Visualizer Pro",
+  "short_name": "DSA Pro",
+  "description": "Interactive Data Structures & Algorithms Visualizer and Mastery Platform",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070B12",
+  "theme_color": "#070B12",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["education", "developer tools", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Visualizers",
+      "url": "/#visualizer",
+      "description": "Jump directly to algorithm visualizers"
+    },
+    {
+      "name": "Skill Tree",
+      "url": "/#skilltree",
+      "description": "View DSA Mastery Map"
+    },
+    {
+      "name": "Control Centre",
+      "url": "/#control-center",
+      "description": "Staff Command & Telemetry Hub"
+    }
+  ]
+}

@@ -27,6 +27,8 @@ create table if not exists enrollments (
   id text primary key,
   class_id text not null references classes(id) on delete cascade,
   student_id text not null references app_users(id) on delete cascade,
+  roll_number text not null default '',
+  student_batch text not null default '',
   joined_at timestamptz not null default now(),
   unique (class_id, student_id)
 );

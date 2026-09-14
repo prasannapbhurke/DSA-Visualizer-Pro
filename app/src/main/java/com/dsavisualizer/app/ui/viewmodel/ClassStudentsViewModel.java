@@ -88,6 +88,8 @@ public class ClassStudentsViewModel extends ViewModel {
                             user == null ? "" : user.optString("id", ""),
                             user == null ? "" : user.optString("displayName", ""),
                             user == null ? "" : user.optString("email", ""),
+                            item.optString("rollNumber", ""),
+                            item.optString("studentBatch", ""),
                             summary == null ? 0 : summary.optInt("totalTechniquesStarted", 0),
                             summary == null ? 0 : summary.optInt("completedTechniques", 0),
                             summary == null ? 0 : summary.optInt("totalPracticeSessions", 0),

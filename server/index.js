@@ -12,6 +12,7 @@ const { createProgressRouter } = require('./routes/progress.routes');
 const { createFeedbackRouter } = require('./routes/feedback.routes');
 const { createClassRouter } = require('./routes/class.routes');
 const { createAdminRouter } = require('./routes/admin.routes');
+const { createControlCenterRouter } = require('./routes/control-center.routes');
 const { createLegacyRouter } = require('./routes/legacy.routes');
 
 const DEFAULT_DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
@@ -50,6 +51,7 @@ const createApp = ({
   app.set('trust proxy', true);
   app.use(cors());
   app.use(express.json());
+  app.use(express.static(path.join(__dirname, 'public')));
   app.use('/uploads', express.static(uploadDir));
   app.use('/admin', express.static(path.join(__dirname, 'public', 'admin')));
 
@@ -80,6 +82,7 @@ const createApp = ({
   app.use('/api', createFeedbackRouter({ store, logger, requireAuth }));
   app.use('/api', createClassRouter({ store, cache, uploadDir, logger, requireAuth }));
   app.use('/api', createAdminRouter({ store, logger, requireAuth, requireRole }));
+  app.use('/api', createControlCenterRouter({ store, logger, requireAuth, requireRole }));
   app.use('/', createLegacyRouter());
 
   return app;

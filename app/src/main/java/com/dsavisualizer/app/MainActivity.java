@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView continueLearningText;
     private TextView continueLearningSubtext;
     private TextView goalTitleText;
+    private View controlCentreButton;
     private View classroomButton;
     private View walkthroughButton;
     private MaterialButton themeButton;
@@ -158,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
         continueLearningText = findViewById(R.id.continue_learning_text);
         continueLearningSubtext = findViewById(R.id.continue_learning_subtext);
         goalTitleText = findViewById(R.id.goal_title_text);
+        controlCentreButton = findViewById(R.id.control_centre_button);
         classroomButton = findViewById(R.id.classroom_button);
         walkthroughButton = findViewById(R.id.walkthrough_button);
         themeButton = findViewById(R.id.theme_button);
@@ -179,6 +181,9 @@ public class MainActivity extends AppCompatActivity {
         walkthroughButton.setOnClickListener(v -> resumeWalkthroughFromDrawer());
         themeButton.setOnClickListener(v -> openThemeDialog());
         findViewById(R.id.about_button).setOnClickListener(v -> openAboutDialog());
+        if (controlCentreButton != null) {
+            controlCentreButton.setOnClickListener(v -> openControlCentre());
+        }
         classroomButton.setOnClickListener(v -> openClassroom());
         ownerManageUsersButton.setOnClickListener(v -> openOwnerUsers());
         ownerFeedbackButton.setOnClickListener(v -> openOwnerFeedback());
@@ -542,15 +547,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateOwnerActionsVisibility() {
+        String role = appPreferences.getAuthRole();
+        boolean isStaff = "owner".equalsIgnoreCase(role) || "teacher".equalsIgnoreCase(role);
+        if (controlCentreButton != null) {
+            controlCentreButton.setVisibility(isStaff ? View.VISIBLE : View.GONE);
+        }
         classroomButton.setVisibility(appPreferences.hasGoogleSession() ? View.VISIBLE : View.GONE);
-        ownerManageUsersButton.setVisibility("owner".equalsIgnoreCase(appPreferences.getAuthRole()) ? View.VISIBLE : View.GONE);
-        ownerFeedbackButton.setVisibility("owner".equalsIgnoreCase(appPreferences.getAuthRole()) ? View.VISIBLE : View.GONE);
-        ownerAnalyticsButton.setVisibility("owner".equalsIgnoreCase(appPreferences.getAuthRole()) ? View.VISIBLE : View.GONE);
-        teacherFeedbackButton.setVisibility(
-            ("teacher".equalsIgnoreCase(appPreferences.getAuthRole()) || "owner".equalsIgnoreCase(appPreferences.getAuthRole()))
-                ? View.VISIBLE
-                : View.GONE
-        );
+        ownerManageUsersButton.setVisibility("owner".equalsIgnoreCase(role) ? View.VISIBLE : View.GONE);
+        ownerFeedbackButton.setVisibility("owner".equalsIgnoreCase(role) ? View.VISIBLE : View.GONE);
+        ownerAnalyticsButton.setVisibility("owner".equalsIgnoreCase(role) ? View.VISIBLE : View.GONE);
+        teacherFeedbackButton.setVisibility(isStaff ? View.VISIBLE : View.GONE);
     }
 
     private void refreshDashboard() {
@@ -781,6 +787,16 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TechniqueDetailActivity.class);
         intent.putExtra(TechniqueDetailActivity.EXTRA_TECHNIQUE_ID, technique.id);
         startActivity(intent);
+    }
+
+    private void openControlCentre() {
+        String role = appPreferences.getAuthRole();
+        if (!"owner".equalsIgnoreCase(role) && !"teacher".equalsIgnoreCase(role)) {
+            Toast.makeText(this, R.string.control_centre_unauthorized, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        drawerLayout.closeDrawer(GravityCompat.START);
+        startActivity(new Intent(this, ControlCentreActivity.class));
     }
 
     private void openOwnerUsers() {

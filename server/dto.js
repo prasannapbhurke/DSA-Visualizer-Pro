@@ -205,10 +205,32 @@ const parseJoinClassRequest = (body) => {
     return createValidationError('joinCode is required');
   }
 
+  const rollNumber = typeof body?.rollNumber === 'string' ? body.rollNumber.trim().slice(0, 50) : '';
+  const studentBatch = typeof body?.studentBatch === 'string' ? body.studentBatch.trim().slice(0, 50) : '';
+
   return {
     ok: true,
     value: {
       joinCode,
+      rollNumber,
+      studentBatch,
+    },
+  };
+};
+
+const parseUpdateEnrollmentProfileRequest = (body) => {
+  if (!isPlainObject(body)) {
+    return createValidationError('Request body is required');
+  }
+
+  const rollNumber = typeof body?.rollNumber === 'string' ? body.rollNumber.trim().slice(0, 50) : '';
+  const studentBatch = typeof body?.studentBatch === 'string' ? body.studentBatch.trim().slice(0, 50) : '';
+
+  return {
+    ok: true,
+    value: {
+      rollNumber,
+      studentBatch,
     },
   };
 };
@@ -602,6 +624,84 @@ const mistakesResponseDto = (mistakes) => ({
   },
 });
 
+const successResponseDto = (data) => ({
+  data,
+});
+
+const controlCenterOverviewResponseDto = (overview) => ({
+  data: {
+    overview,
+  },
+});
+
+const controlCenterSettingsResponseDto = (settings) => ({
+  data: {
+    settings,
+  },
+});
+
+const parseUpdateControlCenterSettingsRequest = (body) => {
+  if (!isPlainObject(body) || !isPlainObject(body.settings)) {
+    return createValidationError('A valid settings object is required');
+  }
+
+  const { settings } = body;
+  return {
+    ok: true,
+    value: {
+      settings: {
+        announcement: typeof settings.announcement === 'string' ? settings.announcement.trim() : '',
+        maintenanceMode: Boolean(settings.maintenanceMode),
+        registrationEnabled: settings.registrationEnabled !== false,
+        experimentalVisualizers: isPlainObject(settings.experimentalVisualizers)
+          ? { ...settings.experimentalVisualizers }
+          : {
+              avlTree: true,
+              huffmanCoding: true,
+              trie: true,
+              dijkstra: true,
+              unionFind: true,
+            },
+      },
+    },
+  };
+};
+
+const parseLiveSessionBroadcastRequest = (body) => {
+  if (!isPlainObject(body) || !isPlainObject(body.session)) {
+    return createValidationError('A valid session object is required');
+  }
+
+  const { session } = body;
+  if (typeof session.classId !== 'string' || !session.classId.trim()) {
+    return createValidationError('session.classId is required');
+  }
+  if (typeof session.techniqueId !== 'string' || !session.techniqueId.trim()) {
+    return createValidationError('session.techniqueId is required');
+  }
+
+  return {
+    ok: true,
+    value: {
+      session: {
+        classId: session.classId.trim(),
+        techniqueId: session.techniqueId.trim(),
+        currentStep: Number.isInteger(session.currentStep) ? session.currentStep : 0,
+        playbackSpeed: typeof session.playbackSpeed === 'number' ? session.playbackSpeed : 1.0,
+        isPaused: Boolean(session.isPaused),
+        activeNodeIds: Array.isArray(session.activeNodeIds) ? session.activeNodeIds : [],
+        statusMessage: typeof session.statusMessage === 'string' ? session.statusMessage.trim() : '',
+      },
+    },
+  };
+};
+
+const liveSessionResponseDto = (session) => ({
+  data: {
+    session,
+  },
+});
+
 const errorResponseDto = (message, code = 'INTERNAL_ERROR') => ({
   error: {
     code,
@@ -614,7 +714,10 @@ module.exports = {
   analyticsResponseDto,
   auditLogsResponseDto,
   backupResponseDto,
+  controlCenterOverviewResponseDto,
+  controlCenterSettingsResponseDto,
   errorResponseDto,
+  liveSessionResponseDto,
   logoutResponseDto,
   meResponseDto,
   dashboardResponseDto,
@@ -633,6 +736,7 @@ module.exports = {
   parseGoogleAuthRequest,
   parseGuestAuthRequest,
   parseJoinClassRequest,
+  parseLiveSessionBroadcastRequest,
   parsePracticeSessionRequest,
   parseReviewFeedbackRequest,
   parseRestoreBackupRequest,
@@ -645,6 +749,8 @@ module.exports = {
   parseClassResourceUploadRequest,
   parseTeacherStudentFeedbackRequest,
   parseTechniqueProgressRequest,
+  parseUpdateControlCenterSettingsRequest,
+  parseUpdateEnrollmentProfileRequest,
   practiceSessionCreatedResponseDto,
   practiceSessionsResponseDto,
   preferencesResponseDto,
@@ -656,8 +762,10 @@ module.exports = {
   statusResponseDto,
   studentDetailResponseDto,
   successMessageResponseDto,
+  successResponseDto,
   teacherFeedbackResponseDto,
   teacherNoteCreatedResponseDto,
   userResponseDto,
   usersResponseDto,
 };
+

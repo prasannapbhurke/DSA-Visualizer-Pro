@@ -16,6 +16,7 @@ const {
   parseCreateClassRequest,
   parseJoinClassRequest,
   parseTeacherStudentFeedbackRequest,
+  parseUpdateEnrollmentProfileRequest,
   studentDetailResponseDto,
   successMessageResponseDto,
   teacherNoteCreatedResponseDto,
@@ -312,12 +313,36 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
       if (enrollRes.rowCount > 0) return res.status(400).json(errorResponseDto('Already enrolled in this class', 'VALIDATION_ERROR'));
 
       await store.query(
-        'INSERT INTO enrollments (id, class_id, student_id, joined_at) VALUES ($1, $2, $3, $4::timestamptz)',
-        [`enroll_${crypto.randomUUID()}`, classroom.id, req.authUser.id, new Date().toISOString()]
+        'INSERT INTO enrollments (id, class_id, student_id, joined_at, roll_number, student_batch) VALUES ($1, $2, $3, $4::timestamptz, $5, $6)',
+        [
+          `enroll_${crypto.randomUUID()}`,
+          classroom.id,
+          req.authUser.id,
+          new Date().toISOString(),
+          parsedRequest.value.rollNumber || '',
+          parsedRequest.value.studentBatch || '',
+        ]
       );
       res.status(201).json(successMessageResponseDto('Joined class successfully'));
     } catch (error) {
       res.status(500).json(errorResponseDto('Failed to join class'));
+    }
+  });
+
+  router.put('/classes/:classId/profile', requireAuth, async (req, res) => {
+    const parsedRequest = parseUpdateEnrollmentProfileRequest(req.body);
+    if (!parsedRequest.ok) return res.status(400).json(parsedRequest);
+    try {
+      const enrollRes = await store.query(
+        'UPDATE enrollments SET roll_number = $1, student_batch = $2 WHERE class_id = $3 AND student_id = $4 RETURNING *',
+        [parsedRequest.value.rollNumber, parsedRequest.value.studentBatch, req.params.classId, req.authUser.id]
+      );
+      if (enrollRes.rowCount === 0) {
+        return res.status(404).json(errorResponseDto('Student is not enrolled in this class', 'NOT_FOUND'));
+      }
+      res.json(successMessageResponseDto('Class profile updated successfully'));
+    } catch (error) {
+      res.status(500).json(errorResponseDto('Failed to update class profile'));
     }
   });
 
@@ -329,10 +354,29 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
       if (classroom.teacherId !== req.authUser.id && req.authUser.role !== 'owner') {
         return res.status(403).json(errorResponseDto('You do not manage this class', 'FORBIDDEN'));
       }
-      const studentsRes = await store.query(
-        `SELECT u.*, e.joined_at FROM app_users u JOIN enrollments e ON u.id = e.student_id WHERE e.class_id = $1 ORDER BY u.name ASC`,
-        [classroom.id]
-      );
+
+      const sortBy = String(req.query.sortBy || 'name').toLowerCase();
+      const batchFilter = typeof req.query.batch === 'string' ? req.query.batch.trim() : '';
+
+      let queryText = `
+        SELECT u.*, e.joined_at, e.roll_number, e.student_batch
+        FROM app_users u
+        JOIN enrollments e ON u.id = e.student_id
+        WHERE e.class_id = $1
+      `;
+      const queryParams = [classroom.id];
+      if (batchFilter) {
+        queryParams.push(batchFilter);
+        queryText += ` AND LOWER(e.student_batch) = LOWER($${queryParams.length})`;
+      }
+
+      if (sortBy === 'roll_number' || sortBy === 'rollnumber') {
+        queryText += ` ORDER BY NULLIF(e.roll_number, '') ASC NULLS LAST, u.name ASC`;
+      } else {
+        queryText += ` ORDER BY u.name ASC`;
+      }
+
+      const studentsRes = await store.query(queryText, queryParams);
       const studentIds = studentsRes.rows.map((r) => r.id);
       let allProgress = [], allSessions = [], allNotes = [];
       if (studentIds.length > 0) {
@@ -348,6 +392,9 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
         const dashboard = buildDashboard({ user: student, progressEntries, practiceSessions });
         return {
           user: sanitizeGoogleUser(student),
+          rollNumber: row.rollNumber || row.roll_number || '',
+          studentBatch: row.studentBatch || row.student_batch || '',
+          joinedAt: row.joinedAt || row.joined_at || '',
           summary: dashboard.summary,
           weakTopics: dashboard.weakTopics,
           recentActivity: dashboard.recentActivity.slice(0, 3),
@@ -359,6 +406,111 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
       res.json(classStudentsResponseDto({ classId: classroom.id, students }));
     } catch (error) {
       res.status(500).json(errorResponseDto('Failed to load students'));
+    }
+  });
+
+  router.get('/classes/:classId/export', requireAuth, async (req, res) => {
+    try {
+      const classRes = await store.query('SELECT * FROM classes WHERE id = $1', [req.params.classId]);
+      if (classRes.rowCount === 0) return res.status(404).json(errorResponseDto('Class not found', 'NOT_FOUND'));
+      const classroom = rowsToCamel(classRes.rows)[0];
+      if (classroom.teacherId !== req.authUser.id && req.authUser.role !== 'owner') {
+        return res.status(403).json(errorResponseDto('You do not manage this class', 'FORBIDDEN'));
+      }
+
+      const sortBy = String(req.query.sortBy || 'roll_number').toLowerCase();
+      const batchFilter = typeof req.query.batch === 'string' ? req.query.batch.trim() : '';
+
+      let queryText = `
+        SELECT u.*, e.joined_at, e.roll_number, e.student_batch
+        FROM app_users u
+        JOIN enrollments e ON u.id = e.student_id
+        WHERE e.class_id = $1
+      `;
+      const queryParams = [classroom.id];
+      if (batchFilter) {
+        queryParams.push(batchFilter);
+        queryText += ` AND LOWER(e.student_batch) = LOWER($${queryParams.length})`;
+      }
+
+      if (sortBy === 'name') {
+        queryText += ` ORDER BY u.name ASC`;
+      } else {
+        queryText += ` ORDER BY NULLIF(e.roll_number, '') ASC NULLS LAST, u.name ASC`;
+      }
+
+      const studentsRes = await store.query(queryText, queryParams);
+      const studentIds = studentsRes.rows.map((r) => r.id);
+      let allProgress = [], allSessions = [];
+      if (studentIds.length > 0) {
+        allProgress = rowsToCamel((await store.query('SELECT * FROM progress_entries WHERE user_id = ANY($1)', [studentIds])).rows).map(stripSnakeOnly);
+        allSessions = rowsToCamel((await store.query('SELECT * FROM practice_sessions WHERE user_id = ANY($1)', [studentIds])).rows).map(stripSnakeOnly);
+      }
+
+      const escapeCsv = (val) => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+      };
+
+      const headers = [
+        'Roll No / PRN',
+        'Student Name',
+        'Batch / Section',
+        'Email',
+        'Enrolled At',
+        'Last Active',
+        'Modules Started',
+        'Modules Completed',
+        'Practice Sessions',
+        'Current Streak (Days)',
+        'Average Score',
+        'Attendance / Status'
+      ];
+
+      const rows = rowsToCamel(studentsRes.rows).map((row) => {
+        const student = stripSnakeOnly({ ...row, provider: 'google' });
+        const progressEntries = allProgress.filter((p) => p.userId === student.id);
+        const practiceSessions = allSessions.filter((p) => p.userId === student.id);
+        const dashboard = buildDashboard({ user: student, progressEntries, practiceSessions });
+
+        const avgScore = practiceSessions.length > 0
+          ? Math.round(practiceSessions.reduce((acc, cur) => acc + (cur.score || 0), 0) / practiceSessions.length)
+          : (dashboard.summary?.averageScore || 0);
+
+        const lastActive = dashboard.recentActivity.length > 0
+          ? dashboard.recentActivity[0].createdAt
+          : (student.lastSeenAt || '');
+
+        const status = dashboard.summary?.totalPracticeSessions > 0 || dashboard.summary?.totalTechniquesStarted > 0
+          ? 'Active'
+          : 'Enrolled (No Activity)';
+
+        return [
+          escapeCsv(row.rollNumber || row.roll_number || '-'),
+          escapeCsv(student.name || student.email || 'Unnamed Student'),
+          escapeCsv(row.studentBatch || row.student_batch || '-'),
+          escapeCsv(student.email || '-'),
+          escapeCsv(row.joinedAt ? new Date(row.joinedAt).toLocaleDateString() : '-'),
+          escapeCsv(lastActive ? new Date(lastActive).toLocaleDateString() : '-'),
+          escapeCsv(dashboard.summary?.totalTechniquesStarted || 0),
+          escapeCsv(dashboard.summary?.completedTechniques || 0),
+          escapeCsv(dashboard.summary?.totalPracticeSessions || 0),
+          escapeCsv(dashboard.summary?.streakDays || 0),
+          escapeCsv(`${avgScore}%`),
+          escapeCsv(status)
+        ].join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.map(escapeCsv).join(','), ...rows].join('\r\n');
+      const safeClassName = (classroom.name || 'Class').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `${safeClassName}_${classroom.joinCode || 'roster'}_marksheet.csv`;
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csvContent);
+    } catch (error) {
+      res.status(500).json(errorResponseDto('Failed to export class roster'));
     }
   });
 
@@ -374,6 +526,7 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
 
       const enrollRes = await store.query('SELECT * FROM enrollments WHERE class_id = $1 AND student_id = $2', [classroom.id, req.params.studentId]);
       if (enrollRes.rowCount === 0) return res.status(404).json(errorResponseDto('Student not enrolled', 'NOT_FOUND'));
+      const enrollment = rowsToCamel(enrollRes.rows)[0];
 
       const stuRes = await store.query('SELECT * FROM app_users WHERE id = $1', [req.params.studentId]);
       if (stuRes.rowCount === 0) return res.status(404).json(errorResponseDto('Student not found', 'NOT_FOUND'));
@@ -391,6 +544,9 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
 
       res.json(studentDetailResponseDto({
         user: sanitizeGoogleUser(student),
+        rollNumber: enrollment.rollNumber || enrollment.roll_number || '',
+        studentBatch: enrollment.studentBatch || enrollment.student_batch || '',
+        joinedAt: enrollment.joinedAt || enrollment.joined_at || '',
         summary: dashboard.summary,
         weakTopics: dashboard.weakTopics,
         recentActivity: dashboard.recentActivity.slice(0, 5),

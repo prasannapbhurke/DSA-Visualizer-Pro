@@ -42,6 +42,21 @@ public class ClassroomStudentAdapter extends RecyclerView.Adapter<ClassroomStude
     @Override
     public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
         ClassroomStudentSummary student = students.get(position);
+
+        if (student.rollNumber != null && !student.rollNumber.trim().isEmpty()) {
+            holder.rollBadge.setVisibility(View.VISIBLE);
+            holder.rollBadge.setText("ROLL: " + student.rollNumber.trim());
+        } else {
+            holder.rollBadge.setVisibility(View.GONE);
+        }
+
+        if (student.studentBatch != null && !student.studentBatch.trim().isEmpty()) {
+            holder.batchBadge.setVisibility(View.VISIBLE);
+            holder.batchBadge.setText(student.studentBatch.trim());
+        } else {
+            holder.batchBadge.setVisibility(View.GONE);
+        }
+
         holder.nameText.setText(student.displayName.trim().isEmpty()
             ? holder.itemView.getContext().getString(R.string.classroom_student_default_name)
             : student.displayName);
@@ -73,6 +88,8 @@ public class ClassroomStudentAdapter extends RecyclerView.Adapter<ClassroomStude
     }
 
     static class StudentViewHolder extends RecyclerView.ViewHolder {
+        final TextView rollBadge;
+        final TextView batchBadge;
         final TextView nameText;
         final TextView emailText;
         final TextView progressText;
@@ -80,6 +97,8 @@ public class ClassroomStudentAdapter extends RecyclerView.Adapter<ClassroomStude
 
         StudentViewHolder(@NonNull View itemView) {
             super(itemView);
+            rollBadge = itemView.findViewById(R.id.classroom_student_roll_badge);
+            batchBadge = itemView.findViewById(R.id.classroom_student_batch_badge);
             nameText = itemView.findViewById(R.id.classroom_student_name_text);
             emailText = itemView.findViewById(R.id.classroom_student_email_text);
             progressText = itemView.findViewById(R.id.classroom_student_progress_text);
