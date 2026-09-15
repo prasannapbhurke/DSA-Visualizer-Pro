@@ -112,28 +112,69 @@ const createAuthRouter = ({ store, logger = console, requireAuth }) => {
     }
   });
 
-  router.delete('/users/me', requireAuth, async (req, res) => {
+  const handleAccountDeletion = async (req, res) => {
     try {
-      const userId = req.authUser.id;
-      if (logger && typeof logger.info === 'function') {
-        logger.info('user.deletion_requested', { userId, email: req.authUser.email });
+      const userId = req.authUser?.id;
+      const userEmail = req.authUser?.email;
+      if (!userId) {
+        return res.status(401).json(errorResponseDto('Authentication required', 'UNAUTHORIZED'));
       }
+
+      if (logger && typeof logger.info === 'function') {
+        logger.info('auth.account_deletion_requested', { userId, email: userEmail });
+      }
+
+      // Revoke Google tokens if present
+      try {
+        const tokenToRevoke = req.authUser.token || req.authUser.refreshToken;
+        if (tokenToRevoke && oauth2Client && typeof oauth2Client.revokeToken === 'function') {
+          await oauth2Client.revokeToken(tokenToRevoke).catch(() => {});
+        }
+      } catch (tokenErr) {
+        if (logger && typeof logger.warn === 'function') {
+          logger.warn('auth.token_revocation_skipped', { error: tokenErr.message });
+        }
+      }
+
+      // Scrub database records with full cascade
       if (typeof store.deleteUser === 'function') {
         await store.deleteUser(userId);
-      } else {
-        await store.query('DELETE FROM app_users WHERE id = $1', [userId]);
+      } else if (typeof store.query === 'function') {
+        await store.query('delete from class_resources where uploaded_by = $1', [userId]);
+        await store.query('delete from enrollments where student_id = $1', [userId]);
+        await store.query('delete from teacher_notes where student_id = $1 or teacher_id = $1', [userId]);
+        await store.query('delete from progress_entries where user_id = $1', [userId]);
+        await store.query('delete from practice_sessions where user_id = $1', [userId]);
+        await store.query('delete from mistakes where user_id = $1', [userId]);
+        await store.query('update feedback_entries set reviewed_by = null where reviewed_by = $1', [userId]);
+        await store.query('delete from feedback_entries where user_id = $1', [userId]);
+        await store.query('update audit_logs set actor_id = null where actor_id = $1', [userId]);
+        await store.query('delete from app_users where id = $1', [userId]);
       }
+
+      // Clear auth cookies
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/api/auth',
+      });
+
       if (logger && typeof logger.info === 'function') {
-        logger.info('user.deleted_successfully', { userId });
+        logger.info('auth.account_deleted_successfully', { userId, email: userEmail });
       }
-      res.json(successMessageResponseDto('Account and all associated learning data have been permanently deleted'));
+
+      res.json(successMessageResponseDto('Account, Google session, classroom enrollments, and all associated learning records have been permanently deleted'));
     } catch (error) {
       if (logger && typeof logger.error === 'function') {
-        logger.error('user.deletion_failed', { error: error.message, userId: req.authUser?.id });
+        logger.error('auth.account_deletion_failed', { error: error.message, userId: req.authUser?.id });
       }
       res.status(500).json(errorResponseDto('Failed to delete account'));
     }
-  });
+  };
+
+  router.delete('/auth/account', requireAuth, handleAccountDeletion);
+  router.delete('/users/me', requireAuth, handleAccountDeletion);
 
   router.post('/users/request-deletion', async (req, res) => {
     try {

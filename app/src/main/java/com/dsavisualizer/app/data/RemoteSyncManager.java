@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -365,9 +366,21 @@ public class RemoteSyncManager {
             try {
                 String token = preferences.getAuthToken();
                 if (token != null && !token.trim().isEmpty()) {
-                    performJsonRequest("DELETE", "/api/users/me", token, null, false);
+                    try {
+                        performJsonRequest("DELETE", "/api/auth/account", token, null, false);
+                        success = true;
+                    } catch (Exception primaryErr) {
+                        try {
+                            performJsonRequest("DELETE", "/api/users/me", token, null, false);
+                            success = true;
+                        } catch (Exception fallbackErr) {
+                            Log.e("RemoteSyncManager", "Failed to delete account on server", fallbackErr);
+                            success = false;
+                        }
+                    }
+                } else {
+                    success = true;
                 }
-                success = true;
             } catch (Exception ignored) {
                 success = false;
             } finally {

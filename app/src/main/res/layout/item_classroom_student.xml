@@ -26,11 +26,10 @@
                 android:id="@+id/classroom_student_roll_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_difficulty_badge"
-                android:backgroundTint="@color/accent_cyan"
+                android:background="@drawable/drawer_badge_background"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="3dp"
-                android:textColor="@color/bg_base"
+                android:textColor="@color/text_hint_blue"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
@@ -39,7 +38,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/bg_difficulty_badge"
+                android:background="@drawable/drawer_badge_background"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="3dp"
                 android:textColor="@color/text_primary_bright"

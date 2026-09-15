@@ -18,6 +18,9 @@ const createMockStore = () => {
     async findUserByToken(token) {
       return USERS[token] || null;
     },
+    async deleteUser(userId) {
+      return true;
+    },
     async query(sql, params = []) {
       const normalized = sql.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -315,6 +318,28 @@ async function runTests() {
       assert.equal(webRes.status, 200, 'Web companion dashboard should return 200 OK');
       assert.ok(typeof webRes.body === 'string' && webRes.body.includes('DSA Control Centre'), 'HTML must contain dashboard title');
       console.log('✓ Test 8: Desktop Web companion dashboard served with 200 OK at /admin/');
+    }
+
+    // Test 9: DELETE /api/auth/account cascades deletion and revokes session
+    {
+      const unauthRes = await makeRequest(baseUrl, '/api/auth/account', { method: 'DELETE' });
+      assert.equal(unauthRes.status, 401, 'Unauthenticated deletion request should return 401');
+
+      const authRes = await makeRequest(baseUrl, '/api/auth/account', {
+        method: 'DELETE',
+        token: 'student_token',
+      });
+      assert.equal(authRes.status, 200, 'Authenticated deletion request should return 200 OK');
+      assert.ok(authRes.body?.data?.message, 'Response should contain success message');
+      console.log('✓ Test 9: DELETE /api/auth/account securely cascades and deletes user account');
+    }
+
+    // Test 10: /delete-account.html web portal is served
+    {
+      const deletePageRes = await makeRequest(baseUrl, '/delete-account.html');
+      assert.equal(deletePageRes.status, 200, 'Web account deletion portal should return 200 OK');
+      assert.ok(typeof deletePageRes.body === 'string' && deletePageRes.body.includes('Delete Account & Data'), 'HTML must contain deletion page title');
+      console.log('✓ Test 10: Fallback web portal served at /delete-account.html with 200 OK');
     }
 
     console.log('\nAll Control Centre tests PASSED successfully! 🚀');

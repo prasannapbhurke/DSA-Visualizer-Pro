@@ -119,94 +119,82 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/player_controls_strip_background"
-                android:gravity="center"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="3dp"
+                android:paddingStart="8dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="6dp"
                 android:weightSum="4">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:paddingEnd="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_study_previous_button"
                         style="@style/Widget.DSA.Button.Playback"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Prev"
-                        app:icon="@drawable/ic_player_prev" />
+                        android:contentDescription="@string/vis_step_prev"
+                        app:icon="@drawable/ic_player_prev"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="0.5dp"
-                    android:layout_height="16dp"
-                    android:layout_gravity="center_vertical"
-                    android:alpha="0.26"
-                    android:background="@color/surface_stroke_muted" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:paddingStart="3dp"
+                    android:paddingEnd="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_study_replay_button"
                         style="@style/Widget.DSA.Button.Playback.Restart"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Restart"
-                        app:icon="@drawable/ic_player_replay" />
+                        android:contentDescription="@string/vis_restart"
+                        app:icon="@drawable/ic_player_replay"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="0.5dp"
-                    android:layout_height="16dp"
-                    android:layout_gravity="center_vertical"
-                    android:alpha="0.26"
-                    android:background="@color/surface_stroke_muted" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:paddingStart="3dp"
+                    android:paddingEnd="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_study_play_button"
                         style="@style/Widget.DSA.Button.Playback.Primary"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Play"
-                        app:icon="@drawable/ic_player_play" />
+                        android:contentDescription="@string/vis_play"
+                        app:icon="@drawable/ic_player_play"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="0.5dp"
-                    android:layout_height="16dp"
-                    android:layout_gravity="center_vertical"
-                    android:alpha="0.26"
-                    android:background="@color/surface_stroke_muted" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:paddingStart="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_study_next_button"
                         style="@style/Widget.DSA.Button.Playback"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Next"
-                        app:icon="@drawable/ic_player_next" />
+                        android:contentDescription="@string/vis_step_next"
+                        app:icon="@drawable/ic_player_next"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -1036,200 +1024,185 @@
                 android:visibility="gone" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/visual_progress_label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/vis_progress_initial"
-            android:textColor="@color/text_muted_soft"
-            android:textSize="12sp" />
-
-        <FrameLayout
-            android:id="@+id/visual_progress_track"
-            android:layout_width="match_parent"
-            android:layout_height="22dp"
-            android:layout_marginTop="6dp">
-
-            <TextView
-                android:id="@+id/visual_progress_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start|top"
-                android:background="@drawable/surface_chip_background"
-                android:paddingStart="8dp"
-                android:paddingTop="3dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="3dp"
-                android:text="@string/vis_step_initial"
-                android:textColor="@color/text_primary_soft"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:translationY="0dp"
-                android:visibility="gone" />
-
-            <ProgressBar
-                android:id="@+id/visual_progress_bar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="5dp"
-                android:layout_gravity="center_vertical"
-                android:max="100"
-                android:progress="0"
-                android:progressTint="#38BDF8" />
-
-            <View
-                android:id="@+id/visual_progress_handle"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:layout_gravity="start|center_vertical"
-                android:background="@drawable/player_progress_handle_background" />
-        </FrameLayout>
-
         <LinearLayout
+            android:id="@+id/visual_controls_dock_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="vertical">
+            android:layout_marginTop="8dp"
+            android:background="@drawable/player_controls_strip_background"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp">
 
+            <!-- Scrubber Timeline Header: Step X of Y -->
             <TextView
-                android:id="@+id/visual_controls_hint_label"
-                android:layout_width="wrap_content"
+                android:id="@+id/visual_progress_label"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="3dp"
-                android:text="@string/vis_controls_hint"
-                android:textColor="@color/text_muted_soft"
-                android:textSize="9sp"
-                android:visibility="gone" />
+                android:gravity="center"
+                android:text="@string/vis_progress_initial"
+                android:textColor="@color/text_primary_soft"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
+            <!-- Interactive Scrubber Timeline Track -->
+            <FrameLayout
+                android:id="@+id/visual_progress_track"
+                android:layout_width="match_parent"
+                android:layout_height="26dp"
+                android:layout_marginTop="2dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
+
+                <TextView
+                    android:id="@+id/visual_progress_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|top"
+                    android:background="@drawable/surface_chip_background"
+                    android:paddingStart="8dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="3dp"
+                    android:text="@string/vis_step_initial"
+                    android:textColor="@color/text_primary_soft"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <ProgressBar
+                    android:id="@+id/visual_progress_bar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_gravity="center_vertical"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressTint="#38BDF8" />
+
+                <View
+                    android:id="@+id/visual_progress_handle"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="start|center_vertical"
+                    android:background="@drawable/player_progress_handle_background"
+                    android:elevation="2dp" />
+            </FrameLayout>
+
+            <!-- Unified Control Strip (5 buttons: Prev, Restart, Play, Next, Edit) -->
             <LinearLayout
                 android:id="@+id/visual_controls_strip"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/player_controls_strip_background"
-                android:gravity="center"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="5dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="5dp"
-                android:paddingBottom="5dp"
-                android:weightSum="4.35">
+                android:weightSum="5">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:paddingEnd="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_previous_button"
                         style="@style/Widget.DSA.Button.Playback"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Prev"
-                        app:icon="@drawable/ic_player_prev" />
+                        android:contentDescription="@string/vis_step_prev"
+                        app:icon="@drawable/ic_player_prev"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center_vertical"
-                    android:alpha="0"
-                    android:background="@color/surface_stroke_muted" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:paddingStart="3dp"
+                    android:paddingEnd="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_replay_button"
                         style="@style/Widget.DSA.Button.Playback.Restart"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Restart"
-                        app:icon="@drawable/ic_player_replay" />
+                        android:contentDescription="@string/vis_restart"
+                        app:icon="@drawable/ic_player_replay"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center_vertical"
-                    android:alpha="0"
-                    android:background="@color/surface_stroke_muted" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1.35"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:paddingStart="3dp"
+                    android:paddingEnd="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_start_pause_button"
                         style="@style/Widget.DSA.Button.Playback.Primary"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Play"
-                        android:translationY="-3dp"
-                        app:icon="@drawable/ic_player_play" />
+                        android:contentDescription="@string/vis_play"
+                        app:icon="@drawable/ic_player_play"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center_vertical"
-                    android:alpha="0"
-                    android:background="@color/surface_stroke_muted" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:paddingStart="3dp"
+                    android:paddingEnd="3dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/visual_step_button"
                         style="@style/Widget.DSA.Button.Playback"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Next"
-                        app:icon="@drawable/ic_player_next" />
+                        android:contentDescription="@string/vis_step_next"
+                        app:icon="@drawable/ic_player_next"
+                        app:iconGravity="textStart" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:paddingStart="3dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/visual_edit_input_button"
+                        style="@style/Widget.DSA.Button.Playback.Action"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/vis_edit_input"
+                        app:icon="@drawable/ic_edit"
+                        app:iconGravity="textStart" />
                 </LinearLayout>
             </LinearLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/visual_edit_input_button"
-                style="@style/Widget.DSA.Button.Outlined"
-                android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="9dp"
-                android:minHeight="0dp"
-                android:paddingStart="16dp"
-                android:paddingEnd="18dp"
-                android:text="@string/vis_edit_input"
-                android:textSize="11sp"
-                app:icon="@drawable/ic_edit"
-                app:iconGravity="textStart"
-                app:iconTint="@color/text_primary_bright" />
 
             <View
                 android:id="@+id/visual_controls_progress_line"
                 android:layout_width="match_parent"
                 android:layout_height="2dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="6dp"
-                android:layout_marginEnd="10dp"
-                android:alpha="0.92"
-                android:background="@color/text_primary_soft"
-                android:scaleX="0"
-                android:transformPivotX="0dp" />
+                android:alpha="0"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/visual_controls_hint_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton

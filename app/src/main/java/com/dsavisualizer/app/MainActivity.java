@@ -454,30 +454,70 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void openWebAccountDeletion() {
+        String url = ApiConfig.getBaseUrl() + "/delete-account";
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not open browser for Web Deletion page", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void confirmAccountDeletion() {
         new MaterialAlertDialogBuilder(this)
             .setTitle(R.string.dialog_delete_account_title)
             .setMessage(R.string.dialog_delete_account_message)
             .setNegativeButton(R.string.dialog_delete_account_cancel, null)
+            .setNeutralButton(R.string.dialog_delete_account_web, (dialog, which) -> openWebAccountDeletion())
             .setPositiveButton(R.string.dialog_delete_account_confirm, (dialog, which) -> executeAccountDeletion())
             .show();
     }
 
     private void executeAccountDeletion() {
-        Toast.makeText(this, "Deleting account...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.toast_deleting_account, Toast.LENGTH_SHORT).show();
         RemoteSyncManager.getInstance(this).deleteAccount(success -> {
             appPreferences.clearAuthSession();
             try {
-                googleSignInClient.revokeAccess();
-                googleSignInClient.signOut();
+                if (googleSignInClient != null) {
+                    googleSignInClient.revokeAccess();
+                    googleSignInClient.signOut();
+                }
             } catch (Exception ignored) {
             }
-            Toast.makeText(this, R.string.toast_delete_account_success, Toast.LENGTH_LONG).show();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
+            runOnUiThread(() -> {
+                if (success) {
+                    Toast.makeText(this, R.string.toast_delete_account_success, Toast.LENGTH_LONG).show();
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    showDeletionFallbackDialog();
+                }
+            });
         });
+    }
+
+    private void showDeletionFallbackDialog() {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.dialog_delete_account_fallback_title)
+            .setMessage(R.string.dialog_delete_account_fallback_message)
+            .setNegativeButton(R.string.dialog_delete_account_cancel, (dialog, which) -> {
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            })
+            .setPositiveButton(R.string.dialog_delete_account_open_web, (dialog, which) -> {
+                openWebAccountDeletion();
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            })
+            .setCancelable(false)
+            .show();
     }
 
     @Override

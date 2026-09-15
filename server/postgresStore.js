@@ -493,6 +493,13 @@ const createPostgresStore = (databaseUrl) => {
       await client.query('begin');
       await client.query('update feedback_entries set reviewed_by = null where reviewed_by = $1', [userId]);
       await client.query('update audit_logs set actor_id = null where actor_id = $1', [userId]);
+      await client.query('delete from class_resources where uploaded_by = $1', [userId]);
+      await client.query('delete from enrollments where student_id = $1', [userId]);
+      await client.query('delete from teacher_notes where student_id = $1 or teacher_id = $1', [userId]);
+      await client.query('delete from progress_entries where user_id = $1', [userId]);
+      await client.query('delete from practice_sessions where user_id = $1', [userId]);
+      await client.query('delete from mistakes where user_id = $1', [userId]);
+      await client.query('delete from feedback_entries where user_id = $1', [userId]);
       const res = await client.query('delete from app_users where id = $1 returning *', [userId]);
       await client.query('commit');
       return res.rowCount > 0;
@@ -517,6 +524,13 @@ const createPostgresStore = (databaseUrl) => {
       const userId = userRes.rows[0].id;
       await client.query('update feedback_entries set reviewed_by = null where reviewed_by = $1', [userId]);
       await client.query('update audit_logs set actor_id = null where actor_id = $1', [userId]);
+      await client.query('delete from class_resources where uploaded_by = $1', [userId]);
+      await client.query('delete from enrollments where student_id = $1', [userId]);
+      await client.query('delete from teacher_notes where student_id = $1 or teacher_id = $1', [userId]);
+      await client.query('delete from progress_entries where user_id = $1', [userId]);
+      await client.query('delete from practice_sessions where user_id = $1', [userId]);
+      await client.query('delete from mistakes where user_id = $1', [userId]);
+      await client.query('delete from feedback_entries where user_id = $1', [userId]);
       await client.query('delete from app_users where id = $1', [userId]);
       await client.query('commit');
       return true;

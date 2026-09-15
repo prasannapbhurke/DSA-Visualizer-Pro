@@ -296,6 +296,11 @@
     <string name="dialog_delete_account_cancel">Cancel</string>
     <string name="toast_delete_account_success">Your account and data have been permanently deleted.</string>
     <string name="toast_delete_account_failed">Server request failed. Local session cleared.</string>
+    <string name="toast_deleting_account">Deleting account and data...</string>
+    <string name="dialog_delete_account_web">Web Deletion Page</string>
+    <string name="dialog_delete_account_fallback_title">Account Deletion Notice</string>
+    <string name="dialog_delete_account_fallback_message">Local credentials have been wiped from this device. The server could not be reached to confirm cloud deletion. Would you like to open the Web Account Deletion page to request data erasure?</string>
+    <string name="dialog_delete_account_open_web">Open Web Portal</string>
     <string name="home_feedback_title">Send feedback</string>
     <string name="home_feedback_bug">Report a bug</string>
     <string name="home_feedback_content">Improve explanation or quiz</string>
@@ -503,6 +508,11 @@
     <string name="vis_random">Random</string>
     <string name="vis_apply_input">Apply Input</string>
     <string name="vis_edit_input">Edit Input</string>
+    <string name="vis_step_prev">Previous step</string>
+    <string name="vis_restart">Restart</string>
+    <string name="vis_play">Play</string>
+    <string name="vis_pause">Pause</string>
+    <string name="vis_step_next">Next step</string>
     <string name="vis_input_editor_title">Input Editor</string>
     <string name="vis_input_editor_support">Update the sample values here without crowding the main visualizer.</string>
     <string name="vis_operations">Operations</string>

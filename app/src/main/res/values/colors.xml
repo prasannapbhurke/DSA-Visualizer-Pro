@@ -122,21 +122,28 @@
     <!-- Player & Visualizer Dock Controls -->
     <color name="player_dock_start">#FFFFFF</color>
     <color name="player_dock_end">#F8FAFC</color>
-    <color name="player_strip_surface">#F1F5F9</color>
+    <color name="player_strip_surface">#FFFFFF</color>
     <color name="player_strip_stroke">#E2E8F0</color>
-    <color name="player_control_surface">#FFFFFF</color>
+    <color name="player_control_surface">#F1F5F9</color>
     <color name="player_control_pressed_surface">#E2E8F0</color>
     <color name="player_control_text">#0F172A</color>
-    <color name="player_control_disabled_surface">#F1F5F9</color>
+    <color name="player_control_disabled_surface">#F8FAFC</color>
     <color name="player_control_disabled_text">#94A3B8</color>
-    <color name="player_control_neutral_stroke">#CBD5E1</color>
-    <color name="player_control_disabled_stroke">#E2E8F0</color>
-    <color name="player_play_surface">#16A34A</color>
-    <color name="player_play_active_surface">#22C55E</color>
-    <color name="player_play_pressed_surface">#15803D</color>
-    <color name="player_play_stroke">#16A34A</color>
-    <color name="player_reset_surface">#FEF3C7</color>
-    <color name="player_reset_pressed_surface">#FDE68A</color>
-    <color name="player_reset_text">#92400E</color>
-    <color name="player_reset_stroke">#F59E0B</color>
+    <color name="player_control_neutral_stroke">#E2E8F0</color>
+    <color name="player_control_disabled_stroke">#F1F5F9</color>
+    <color name="player_play_surface">#10B981</color>
+    <color name="player_play_active_surface">#059669</color>
+    <color name="player_play_pressed_surface">#047857</color>
+    <color name="player_play_stroke">#059669</color>
+    <color name="player_reset_surface">#F1F5F9</color>
+    <color name="player_reset_pressed_surface">#E2E8F0</color>
+    <color name="player_reset_text">#0F172A</color>
+    <color name="player_reset_stroke">#E2E8F0</color>
+    <color name="player_scrubber_track">#E2E8F0</color>
+    <color name="player_scrubber_progress">#2563EB</color>
+    <color name="player_scrubber_thumb">#2563EB</color>
+
+    <!-- Semantic tokens -->
+    <color name="accent_cyan">#06B6D4</color>
+    <color name="bg_base">#FFFFFF</color>
 </resources>

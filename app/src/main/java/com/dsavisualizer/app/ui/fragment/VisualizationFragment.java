@@ -460,25 +460,35 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             }
 
             if (replayButton != null) {
-                replayButton.setText("Restart");
+                replayButton.setText("");
+                replayButton.setContentDescription(getString(R.string.vis_restart));
             }
             if (previousButton != null) {
-                previousButton.setText("Prev");
+                previousButton.setText("");
+                previousButton.setContentDescription(getString(R.string.vis_step_prev));
             }
             if (nextButton != null) {
-                nextButton.setText("Next");
+                nextButton.setText("");
+                nextButton.setContentDescription(getString(R.string.vis_step_next));
+            }
+            if (editInputButton != null) {
+                editInputButton.setText("");
+                editInputButton.setContentDescription(getString(R.string.vis_edit_input));
             }
             if (topicNameText != null) {
                 topicNameText.setText(techniqueTitle);
             }
             if (studyReplayButton != null) {
-                studyReplayButton.setText("Restart");
+                studyReplayButton.setText("");
+                studyReplayButton.setContentDescription(getString(R.string.vis_restart));
             }
             if (studyPreviousButton != null) {
-                studyPreviousButton.setText("Prev");
+                studyPreviousButton.setText("");
+                studyPreviousButton.setContentDescription(getString(R.string.vis_step_prev));
             }
             if (studyNextButton != null) {
-                studyNextButton.setText("Next");
+                studyNextButton.setText("");
+                studyNextButton.setContentDescription(getString(R.string.vis_step_next));
             }
 
             try {
@@ -742,11 +752,11 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         if (inputActionsRow != null) {
             inputActionsRow.setVisibility(View.GONE);
         }
-        if (progressLabel != null && !landscape) {
-            progressLabel.setVisibility(View.GONE);
+        if (progressLabel != null) {
+            progressLabel.setVisibility(View.VISIBLE);
         }
-        if (progressTrack != null && !landscape) {
-            progressTrack.setVisibility(View.GONE);
+        if (progressTrack != null) {
+            progressTrack.setVisibility(View.VISIBLE);
         }
 
         if (visualizerView != null && visualizerView.getLayoutParams() != null) {
@@ -4404,7 +4414,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         }
         button.animate().cancel();
         button.setIconResource(playing ? R.drawable.ic_player_pause : R.drawable.ic_player_play);
-        button.setText(playing ? "Pause" : "Play");
+        button.setText("");
+        button.setContentDescription(playing ? getString(R.string.vis_pause) : getString(R.string.vis_play));
         button.animate()
             .scaleX(celebrateCompletion ? 1.08f : (playing ? 1.03f : 1f))
             .scaleY(celebrateCompletion ? 1.08f : (playing ? 1.03f : 1f))
@@ -4645,15 +4656,6 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     private void applyPlayerAccentColors() {
         int accentColor = resolveAccentColor();
         int barColor = resolveBarColor();
-        if (controlsGroup != null && controlsGroup.getBackground() != null) {
-            controlsGroup.getBackground().setTint(barColor);
-        }
-        if (controlsStrip != null && controlsStrip.getBackground() != null) {
-            controlsStrip.getBackground().setTint(barColor);
-        }
-        if (studyControlsStrip != null && studyControlsStrip.getBackground() != null) {
-            studyControlsStrip.getBackground().setTint(darkenColor(barColor, 0.88f));
-        }
         if (progressBar != null) {
             progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(accentColor));
         }
