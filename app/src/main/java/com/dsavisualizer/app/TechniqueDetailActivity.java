@@ -126,6 +126,15 @@ public class TechniqueDetailActivity extends AppCompatActivity {
                 showPage(3);
             }
         });
+        boolean isLeetCode = resolvedTechniqueId.startsWith("leetcode_");
+        View practiceBtn = findViewById(R.id.detail_flow_practice);
+        if (practiceBtn != null && isLeetCode) {
+            practiceBtn.setVisibility(View.GONE);
+        }
+        if (isLeetCode && flowLabelView != null) {
+            flowLabelView.setText("Interview Solution Flow");
+        }
+
         currentPage = resolveInitialPage(savedInstanceState);
         checkFlowToggle(flowToggle, currentPage);
         showPage(currentPage);
@@ -143,6 +152,10 @@ public class TechniqueDetailActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (currentPage > 0) {
             int targetPage = currentPage - 1;
+            boolean isLeetCode = techniqueId != null && techniqueId.startsWith("leetcode_");
+            if (isLeetCode && targetPage == 2) {
+                targetPage = 1;
+            }
             checkFlowToggle(flowToggle, targetPage);
             showPage(targetPage);
             return;

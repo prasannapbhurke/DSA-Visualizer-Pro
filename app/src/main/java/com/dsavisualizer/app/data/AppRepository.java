@@ -2976,6 +2976,9 @@ public final class AppRepository {
                 + "   [End of Step 3 loop.]\n"
                 + "6. Exit."
         );
+
+        // Register LeetCode Top Interview Problems
+        LeetCodeProblemProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
     }
 
     private static void putPdfAlgorithm(String techniqueId, String algorithm) {

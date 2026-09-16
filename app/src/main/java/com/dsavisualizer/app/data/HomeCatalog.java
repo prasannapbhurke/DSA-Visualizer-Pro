@@ -16,6 +16,7 @@ public final class HomeCatalog {
 
     public static List<CategoryItem> getCategories() {
         List<CategoryItem> categories = new ArrayList<>();
+        categories.add(new CategoryItem("leetcode", "🔥 LeetCode Top Picks", "Top interview problems with animated solutions & code", "#F59E0B"));
         categories.add(new CategoryItem("searching", "Searching", "Find data quickly and clearly", "#4ADE80"));
         categories.add(new CategoryItem("sorting", "Sorting", "Arrange items step by step", "#60A5FA"));
         categories.add(new CategoryItem("stack", "Stack", "Last in, first out structure", "#F59E0B"));

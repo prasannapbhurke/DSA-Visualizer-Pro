@@ -14,7 +14,10 @@ public final class VisualizationTechniqueRegistry {
         "linear_search",
         "binary_search",
         "jump_search",
-        "pattern_matching"
+        "pattern_matching",
+        "leetcode_two_sum",
+        "leetcode_binary_search",
+        "leetcode_best_time_stock"
     ));
 
     private static final Set<String> SORTING = new HashSet<>(Arrays.asList(
@@ -59,7 +62,11 @@ public final class VisualizationTechniqueRegistry {
         "union_find",
         "hash_collision_handling",
         "recursion_basics",
-        "dynamic_programming_basics"
+        "dynamic_programming_basics",
+        "leetcode_valid_parentheses",
+        "leetcode_reverse_linked_list",
+        "leetcode_merge_two_sorted_lists",
+        "leetcode_linked_list_cycle"
     ));
 
     private static final Set<String> TREES = new HashSet<>(Arrays.asList(
@@ -76,7 +83,8 @@ public final class VisualizationTechniqueRegistry {
         "traversal_using_stacks",
         "huffman_algorithm",
         "avl_tree",
-        "trie"
+        "trie",
+        "leetcode_invert_binary_tree"
     ));
 
     private static final Set<String> GRAPHS = new HashSet<>(Arrays.asList(
