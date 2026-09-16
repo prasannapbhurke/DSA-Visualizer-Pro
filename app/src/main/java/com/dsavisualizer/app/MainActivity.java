@@ -216,7 +216,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         adapter = new CategoryAdapter(this::openCategory);
-        int categorySpanCount = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 4 : 2;
+        int smallestWidth = getResources().getConfiguration().smallestScreenWidthDp;
+        boolean isTablet = smallestWidth >= 600;
+        boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        int categorySpanCount = isLandscape ? (isTablet ? 4 : 4) : (isTablet ? 3 : 2);
         categoryRecyclerView.setLayoutManager(new GridLayoutManager(this, categorySpanCount));
         categoryRecyclerView.setAdapter(adapter);
 

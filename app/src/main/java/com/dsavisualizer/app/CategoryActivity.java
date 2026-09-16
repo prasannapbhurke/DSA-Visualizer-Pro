@@ -55,8 +55,12 @@ public class CategoryActivity extends AppCompatActivity {
         remoteSyncManager = RemoteSyncManager.getInstance(this);
 
         adapter = new TechniqueAdapter(this::openTechnique);
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        int smallestWidth = getResources().getConfiguration().smallestScreenWidthDp;
+        boolean isTablet = smallestWidth >= 600;
+        boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        if (isLandscape || isTablet) {
+            int spanCount = isLandscape ? (isTablet ? 3 : 2) : 2;
+            recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         } else {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
         }

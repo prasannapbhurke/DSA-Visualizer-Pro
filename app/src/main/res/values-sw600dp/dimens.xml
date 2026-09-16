@@ -1,0 +1,13 @@
+<resources>
+    <dimen name="dsa_drawer_width">360dp</dimen>
+    <dimen name="dsa_screen_title_text">28sp</dimen>
+    <dimen name="dsa_home_title_text">28sp</dimen>
+    <dimen name="dsa_login_title_text">32sp</dimen>
+    <dimen name="dsa_login_subtitle_text">18sp</dimen>
+    <dimen name="dsa_section_title_text">19sp</dimen>
+    <dimen name="dsa_body_text">15sp</dimen>
+    <dimen name="dsa_body_small_text">13sp</dimen>
+    <dimen name="dsa_caption_text">12sp</dimen>
+    <dimen name="dsa_card_title_text">14sp</dimen>
+    <dimen name="dsa_flow_chip_text">12sp</dimen>
+</resources>

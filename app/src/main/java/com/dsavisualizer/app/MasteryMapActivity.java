@@ -1,5 +1,6 @@
 package com.dsavisualizer.app;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -42,7 +43,11 @@ public class MasteryMapActivity extends AppCompatActivity {
 
         categoryRecyclerView = findViewById(R.id.category_recycler_view);
         adapter = new CategoryAdapter(this::openCategory);
-        categoryRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        int smallestWidth = getResources().getConfiguration().smallestScreenWidthDp;
+        boolean isTablet = smallestWidth >= 600;
+        boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        int spanCount = isLandscape ? (isTablet ? 4 : 4) : (isTablet ? 3 : 2);
+        categoryRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         categoryRecyclerView.setAdapter(adapter);
 
         loadCategories();
