@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const { statusResponseDto } = require('../dto');
 
-const createPublicRouter = () => {
+const createPublicRouter = ({ store, logger } = {}) => {
   const router = express.Router();
 
   router.get('/', (req, res) => {
@@ -14,6 +14,7 @@ const createPublicRouter = () => {
   });
 
   router.get('/privacy-policy', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'privacy-policy.html'));
   });
 
@@ -26,6 +27,7 @@ const createPublicRouter = () => {
   });
 
   router.get('/delete-account', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'delete-account.html'));
   });
 
@@ -33,9 +35,32 @@ const createPublicRouter = () => {
     res.redirect(301, '/delete-account');
   });
 
-  router.get('/status', (req, res) => {
-    res.json(statusResponseDto());
-  });
+  const handleStatus = async (req, res) => {
+    let dbStatus = 'unconfigured';
+    if (store && typeof store.query === 'function') {
+      try {
+        await store.query('SELECT 1');
+        dbStatus = 'connected';
+      } catch (error) {
+        dbStatus = 'error';
+        if (logger && typeof logger.warn === 'function') {
+          logger.warn('db.keep_alive.error', { error: error.message });
+        }
+      }
+    }
+    const base = statusResponseDto();
+    res.json({
+      data: {
+        ...base.data,
+        database: dbStatus,
+      },
+    });
+  };
+
+  router.get('/status', handleStatus);
+  router.get('/api/status', handleStatus);
+  router.get('/api/health', handleStatus);
+  router.get('/api/keep-alive', handleStatus);
 
   return router;
 };

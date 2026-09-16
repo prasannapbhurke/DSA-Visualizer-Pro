@@ -76,7 +76,7 @@ const createApp = ({
   const { requireAuth, requireRole } = createAuthMiddleware(store, logger);
 
   // Mount Modular Routers
-  app.use('/', createPublicRouter());
+  app.use('/', createPublicRouter({ store, logger }));
   app.use('/api', createAuthRouter({ store, logger, requireAuth }));
   app.use('/api', createProgressRouter({ store, logger, requireAuth }));
   app.use('/api', createFeedbackRouter({ store, logger, requireAuth }));
