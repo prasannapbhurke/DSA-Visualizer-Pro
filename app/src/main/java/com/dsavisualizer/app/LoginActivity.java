@@ -75,7 +75,16 @@ public class LoginActivity extends AppCompatActivity {
         warmBackend();
 
         googleSignInButton.setOnClickListener(v -> signInWithGoogle());
+        View guestButton = findViewById(R.id.guest_mode_button);
+        if (guestButton != null) {
+            guestButton.setOnClickListener(v -> continueAsGuest());
+        }
+    }
 
+    private void continueAsGuest() {
+        String guestId = "guest_" + System.currentTimeMillis();
+        appPreferences.saveGuestSession("guest_token", guestId, "Guest Scholar");
+        proceedToMain();
     }
 
     private void initializeGoogleSignIn() {
@@ -246,11 +255,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private boolean isUserAuthenticated() {
-        if (appPreferences.hasGuestSession()) {
-            appPreferences.clearAuthSession();
-            return false;
-        }
-        return appPreferences.hasGoogleSession();
+        return appPreferences.hasAuthSession();
     }
 
     private boolean isGoogleClientConfigured() {

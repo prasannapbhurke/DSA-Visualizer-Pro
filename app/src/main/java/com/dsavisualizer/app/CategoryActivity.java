@@ -14,8 +14,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.dsavisualizer.app.data.AppPreferences;
 import com.dsavisualizer.app.data.AppRepository;
 import com.dsavisualizer.app.data.ProManager;
+import com.dsavisualizer.app.data.RateAppManager;
 import com.dsavisualizer.app.data.RemoteSyncManager;
 import com.dsavisualizer.app.model.TechniqueItem;
 import com.dsavisualizer.app.ui.SafeInsetHelper;
@@ -83,6 +85,7 @@ public class CategoryActivity extends AppCompatActivity {
         super.onResume();
         navigationInProgress = false;
         refreshWeakTopics();
+        RateAppManager.maybePromptRating(this);
     }
 
     private void loadTechniques(String categoryId) {
@@ -136,6 +139,7 @@ public class CategoryActivity extends AppCompatActivity {
             return;
         }
         navigationInProgress = true;
+        new AppPreferences(this).incrementExploredActions();
         Intent intent = new Intent(this, TechniqueDetailActivity.class);
         intent.putExtra(TechniqueDetailActivity.EXTRA_TECHNIQUE_ID, item.id);
         startActivity(intent);

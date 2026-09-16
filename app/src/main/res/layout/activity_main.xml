@@ -567,6 +567,17 @@
                 app:iconTint="@color/amber_500" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/rate_store_button"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="⭐ Rate Us on Store"
+                app:icon="@drawable/ic_star_pro"
+                app:iconGravity="textStart"
+                app:iconPadding="10dp" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/feedback_button"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"

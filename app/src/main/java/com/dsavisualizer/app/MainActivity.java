@@ -36,6 +36,7 @@ import com.dsavisualizer.app.data.ApiConfig;
 import com.dsavisualizer.app.data.AppRepository;
 import com.dsavisualizer.app.data.HomeCatalog;
 import com.dsavisualizer.app.data.ProManager;
+import com.dsavisualizer.app.data.RateAppManager;
 import com.dsavisualizer.app.data.RemoteSyncManager;
 import com.dsavisualizer.app.model.CategoryItem;
 import com.dsavisualizer.app.model.TechniqueItem;
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         SafeInsetHelper.applyTopAndBottomInsets(findViewById(R.id.drawer_content), 16, 16, 16, 16);
         appPreferences = new AppPreferences(this);
         remoteSyncManager = RemoteSyncManager.getInstance(this);
-        if (!appPreferences.hasGoogleSession()) {
+        if (!appPreferences.hasAuthSession()) {
             appPreferences.clearAuthSession();
             Intent intent = new Intent(this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -144,7 +145,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize Google Sign-In
         initializeGoogleSignIn();
-        attemptSilentSessionRefresh();
+        if (appPreferences.hasGoogleSession()) {
+            attemptSilentSessionRefresh();
+        }
 
         EditText searchInput = findViewById(R.id.search_input);
         categoryRecyclerView = findViewById(R.id.category_recycler_view);
@@ -179,6 +182,10 @@ public class MainActivity extends AppCompatActivity {
             redeemBtn.setOnClickListener(v -> ProManager.showRedeemDialog(this, () -> {
                 updateProgress();
             }));
+        }
+        View rateStoreBtn = findViewById(R.id.rate_store_button);
+        if (rateStoreBtn != null) {
+            rateStoreBtn.setOnClickListener(v -> RateAppManager.showRateDialog(this));
         }
         findViewById(R.id.feedback_button).setOnClickListener(v -> openFeedbackDialog());
         findViewById(R.id.privacy_policy_button).setOnClickListener(v -> openPrivacyPolicy());
@@ -534,6 +541,7 @@ public class MainActivity extends AppCompatActivity {
         updateThemeButtonLabel();
         updateProgress();
         refreshDashboard();
+        RateAppManager.maybePromptRating(this);
     }
 
     @Override

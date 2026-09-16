@@ -191,6 +191,23 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
+        <!-- Guest / Offline Mode Button for Amazon & Offline Students -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/guest_mode_button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="52dp"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_play_arrow"
+            app:iconGravity="textStart"
+            app:iconPadding="14dp"
+            android:text="Explore as Guest (Offline Mode)"
+            android:textColor="@color/text_primary_bright"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
         <!-- Creator Credit -->
         <TextView
             android:id="@+id/login_creator_credit"

@@ -39,6 +39,8 @@ public class AppPreferences {
     private static final String KEY_CODE_READER_TEXT_SIZE = "code_reader_text_size";
     private static final String KEY_PRO_UNLOCKED = "pro_unlocked";
     private static final String KEY_PRO_CODE = "pro_code";
+    private static final String KEY_HAS_RATED_STORE = "has_rated_store";
+    private static final String KEY_EXPLORED_ACTION_COUNT = "explored_action_count";
     private static final String SEPARATOR = "||";
 
     public static final String THEME_SYSTEM = "system";
@@ -406,6 +408,20 @@ public class AppPreferences {
 
     public String getProCode() {
         return preferences.getString(KEY_PRO_CODE, "");
+    }
+
+    public boolean hasRatedStore() {
+        return preferences.getBoolean(KEY_HAS_RATED_STORE, false);
+    }
+
+    public void setRatedStore(boolean rated) {
+        preferences.edit().putBoolean(KEY_HAS_RATED_STORE, rated).apply();
+    }
+
+    public int incrementExploredActions() {
+        int current = preferences.getInt(KEY_EXPLORED_ACTION_COUNT, 0) + 1;
+        preferences.edit().putInt(KEY_EXPLORED_ACTION_COUNT, current).apply();
+        return current;
     }
 
     public static class MistakeReview {
