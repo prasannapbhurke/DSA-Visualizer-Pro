@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.dsavisualizer.app.data.AppRepository;
+import com.dsavisualizer.app.data.ProManager;
 import com.dsavisualizer.app.data.RemoteSyncManager;
 import com.dsavisualizer.app.model.TechniqueItem;
 import com.dsavisualizer.app.ui.SafeInsetHelper;
@@ -125,6 +126,13 @@ public class CategoryActivity extends AppCompatActivity {
 
     private void openTechnique(TechniqueItem item) {
         if (navigationInProgress) {
+            return;
+        }
+        if (!ProManager.isPro(this) && ProManager.isProTechnique(item)) {
+            ProManager.showProFeatureLockedDialog(this, item.title, () -> {
+                adapter.notifyDataSetChanged();
+                openTechnique(item);
+            });
             return;
         }
         navigationInProgress = true;

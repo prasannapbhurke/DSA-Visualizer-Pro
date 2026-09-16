@@ -554,6 +554,19 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/redeem_pro_button"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="🎓 Campus Pass &amp; Pro"
+                android:textColor="@color/amber_500"
+                app:icon="@drawable/ic_star_pro"
+                app:iconGravity="textStart"
+                app:iconPadding="10dp"
+                app:iconTint="@color/amber_500" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/feedback_button"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"

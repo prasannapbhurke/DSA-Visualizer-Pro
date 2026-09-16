@@ -35,6 +35,7 @@ import com.dsavisualizer.app.data.AppPreferences;
 import com.dsavisualizer.app.data.ApiConfig;
 import com.dsavisualizer.app.data.AppRepository;
 import com.dsavisualizer.app.data.HomeCatalog;
+import com.dsavisualizer.app.data.ProManager;
 import com.dsavisualizer.app.data.RemoteSyncManager;
 import com.dsavisualizer.app.model.CategoryItem;
 import com.dsavisualizer.app.model.TechniqueItem;
@@ -173,6 +174,12 @@ public class MainActivity extends AppCompatActivity {
         goalCard = findViewById(R.id.goal_card);
         continueLearningCard = findViewById(R.id.continue_learning_card);
         menuButton.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+        View redeemBtn = findViewById(R.id.redeem_pro_button);
+        if (redeemBtn != null) {
+            redeemBtn.setOnClickListener(v -> ProManager.showRedeemDialog(this, () -> {
+                updateProgress();
+            }));
+        }
         findViewById(R.id.feedback_button).setOnClickListener(v -> openFeedbackDialog());
         findViewById(R.id.privacy_policy_button).setOnClickListener(v -> openPrivacyPolicy());
         findViewById(R.id.delete_account_button).setOnClickListener(v -> confirmAccountDeletion());
@@ -445,7 +452,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openPrivacyPolicy() {
-        String url = ApiConfig.getBaseUrl() + "/privacy-policy";
+        String url = ApiConfig.getBaseUrl() + "/privacy-policy?v=" + System.currentTimeMillis();
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             startActivity(intent);
@@ -455,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openWebAccountDeletion() {
-        String url = ApiConfig.getBaseUrl() + "/delete-account";
+        String url = ApiConfig.getBaseUrl() + "/delete-account?v=" + System.currentTimeMillis();
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             startActivity(intent);
@@ -582,6 +589,20 @@ public class MainActivity extends AppCompatActivity {
         } else {
             accountModeText.setText(getString(R.string.home_account_guest_badge));
             accountStatusText.setText(getString(R.string.home_account_guest_local, resolveDisplayName()));
+        }
+        if (ProManager.isPro(this)) {
+            String code = appPreferences.getProCode();
+            String badge = code.isEmpty() ? "⭐ PRO" : "⭐ " + code;
+            accountModeText.setText(badge);
+        }
+        com.google.android.material.button.MaterialButton redeemBtn = findViewById(R.id.redeem_pro_button);
+        if (redeemBtn != null) {
+            if (ProManager.isPro(this)) {
+                String code = appPreferences.getProCode();
+                redeemBtn.setText(code.isEmpty() ? "⭐ DSA Pro Unlocked" : "⭐ " + code + " Active");
+            } else {
+                redeemBtn.setText("🎓 Campus Pass & Pro");
+            }
         }
         updateOwnerActionsVisibility();
     }

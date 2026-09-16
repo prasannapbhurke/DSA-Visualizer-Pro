@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.dsavisualizer.app.R;
+import com.dsavisualizer.app.data.ProManager;
 import com.dsavisualizer.app.model.TechniqueItem;
 import com.dsavisualizer.app.ui.HapticFeedbackHelper;
 
@@ -75,6 +76,11 @@ public class TechniqueAdapter extends RecyclerView.Adapter<TechniqueAdapter.Tech
         holder.difficulty.setText(item.difficulty);
         boolean isWeakTopic = weakTopicIds.contains(item.id);
         holder.weakBadge.setVisibility(isWeakTopic ? View.VISIBLE : View.GONE);
+
+        boolean isProUnlocked = ProManager.isPro(holder.itemView.getContext());
+        boolean isProTopic = ProManager.isProTechnique(item);
+        holder.proBadge.setVisibility(!isProUnlocked && isProTopic ? View.VISIBLE : View.GONE);
+
         holder.itemView.setContentDescription(
             holder.itemView.getContext().getString(
                 R.string.a11y_technique_card,
@@ -99,6 +105,7 @@ public class TechniqueAdapter extends RecyclerView.Adapter<TechniqueAdapter.Tech
         final TextView subtitle;
         final TextView difficulty;
         final TextView weakBadge;
+        final TextView proBadge;
 
         TechniqueViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -106,6 +113,7 @@ public class TechniqueAdapter extends RecyclerView.Adapter<TechniqueAdapter.Tech
             subtitle = itemView.findViewById(R.id.technique_subtitle);
             difficulty = itemView.findViewById(R.id.technique_difficulty);
             weakBadge = itemView.findViewById(R.id.technique_weak_badge);
+            proBadge = itemView.findViewById(R.id.technique_pro_badge);
         }
     }
 

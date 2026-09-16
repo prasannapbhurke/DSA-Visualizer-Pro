@@ -37,6 +37,8 @@ public class AppPreferences {
     private static final String KEY_THEME_MODE = "theme_mode";
     private static final String KEY_CODE_READER_THEME = "code_reader_theme";
     private static final String KEY_CODE_READER_TEXT_SIZE = "code_reader_text_size";
+    private static final String KEY_PRO_UNLOCKED = "pro_unlocked";
+    private static final String KEY_PRO_CODE = "pro_code";
     private static final String SEPARATOR = "||";
 
     public static final String THEME_SYSTEM = "system";
@@ -389,6 +391,21 @@ public class AppPreferences {
             return existing == null ? "" : existing;
         }
         return value.trim();
+    }
+
+    public boolean isProUnlocked() {
+        return preferences.getBoolean(KEY_PRO_UNLOCKED, false);
+    }
+
+    public void setProUnlocked(boolean unlocked, String code) {
+        preferences.edit()
+            .putBoolean(KEY_PRO_UNLOCKED, unlocked)
+            .putString(KEY_PRO_CODE, code == null ? "" : code.trim())
+            .apply();
+    }
+
+    public String getProCode() {
+        return preferences.getString(KEY_PRO_CODE, "");
     }
 
     public static class MistakeReview {

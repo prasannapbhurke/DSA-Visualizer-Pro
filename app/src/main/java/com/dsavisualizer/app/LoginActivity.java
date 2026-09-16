@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 import android.widget.TextView;
 
@@ -262,6 +263,10 @@ public class LoginActivity extends AppCompatActivity {
         googleSignInButton.setEnabled(configured);
         googleSignInButton.setAlpha(configured ? 1f : 0.6f);
 
+        if (setupCard != null) {
+            setupCard.setVisibility(configured ? View.GONE : View.VISIBLE);
+        }
+
         setupTitleView.setText(configured
             ? R.string.login_setup_ready
             : R.string.login_setup_missing_title);
@@ -275,7 +280,6 @@ public class LoginActivity extends AppCompatActivity {
             configured ? R.color.surface_toggle_algorithm_active : R.color.surface_panel_muted);
         setupCard.setStrokeColor(strokeColor);
         setupCard.setCardBackgroundColor(backgroundColor);
-
     }
 
     private String readStream(InputStream stream) throws Exception {

@@ -12,20 +12,38 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingStart="28dp"
-        android:paddingTop="48dp"
-        android:paddingEnd="28dp"
+        android:paddingStart="24dp"
+        android:paddingTop="32dp"
+        android:paddingEnd="24dp"
         android:paddingBottom="36dp">
+
+        <!-- 3D Glowing Algorithm Hero Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/login_hero_card"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            app:cardBackgroundColor="@color/surface_card_overlay"
+            app:cardCornerRadius="24dp"
+            app:strokeColor="@color/surface_stroke_accent"
+            app:strokeWidth="1.5dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/bg_login_hero" />
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/login_brand"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:background="@drawable/badge_background"
-            android:paddingStart="18dp"
-            android:paddingTop="9dp"
-            android:paddingEnd="18dp"
-            android:paddingBottom="9dp"
+            android:paddingStart="16dp"
+            android:paddingTop="7dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="7dp"
             android:text="@string/app_name"
             android:textAllCaps="true"
             android:textColor="@color/text_primary_bright"
@@ -36,30 +54,82 @@
             android:id="@+id/login_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="16dp"
             android:gravity="center"
             android:text="@string/login_title"
             android:textColor="@color/text_primary_bright"
-            android:textSize="@dimen/dsa_login_title_text"
+            android:textSize="26sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/login_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="10dp"
             android:gravity="center"
+            android:lineSpacingExtra="3dp"
             android:text="@string/login_subtitle"
             android:textColor="@color/text_muted"
-            android:textSize="@dimen/dsa_login_subtitle_text" />
+            android:textSize="14sp" />
 
+        <!-- Feature Highlights -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_difficulty_badge"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="9dp"
+                android:drawableStart="@drawable/ic_play"
+                android:drawablePadding="10dp"
+                android:drawableTint="@color/accent_cyan"
+                android:text="Step-by-step algorithm animations"
+                android:textColor="@color/text_primary_bright"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_difficulty_badge"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="9dp"
+                android:drawableStart="@drawable/ic_badge_tree"
+                android:drawablePadding="10dp"
+                android:drawableTint="@color/accent_cyan"
+                android:text="Binary Trees, AVL, Sorting &amp; Graphs"
+                android:textColor="@color/text_primary_bright"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_difficulty_badge"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="9dp"
+                android:drawableStart="@drawable/ic_target_arrow"
+                android:drawablePadding="10dp"
+                android:drawableTint="@color/accent_cyan"
+                android:text="Practice quizzes, mastery map &amp; cloud sync"
+                android:textColor="@color/text_primary_bright"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Setup Card (Visible only if Google Client ID is unconfigured) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/login_setup_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="34dp"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
             app:cardBackgroundColor="@color/surface_panel_muted"
-            app:cardCornerRadius="26dp"
+            app:cardCornerRadius="20dp"
             app:strokeColor="@color/surface_stroke_muted"
             app:strokeWidth="1dp">
 
@@ -67,7 +137,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -86,7 +156,7 @@
                     android:id="@+id/login_setup_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="10dp"
                     android:text="@string/login_setup_missing_title"
                     android:textColor="@color/text_primary_bright"
                     android:textSize="@dimen/dsa_section_title_text"
@@ -96,27 +166,37 @@
                     android:id="@+id/login_setup_message"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:text="@string/login_setup_missing_body"
                     android:textColor="@color/text_muted"
                     android:textSize="@dimen/dsa_body_text" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Google Sign-In Button with Authentic G Mark -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/google_sign_in_button"
             style="@style/Widget.Material3.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="26dp"
-            android:minHeight="58dp"
-            android:text="@string/login_google_button" />
+            android:layout_marginTop="24dp"
+            android:minHeight="56dp"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_google_mark"
+            app:iconGravity="textStart"
+            app:iconPadding="14dp"
+            app:iconSize="22dp"
+            app:iconTint="@null"
+            android:text="@string/login_google_button"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
+        <!-- Creator Credit -->
         <TextView
             android:id="@+id/login_creator_credit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="20dp"
             android:gravity="center"
             android:text="@string/login_creator_credit"
             android:textColor="@color/text_muted_soft"

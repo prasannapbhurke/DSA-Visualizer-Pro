@@ -23,8 +23,8 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="26dp"
-            android:src="@drawable/ic_app_symbol" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_dsa_logo" />
     </com.google.android.material.card.MaterialCardView>
 
     <TextView
