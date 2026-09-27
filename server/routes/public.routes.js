@@ -13,6 +13,14 @@ const createPublicRouter = ({ store, logger } = {}) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'openapi.json'));
   });
 
+  router.get('/visualize', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'visualize.html'));
+  });
+
+  router.get('/visualize.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'visualize.html'));
+  });
+
   router.get('/privacy-policy', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, '..', 'public', 'privacy-policy.html'));

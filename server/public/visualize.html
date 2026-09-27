@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Algorithm Player | DSA Visualizer Pro</title>
+  <meta name="description" content="Play, pause, step forward/backward, and edit inputs interactively in this shared DSA visualization." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-base: #070B12;
+      --bg-surface: #0D1424;
+      --bg-card: rgba(15, 23, 42, 0.85);
+      --border-color: rgba(99, 140, 255, 0.18);
+      --border-glow: rgba(99, 140, 255, 0.35);
+      --text-main: #F8FAFC;
+      --text-sub: #94A3B8;
+      --text-muted: #64748B;
+      --accent-cyan: #38BDF8;
+      --accent-amber: #F59E0B;
+      --accent-amber-light: #FCD34D;
+      --accent-emerald: #10B981;
+      --accent-purple: #8B5CF6;
+      --accent-rose: #EF4444;
+      --font-title: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Background Lights */
+    .ambient-glow {
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top Navigation Header */
+    header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: rgba(13, 20, 36, 0.75);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366F1, #38BDF8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-title);
+      font-weight: 800;
+      font-size: 16px;
+      color: #FFF;
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+    }
+    .brand-title {
+      font-family: var(--font-title);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.3px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .algo-select {
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .algo-select:focus, .algo-select:hover {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+    .btn-header {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-header:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+    .btn-header.primary {
+      background: linear-gradient(135deg, #059669, #10B981);
+      border: none;
+      color: #FFF;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    }
+    .btn-header.primary:hover {
+      background: linear-gradient(135deg, #10B981, #34D399);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Main Container */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 20px 20px 60px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Technique Title Banner */
+    .technique-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+    }
+    .tech-info h1 {
+      font-family: var(--font-title);
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tech-pill {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .tech-desc {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+    .metrics-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .metric-badge {
+      background: rgba(13, 20, 36, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px 12px;
+      text-align: center;
+    }
+    .metric-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+    .metric-val { font-size: 13px; font-weight: 700; color: var(--accent-amber-light); font-family: var(--font-code); }
+
+    /* Visualizer Arena */
+    .arena-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Explanation Status Bar */
+    .status-panel {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-left: 4px solid var(--accent-amber);
+      padding: 12px 18px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .status-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #F1F5F9;
+      line-height: 1.4;
+    }
+    .status-text strong {
+      color: var(--accent-amber-light);
+    }
+    .step-pill {
+      font-family: var(--font-code);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-amber);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      white-space: nowrap;
+    }
+
+    /* Visualizer Canvas Area */
+    .canvas-container {
+      min-height: 240px;
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 30px 16px 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: auto;
+    }
+    .array-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      padding: 40px 10px 10px 10px;
+      min-width: max-content;
+    }
+    .element-card-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .pointer-badge {
+      position: absolute;
+      top: -38px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-code);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      white-space: nowrap;
+      animation: floatBadge 1.2s ease-in-out infinite alternate;
+    }
+    .pointer-badge.comparing {
+      background: #0F172A;
+      border: 1.5px solid var(--accent-amber);
+      color: var(--accent-amber-light);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+    .pointer-badge.comparing::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 5px 0 5px;
+      border-style: solid;
+      border-color: var(--accent-amber) transparent transparent transparent;
+    }
+    .pointer-badge.match {
+      background: #064E3B;
+      border: 1.5px solid var(--accent-emerald);
+      color: #A7F3D0;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+    .pointer-badge.match::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 5px 0 5px;
+      border-style: solid;
+      border-color: var(--accent-emerald) transparent transparent transparent;
+    }
+    @keyframes floatBadge {
+      from { transform: translateY(0); }
+      to { transform: translateY(-4px); }
+    }
+
+    .array-card {
+      width: 58px;
+      min-height: 68px;
+      background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+      border: 2px solid rgba(99, 140, 255, 0.3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-title);
+      font-size: 22px;
+      font-weight: 700;
+      color: #F8FAFC;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    .array-card.active-compare {
+      border-color: var(--accent-amber);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+      color: var(--accent-amber-light);
+      transform: scale(1.08) translateY(-6px);
+    }
+    .array-card.active-swap {
+      border-color: var(--accent-rose);
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      color: #FCA5A5;
+      transform: scale(1.1) translateY(-8px);
+    }
+    .array-card.settled-sorted {
+      border-color: var(--accent-emerald);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.18) 0%, rgba(6, 78, 59, 0.4) 100%);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
+      color: #6EE7B7;
+    }
+    .array-card.active-pivot {
+      border-color: var(--accent-purple);
+      background: linear-gradient(180deg, rgba(139, 92, 246, 0.3) 0%, rgba(15, 23, 42, 0.9) 100%);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.45);
+      color: #DDD6FE;
+    }
+    .index-label {
+      font-size: 11px;
+      font-family: var(--font-code);
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* Interactive Timeline Controls */
+    .controls-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-top: 8px;
+    }
+    .scrubber-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .scrubber-slider {
+      flex: 1;
+      height: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(30, 41, 59, 0.9);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+    }
+    .scrubber-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-cyan), #6366F1);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+      border: 2px solid #FFF;
+      transition: transform 0.15s ease;
+    }
+    .scrubber-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+    .step-counter-text {
+      font-family: var(--font-code);
+      font-size: 13px;
+      color: var(--text-sub);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    .playback-buttons-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .playback-btns-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ctrl-btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .ctrl-btn:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+    }
+    .ctrl-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .ctrl-btn.play-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563EB, #38BDF8);
+      border: none;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+      font-size: 20px;
+    }
+    .ctrl-btn.play-btn:hover {
+      background: linear-gradient(135deg, #3B82F6, #60A5FA);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+      transform: scale(1.05);
+    }
+    .ctrl-btn.play-btn.paused {
+      background: linear-gradient(135deg, #D97706, #F59E0B);
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+    }
+
+    .playback-btns-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .speed-selector {
+      display: flex;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .speed-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .speed-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent-cyan);
+    }
+
+    /* Bottom Info & Edit Section */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
+
+    .code-card, .edit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-title);
+      font-weight: 700;
+      font-size: 16px;
+      color: #FFF;
+    }
+
+    /* Pseudocode View */
+    .code-box {
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 14px 16px;
+      font-family: var(--font-code);
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    .code-line {
+      color: var(--text-muted);
+      padding: 1px 8px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      white-space: pre;
+    }
+    .code-line.active {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--accent-cyan);
+      font-weight: 600;
+      border-left: 3px solid var(--accent-cyan);
+    }
+
+    /* Edit Array Section */
+    .edit-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .input-field {
+      flex: 1;
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: var(--font-code);
+      font-size: 13px;
+      color: #FFF;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .input-field:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+    .btn-apply {
+      background: linear-gradient(135deg, #2563EB, #38BDF8);
+      border: none;
+      color: #FFF;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-apply:hover {
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      transform: translateY(-1px);
+    }
+    .presets-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .preset-pill {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--border-color);
+      color: var(--text-sub);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .preset-pill:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: #FFF;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #064E3B;
+      border: 1px solid var(--accent-emerald);
+      color: #A7F3D0;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-wrap">
+      <div class="brand-badge">DSA</div>
+      <div>
+        <div class="brand-title">DSA Visualizer Pro</div>
+        <div class="brand-sub">Interactive Web Player</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <select id="algoSelector" class="algo-select" title="Switch Algorithm">
+        <option value="bubble">Bubble Sort</option>
+        <option value="selection">Selection Sort</option>
+        <option value="insertion">Insertion Sort</option>
+        <option value="quick">Quick Sort</option>
+        <option value="merge">Merge Sort</option>
+        <option value="linear_search">Linear Search</option>
+        <option value="binary_search">Binary Search</option>
+      </select>
+      <button class="btn-header" id="btnShareLink" title="Copy shareable link with current state">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        Share Link
+      </button>
+      <button class="btn-header primary" id="btnRestart">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        Replay
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Technique Info Banner -->
+    <div class="technique-banner">
+      <div class="tech-info">
+        <h1>
+          <span id="techName">Bubble Sort</span>
+          <span class="tech-pill" id="techCategory">Sorting • Easy</span>
+        </h1>
+        <div class="tech-desc" id="techDesc">Repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.</div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-badge">
+          <div class="metric-label">Time (Avg)</div>
+          <div class="metric-val" id="valAvgTime">O(N²)</div>
+        </div>
+        <div class="metric-badge">
+          <div class="metric-label">Time (Best)</div>
+          <div class="metric-val" id="valBestTime">O(N)</div>
+        </div>
+        <div class="metric-badge">
+          <div class="metric-label">Space</div>
+          <div class="metric-val" id="valSpace">O(1)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Visualizer Arena -->
+    <div class="arena-card">
+      <!-- Status Explanation -->
+      <div class="status-panel">
+        <div class="status-text" id="statusMessage">
+          Ready to visualize. Tap <strong>Play</strong> or <strong>Next Step</strong> to begin.
+        </div>
+        <div class="step-pill" id="stepCounterBadge">Step 0 / 0</div>
+      </div>
+
+      <!-- Elements Arena View -->
+      <div class="canvas-container">
+        <div class="array-row" id="arrayRow">
+          <!-- Dynamic Array Elements Rendered Here -->
+        </div>
+      </div>
+
+      <!-- Playback Controls -->
+      <div class="controls-wrapper">
+        <div class="scrubber-row">
+          <input type="range" min="0" max="0" value="0" class="scrubber-slider" id="scrubberSlider" />
+          <div class="step-counter-text" id="stepCounterText">0 / 0</div>
+        </div>
+        <div class="playback-buttons-row">
+          <div class="playback-btns-left">
+            <button class="ctrl-btn" id="btnPrev" title="Previous step (⏮)">⏮</button>
+            <button class="ctrl-btn play-btn" id="btnPlayPause" title="Play / Pause">▶</button>
+            <button class="ctrl-btn" id="btnNext" title="Next step (⏭)">⏭</button>
+          </div>
+          <div class="playback-btns-right">
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Speed:</span>
+            <div class="speed-selector">
+              <button class="speed-btn" data-speed="1400">0.5x</button>
+              <button class="speed-btn active" data-speed="700">1x</button>
+              <button class="speed-btn" data-speed="350">2x</button>
+              <button class="speed-btn" data-speed="150">4x</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Two Column Grid: Code & Input Editing -->
+    <div class="info-grid">
+      <!-- Pseudocode Block -->
+      <div class="code-card">
+        <div class="card-heading">
+          <span>Live Pseudocode</span>
+          <span style="font-size: 11px; color: var(--accent-cyan); font-family: var(--font-code);">Synchronized</span>
+        </div>
+        <div class="code-box" id="codeBox">
+          <!-- Dynamic pseudocode rendered here -->
+        </div>
+      </div>
+
+      <!-- Edit Custom Array Card -->
+      <div class="edit-card">
+        <div class="card-heading">
+          <span>Edit & Test Custom Numbers</span>
+          <span style="font-size: 11px; color: var(--accent-emerald);">Interactive</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-sub);">
+          Enter comma-separated integers to test your own test cases:
+        </p>
+        <div class="edit-row">
+          <input type="text" id="customInput" class="input-field" placeholder="e.g. 64, 34, 25, 12, 22, 11, 90" />
+          <button class="btn-apply" id="btnApplyCustom">Run</button>
+        </div>
+        <div class="presets-row">
+          <span style="font-size: 11px; color: var(--text-muted); align-self: center;">Presets:</span>
+          <button class="preset-pill" id="presetRandom">🎲 Random</button>
+          <button class="preset-pill" id="presetReversed">📉 Reversed</button>
+          <button class="preset-pill" id="presetNearlySorted">📈 Nearly Sorted</button>
+          <button class="preset-pill" id="presetDuplicates">🔁 Duplicates</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toastMessage">
+    ✓ Share link copied to clipboard!
+  </div>
+
+  <script>
+    // --- Algorithm Definitions & Generators ---
+    const ALGORITHMS = {
+      bubble: {
+        id: 'bubble',
+        name: 'Bubble Sort',
+        category: 'Sorting • Easy',
+        desc: 'Repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.',
+        avgTime: 'O(N²)',
+        bestTime: 'O(N)',
+        space: 'O(1)',
+        defaultData: [64, 34, 25, 12, 22, 11, 90],
+        code: [
+          'procedure bubbleSort(A : list)',
+          '  n := length(A)',
+          '  for i := 0 to n - 1 do',
+          '    for j := 0 to n - i - 2 do',
+          '      if A[j] > A[j + 1] then',
+          '        swap(A[j], A[j + 1])',
+          '  return A'
+        ],
+        generator: function(initialValues) {
+          const arr = [...initialValues];
+          const n = arr.length;
+          const steps = [];
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 0, message: `Starting Bubble Sort with ${n} elements.` });
+          const settled = [];
+          for (let i = 0; i < n - 1; i++) {
+            let anySwap = false;
+            for (let j = 0; j < n - i - 1; j++) {
+              const needSwap = arr[j] > arr[j + 1];
+              steps.push({
+                array: [...arr],
+                comparing: [j, j + 1],
+                swapped: false,
+                settled: [...settled],
+                codeLine: 4,
+                message: `Pass ${i + 1}: Comparing <strong>${arr[j]}</strong> at [${j}] and <strong>${arr[j + 1]}</strong> at [${j + 1}]. ${needSwap ? `${arr[j]} > ${arr[j + 1]}, swap needed!` : `${arr[j]} ≤ ${arr[j + 1]}, correct order.`}`
+              });
+              if (needSwap) {
+                const temp = arr[j]; arr[j] = arr[j + 1]; arr[j + 1] = temp;
+                anySwap = true;
+                steps.push({
+                  array: [...arr],
+                  comparing: [j, j + 1],
+                  swapped: true,
+                  settled: [...settled],
+                  codeLine: 5,
+                  message: `Swapped <strong>${arr[j + 1]}</strong> and <strong>${arr[j]}</strong>. Array is now: [${arr.join(', ')}].`
+                });
+              }
+            }
+            settled.unshift(n - i - 1);
+            steps.push({
+              array: [...arr],
+              comparing: null,
+              swapped: false,
+              settled: [...settled],
+              codeLine: 2,
+              message: `Pass ${i + 1} done: <strong>${arr[n - i - 1]}</strong> is locked into final position at [${n - i - 1}].`
+            });
+            if (!anySwap) break;
+          }
+          const allSettled = arr.map((_, idx) => idx);
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: allSettled, codeLine: 6, message: `✓ Bubble Sort Completed! Final sorted array: [${arr.join(', ')}].` });
+          return steps;
+        }
+      },
+
+      selection: {
+        id: 'selection',
+        name: 'Selection Sort',
+        category: 'Sorting • Easy',
+        desc: 'Repeatedly finds the minimum element from the unsorted part and moves it to the beginning.',
+        avgTime: 'O(N²)',
+        bestTime: 'O(N²)',
+        space: 'O(1)',
+        defaultData: [29, 10, 14, 37, 13, 22, 5],
+        code: [
+          'procedure selectionSort(A : list)',
+          '  n := length(A)',
+          '  for i := 0 to n - 2 do',
+          '    minIdx := i',
+          '    for j := i + 1 to n - 1 do',
+          '      if A[j] < A[minIdx] then minIdx := j',
+          '    if minIdx != i then swap(A[i], A[minIdx])',
+          '  return A'
+        ],
+        generator: function(initialValues) {
+          const arr = [...initialValues];
+          const n = arr.length;
+          const steps = [];
+          const settled = [];
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 0, message: `Starting Selection Sort with ${n} elements.` });
+          for (let i = 0; i < n - 1; i++) {
+            let minIdx = i;
+            steps.push({ array: [...arr], comparing: [i], swapped: false, settled: [...settled], codeLine: 3, message: `Pass ${i + 1}: Setting initial minimum at index [${i}] (value: ${arr[i]}).` });
+            for (let j = i + 1; j < n; j++) {
+              const isSmaller = arr[j] < arr[minIdx];
+              steps.push({
+                array: [...arr],
+                comparing: [minIdx, j],
+                swapped: false,
+                settled: [...settled],
+                codeLine: 5,
+                message: `Comparing current min <strong>${arr[minIdx]}</strong> with <strong>${arr[j]}</strong> at [${j}]. ${isSmaller ? `Found new smaller minimum: ${arr[j]}!` : `Keep current minimum.`}`
+              });
+              if (isSmaller) minIdx = j;
+            }
+            if (minIdx !== i) {
+              const temp = arr[i]; arr[i] = arr[minIdx]; arr[minIdx] = temp;
+              steps.push({
+                array: [...arr],
+                comparing: [i, minIdx],
+                swapped: true,
+                settled: [...settled],
+                codeLine: 6,
+                message: `Swapped minimum element <strong>${arr[i]}</strong> into position [${i}].`
+              });
+            }
+            settled.push(i);
+          }
+          const allSettled = arr.map((_, idx) => idx);
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: allSettled, codeLine: 7, message: `✓ Selection Sort Completed! Final sorted array: [${arr.join(', ')}].` });
+          return steps;
+        }
+      },
+
+      insertion: {
+        id: 'insertion',
+        name: 'Insertion Sort',
+        category: 'Sorting • Easy',
+        desc: 'Builds the final sorted array one item at a time by inserting each item into its proper sorted location.',
+        avgTime: 'O(N²)',
+        bestTime: 'O(N)',
+        space: 'O(1)',
+        defaultData: [31, 41, 59, 26, 41, 58],
+        code: [
+          'procedure insertionSort(A : list)',
+          '  for i := 1 to length(A) - 1 do',
+          '    key := A[i]',
+          '    j := i - 1',
+          '    while j >= 0 and A[j] > key do',
+          '      A[j + 1] := A[j]',
+          '      j := j - 1',
+          '    A[j + 1] := key',
+          '  return A'
+        ],
+        generator: function(initialValues) {
+          const arr = [...initialValues];
+          const n = arr.length;
+          const steps = [];
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: [0], codeLine: 0, message: `Starting Insertion Sort. First element [0] is trivially sorted.` });
+          for (let i = 1; i < n; i++) {
+            const key = arr[i];
+            let j = i - 1;
+            steps.push({ array: [...arr], comparing: [i], swapped: false, settled: Array.from({length: i}, (_, k) => k), codeLine: 2, message: `Selected key <strong>${key}</strong> at index [${i}] to insert into sorted prefix.` });
+            while (j >= 0 && arr[j] > key) {
+              steps.push({
+                array: [...arr],
+                comparing: [j, j + 1],
+                swapped: false,
+                settled: Array.from({length: i}, (_, k) => k),
+                codeLine: 4,
+                message: `<strong>${arr[j]}</strong> > key (<strong>${key}</strong>), shifting ${arr[j]} right to index [${j + 1}].`
+              });
+              arr[j + 1] = arr[j];
+              j--;
+            }
+            arr[j + 1] = key;
+            steps.push({
+              array: [...arr],
+              comparing: [j + 1],
+              swapped: true,
+              settled: Array.from({length: i + 1}, (_, k) => k),
+              codeLine: 7,
+              message: `Inserted key <strong>${key}</strong> at index [${j + 1}]. Sorted prefix expanded.`
+            });
+          }
+          const allSettled = arr.map((_, idx) => idx);
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: allSettled, codeLine: 8, message: `✓ Insertion Sort Completed! Final sorted array: [${arr.join(', ')}].` });
+          return steps;
+        }
+      },
+
+      quick: {
+        id: 'quick',
+        name: 'Quick Sort',
+        category: 'Sorting • Divide & Conquer',
+        desc: 'Selects a pivot element and partitions the array into two subarrays of elements less than and greater than the pivot.',
+        avgTime: 'O(N log N)',
+        bestTime: 'O(N log N)',
+        space: 'O(log N)',
+        defaultData: [50, 23, 9, 18, 61, 32, 75, 42],
+        code: [
+          'procedure quickSort(A, lo, hi)',
+          '  if lo < hi then',
+          '    p := partition(A, lo, hi)',
+          '    quickSort(A, lo, p - 1)',
+          '    quickSort(A, p + 1, hi)',
+          'procedure partition(A, lo, hi)',
+          '  pivot := A[hi], i := lo',
+          '  for j := lo to hi - 1: swap if A[j] < pivot'
+        ],
+        generator: function(initialValues) {
+          const arr = [...initialValues];
+          const steps = [];
+          const settled = [];
+
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 0, message: `Starting Quick Sort on array of size ${arr.length}.` });
+
+          function qSort(lo, hi) {
+            if (lo >= hi) {
+              if (lo === hi) settled.push(lo);
+              return;
+            }
+            const pivot = arr[hi];
+            let i = lo;
+            steps.push({ array: [...arr], comparing: [hi], swapped: false, settled: [...settled], codeLine: 6, message: `Partitioning range [${lo}...${hi}] with pivot <strong>${pivot}</strong> at [${hi}].` });
+            for (let j = lo; j < hi; j++) {
+              steps.push({ array: [...arr], comparing: [j, hi], swapped: false, settled: [...settled], codeLine: 7, message: `Comparing arr[${j}] (<strong>${arr[j]}</strong>) with pivot (<strong>${pivot}</strong>).` });
+              if (arr[j] < pivot) {
+                if (i !== j) {
+                  const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+                  steps.push({ array: [...arr], comparing: [i, j], swapped: true, settled: [...settled], codeLine: 7, message: `Swapped arr[${i}] and arr[${j}]: element ${arr[i]} placed in left partition.` });
+                }
+                i++;
+              }
+            }
+            const t = arr[i]; arr[i] = arr[hi]; arr[hi] = t;
+            settled.push(i);
+            steps.push({ array: [...arr], comparing: [i], swapped: true, settled: [...settled], codeLine: 2, message: `Placed pivot <strong>${pivot}</strong> into final sorted index [${i}].` });
+            qSort(lo, i - 1);
+            qSort(i + 1, hi);
+          }
+
+          qSort(0, arr.length - 1);
+          const allSettled = arr.map((_, idx) => idx);
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: allSettled, codeLine: 1, message: `✓ Quick Sort Completed! Final sorted array: [${arr.join(', ')}].` });
+          return steps;
+        }
+      },
+
+      merge: {
+        id: 'merge',
+        name: 'Merge Sort',
+        category: 'Sorting • Divide & Conquer',
+        desc: 'Divides the unsorted list into n sublists, each containing one element, then repeatedly merges sublists to produce new sorted sublists.',
+        avgTime: 'O(N log N)',
+        bestTime: 'O(N log N)',
+        space: 'O(N)',
+        defaultData: [38, 27, 43, 3, 9, 82, 10],
+        code: [
+          'procedure mergeSort(A, left, right)',
+          '  if left < right then',
+          '    mid := (left + right) / 2',
+          '    mergeSort(A, left, mid)',
+          '    mergeSort(A, mid + 1, right)',
+          '    merge(A, left, mid, right)'
+        ],
+        generator: function(initialValues) {
+          const arr = [...initialValues];
+          const steps = [];
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 0, message: `Starting Merge Sort on array of size ${arr.length}.` });
+
+          function mSort(left, right) {
+            if (left >= right) return;
+            const mid = Math.floor((left + right) / 2);
+            steps.push({ array: [...arr], comparing: [mid], swapped: false, settled: [], codeLine: 2, message: `Splitting range [${left}...${right}] at midpoint [${mid}].` });
+            mSort(left, mid);
+            mSort(mid + 1, right);
+            // Merge in-place representation
+            const temp = [];
+            let i = left, j = mid + 1;
+            while (i <= mid && j <= right) {
+              steps.push({ array: [...arr], comparing: [i, j], swapped: false, settled: [], codeLine: 5, message: `Merging: Comparing arr[${i}] (<strong>${arr[i]}</strong>) with arr[${j}] (<strong>${arr[j]}</strong>).` });
+              if (arr[i] <= arr[j]) {
+                temp.push(arr[i++]);
+              } else {
+                temp.push(arr[j++]);
+              }
+            }
+            while (i <= mid) temp.push(arr[i++]);
+            while (j <= right) temp.push(arr[j++]);
+            for (let k = 0; k < temp.length; k++) {
+              arr[left + k] = temp[k];
+            }
+            steps.push({ array: [...arr], comparing: null, swapped: true, settled: [], codeLine: 5, message: `Merged subarray [${left}...${right}]: [${temp.join(', ')}].` });
+          }
+
+          mSort(0, arr.length - 1);
+          const allSettled = arr.map((_, idx) => idx);
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: allSettled, codeLine: 0, message: `✓ Merge Sort Completed! Final sorted array: [${arr.join(', ')}].` });
+          return steps;
+        }
+      },
+
+      linear_search: {
+        id: 'linear_search',
+        name: 'Linear Search',
+        category: 'Searching • Easy',
+        desc: 'Sequentially checks each element of the list until a match is found or the whole list has been searched.',
+        avgTime: 'O(N)',
+        bestTime: 'O(1)',
+        space: 'O(1)',
+        defaultData: [18, 42, 7, 95, 33, 61, 84],
+        code: [
+          'procedure linearSearch(A, target)',
+          '  for i := 0 to length(A) - 1 do',
+          '    if A[i] == target then',
+          '      return i',
+          '  return -1'
+        ],
+        generator: function(initialValues, targetVal) {
+          const arr = [...initialValues];
+          const n = arr.length;
+          const target = targetVal !== undefined ? targetVal : arr[Math.floor(n / 2)];
+          const steps = [];
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 0, message: `Searching for target value <strong>${target}</strong> sequentially in list.` });
+          let found = false;
+          for (let i = 0; i < n; i++) {
+            const isMatch = arr[i] === target;
+            steps.push({
+              array: [...arr],
+              comparing: [i],
+              swapped: false,
+              settled: isMatch ? [i] : [],
+              codeLine: 2,
+              message: `Checking index [${i}] (value: <strong>${arr[i]}</strong>). Is it equal to target <strong>${target}</strong>? ${isMatch ? `Yes! Target found at [${i}]!` : `No, continue next.`}`
+            });
+            if (isMatch) {
+              found = true;
+              steps.push({
+                array: [...arr],
+                comparing: null,
+                swapped: false,
+                settled: [i],
+                codeLine: 3,
+                message: `✓ Target <strong>${target}</strong> found at index [${i}]! Search finished.`
+              });
+              break;
+            }
+          }
+          if (!found) {
+            steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 4, message: `Target <strong>${target}</strong> not found in list.` });
+          }
+          return steps;
+        }
+      },
+
+      binary_search: {
+        id: 'binary_search',
+        name: 'Binary Search',
+        category: 'Searching • O(log N)',
+        desc: 'Search a sorted array by repeatedly dividing the search interval in half.',
+        avgTime: 'O(log N)',
+        bestTime: 'O(1)',
+        space: 'O(1)',
+        defaultData: [12, 22, 34, 45, 56, 67, 78, 89, 99],
+        code: [
+          'procedure binarySearch(A, target)',
+          '  low := 0, high := length(A) - 1',
+          '  while low <= high do',
+          '    mid := (low + high) / 2',
+          '    if A[mid] == target then return mid',
+          '    else if A[mid] < target then low := mid + 1',
+          '    else high := mid - 1',
+          '  return -1'
+        ],
+        generator: function(initialValues, targetVal) {
+          // Binary search requires sorted array
+          const arr = [...initialValues].sort((a, b) => a - b);
+          const n = arr.length;
+          const target = targetVal !== undefined ? targetVal : arr[Math.floor(n / 2)];
+          const steps = [];
+          let low = 0, high = n - 1;
+          steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 1, message: `Starting Binary Search for target <strong>${target}</strong> on sorted list.` });
+          let found = false;
+          while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            const isMatch = arr[mid] === target;
+            steps.push({
+              array: [...arr],
+              comparing: [mid],
+              swapped: false,
+              settled: isMatch ? [mid] : [],
+              codeLine: 4,
+              message: `Search window [${low}...${high}]: Mid index [${mid}] has value <strong>${arr[mid]}</strong>. Target is <strong>${target}</strong>.`
+            });
+            if (isMatch) {
+              found = true;
+              steps.push({
+                array: [...arr],
+                comparing: null,
+                swapped: false,
+                settled: [mid],
+                codeLine: 4,
+                message: `✓ Match found! Element <strong>${target}</strong> found at index [${mid}].`
+              });
+              break;
+            } else if (arr[mid] < target) {
+              low = mid + 1;
+              steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 5, message: `<strong>${arr[mid]}</strong> < target (<strong>${target}</strong>). Moving search range to right half: low = ${low}.` });
+            } else {
+              high = mid - 1;
+              steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 6, message: `<strong>${arr[mid]}</strong> > target (<strong>${target}</strong>). Moving search range to left half: high = ${high}.` });
+            }
+          }
+          if (!found) {
+            steps.push({ array: [...arr], comparing: null, swapped: false, settled: [], codeLine: 7, message: `Target <strong>${target}</strong> not found in list.` });
+          }
+          return steps;
+        }
+      }
+    };
+
+    // Alias mapping for Android app technique IDs
+    const ALGO_ALIASES = {
+      'bubble_sort': 'bubble',
+      'bubble': 'bubble',
+      'selection_sort': 'selection',
+      'selection': 'selection',
+      'insertion_sort': 'insertion',
+      'insertion': 'insertion',
+      'quick_sort': 'quick',
+      'quick': 'quick',
+      'merge_sort': 'merge',
+      'merge': 'merge',
+      'linear_search': 'linear_search',
+      'linear': 'linear_search',
+      'binary_search': 'binary_search',
+      'binary': 'binary_search',
+      'binary_search_tree': 'binary_search',
+      'bst': 'binary_search',
+      'singly_linked_list': 'linear_search',
+      'doubly_linked_list': 'linear_search',
+      'stack': 'insertion',
+      'queue': 'bubble'
+    };
+
+    // --- State Management ---
+    let currentAlgoKey = 'bubble';
+    let currentInput = [...ALGORITHMS.bubble.defaultData];
+    let steps = [];
+    let currentStepIndex = 0;
+    let isPlaying = false;
+    let playIntervalId = null;
+    let playbackSpeedMs = 700;
+
+    // DOM Elements
+    const algoSelector = document.getElementById('algoSelector');
+    const techName = document.getElementById('techName');
+    const techCategory = document.getElementById('techCategory');
+    const techDesc = document.getElementById('techDesc');
+    const valAvgTime = document.getElementById('valAvgTime');
+    const valBestTime = document.getElementById('valBestTime');
+    const valSpace = document.getElementById('valSpace');
+    const codeBox = document.getElementById('codeBox');
+    const arrayRow = document.getElementById('arrayRow');
+    const statusMessage = document.getElementById('statusMessage');
+    const stepCounterBadge = document.getElementById('stepCounterBadge');
+    const stepCounterText = document.getElementById('stepCounterText');
+    const scrubberSlider = document.getElementById('scrubberSlider');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnShareLink = document.getElementById('btnShareLink');
+    const customInput = document.getElementById('customInput');
+    const btnApplyCustom = document.getElementById('btnApplyCustom');
+    const toastMessage = document.getElementById('toastMessage');
+
+    function setAlgorithm(rawKey, customData, initialStep) {
+      pausePlayback();
+      const normKey = rawKey ? (ALGO_ALIASES[rawKey.toLowerCase()] || rawKey.toLowerCase()) : 'bubble';
+      currentAlgoKey = ALGORITHMS[normKey] ? normKey : 'bubble';
+      const def = ALGORITHMS[currentAlgoKey];
+
+      // Update Header & Dropdown
+      document.title = `${def.name} — Interactive Web Player | DSA Visualizer Pro`;
+      algoSelector.value = currentAlgoKey;
+      techName.textContent = def.name;
+      techCategory.textContent = def.category;
+      techDesc.textContent = def.desc;
+      valAvgTime.textContent = def.avgTime;
+      valBestTime.textContent = def.bestTime;
+      valSpace.textContent = def.space;
+
+      // Update Pseudocode Box
+      codeBox.innerHTML = '';
+      def.code.forEach((line, idx) => {
+        const div = document.createElement('div');
+        div.className = 'code-line';
+        div.id = `code-${idx}`;
+        div.textContent = line;
+        codeBox.appendChild(div);
+      });
+
+      // Update Input Data
+      if (Array.isArray(customData) && customData.length >= 2) {
+        currentInput = customData;
+      } else {
+        currentInput = [...def.defaultData];
+      }
+      customInput.value = currentInput.join(', ');
+
+      // Generate Steps
+      steps = def.generator(currentInput);
+
+      if (typeof initialStep === 'number' && initialStep >= 0 && initialStep < steps.length) {
+        currentStepIndex = initialStep;
+      } else {
+        currentStepIndex = 0;
+      }
+
+      updateUI();
+    }
+
+    // --- Parse URL Parameters (Share Link Support) ---
+    function loadFromUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rawTech = urlParams.get('tech') || urlParams.get('algo') || 'bubble';
+      const dataParam = urlParams.get('data');
+      const stepParam = parseInt(urlParams.get('step'), 10);
+
+      let parsedData = null;
+      if (dataParam) {
+        const parsed = dataParam.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        if (parsed.length >= 2) parsedData = parsed;
+      }
+
+      setAlgorithm(rawTech, parsedData, !isNaN(stepParam) ? stepParam : 0);
+    }
+
+    // --- UI Render ---
+    function updateUI() {
+      if (steps.length === 0) return;
+      const step = steps[currentStepIndex] || steps[0];
+
+      // Update slider & step counter
+      scrubberSlider.max = steps.length - 1;
+      scrubberSlider.value = currentStepIndex;
+      stepCounterBadge.innerText = `Step ${currentStepIndex + 1} / ${steps.length}`;
+      stepCounterText.innerText = `${currentStepIndex + 1} / ${steps.length}`;
+
+      // Update Explanation
+      statusMessage.innerHTML = step.message;
+
+      // Update Array Elements
+      arrayRow.innerHTML = '';
+      step.array.forEach((val, idx) => {
+        const isComparing = step.comparing && step.comparing.includes(idx);
+        const isSettled = step.settled && step.settled.includes(idx);
+
+        const wrap = document.createElement('div');
+        wrap.className = 'element-card-wrap';
+
+        // Downward Pointer Badge if comparing
+        if (isComparing) {
+          const badge = document.createElement('div');
+          badge.className = isSettled ? 'pointer-badge match' : 'pointer-badge comparing';
+          badge.innerText = isSettled ? 'Match!' : (step.swapped ? 'Swap!' : (step.comparing.length > 1 && idx === step.comparing[0] ? 'i' : (step.comparing.length > 1 ? 'j' : 'target')));
+          wrap.appendChild(badge);
+        }
+
+        const card = document.createElement('div');
+        card.className = 'array-card';
+        if (step.swapped && isComparing) {
+          card.classList.add('active-swap');
+        } else if (isComparing) {
+          card.classList.add('active-compare');
+        } else if (isSettled) {
+          card.classList.add('settled-sorted');
+        }
+        card.innerText = val;
+        wrap.appendChild(card);
+
+        const label = document.createElement('div');
+        label.className = 'index-label';
+        label.innerText = `[${idx}]`;
+        wrap.appendChild(label);
+
+        arrayRow.appendChild(wrap);
+      });
+
+      // Update Pseudocode Highlight
+      document.querySelectorAll('.code-line').forEach(line => line.classList.remove('active'));
+      const activeLine = document.getElementById(`code-${step.codeLine}`);
+      if (activeLine) {
+        activeLine.classList.add('active');
+      }
+
+      // Update Button States
+      btnPrev.disabled = (currentStepIndex === 0);
+      btnNext.disabled = (currentStepIndex === steps.length - 1);
+    }
+
+    // --- Playback Handlers ---
+    function stepForward() {
+      if (currentStepIndex < steps.length - 1) {
+        currentStepIndex++;
+        updateUI();
+      } else {
+        pausePlayback();
+      }
+    }
+
+    function stepBackward() {
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        updateUI();
+      }
+    }
+
+    function startPlayback() {
+      if (currentStepIndex >= steps.length - 1) {
+        currentStepIndex = 0;
+      }
+      isPlaying = true;
+      btnPlayPause.innerText = '⏸';
+      btnPlayPause.classList.add('paused');
+      playIntervalId = setInterval(stepForward, playbackSpeedMs);
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      btnPlayPause.innerText = '▶';
+      btnPlayPause.classList.remove('paused');
+      if (playIntervalId) {
+        clearInterval(playIntervalId);
+        playIntervalId = null;
+      }
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        pausePlayback();
+      } else {
+        startPlayback();
+      }
+    }
+
+    function resetVisualization() {
+      pausePlayback();
+      currentStepIndex = 0;
+      updateUI();
+    }
+
+    // --- Event Listeners ---
+    algoSelector.addEventListener('change', (e) => {
+      setAlgorithm(e.target.value, null, 0);
+      updateUrlState();
+    });
+
+    btnPlayPause.addEventListener('click', togglePlayPause);
+    btnNext.addEventListener('click', () => { pausePlayback(); stepForward(); });
+    btnPrev.addEventListener('click', () => { pausePlayback(); stepBackward(); });
+    btnRestart.addEventListener('click', resetVisualization);
+
+    scrubberSlider.addEventListener('input', (e) => {
+      pausePlayback();
+      currentStepIndex = parseInt(e.target.value, 10);
+      updateUI();
+    });
+
+    // Speed Controls
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        playbackSpeedMs = parseInt(btn.dataset.speed, 10);
+        if (isPlaying) {
+          clearInterval(playIntervalId);
+          playIntervalId = setInterval(stepForward, playbackSpeedMs);
+        }
+      });
+    });
+
+    // Custom Input Runner
+    function applyCustomArray(arr) {
+      if (!Array.isArray(arr) || arr.length < 2) {
+        alert('Please enter at least 2 numbers separated by commas.');
+        return;
+      }
+      currentInput = arr;
+      customInput.value = currentInput.join(', ');
+      steps = ALGORITHMS[currentAlgoKey].generator(currentInput);
+      resetVisualization();
+      updateUrlState();
+    }
+
+    btnApplyCustom.addEventListener('click', () => {
+      const raw = customInput.value;
+      const parsed = raw.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+      applyCustomArray(parsed);
+    });
+
+    // Preset Buttons
+    document.getElementById('presetRandom').addEventListener('click', () => {
+      const count = 7;
+      const rand = Array.from({ length: count }, () => Math.floor(Math.random() * 90) + 10);
+      applyCustomArray(rand);
+    });
+    document.getElementById('presetReversed').addEventListener('click', () => {
+      applyCustomArray([88, 72, 60, 45, 33, 20, 9]);
+    });
+    document.getElementById('presetNearlySorted').addEventListener('click', () => {
+      applyCustomArray([10, 20, 45, 30, 60, 75, 90]);
+    });
+    document.getElementById('presetDuplicates').addEventListener('click', () => {
+      applyCustomArray([40, 15, 40, 25, 15, 60, 25]);
+    });
+
+    function updateUrlState() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tech', currentAlgoKey);
+      url.searchParams.set('data', currentInput.join(','));
+      url.searchParams.set('step', currentStepIndex);
+      window.history.replaceState({}, '', url.toString());
+      return url.toString();
+    }
+
+    // Share Link Generator
+    btnShareLink.addEventListener('click', () => {
+      const shareUrl = updateUrlState();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          toastMessage.classList.add('show');
+          setTimeout(() => toastMessage.classList.remove('show'), 2600);
+        }).catch(() => {
+          prompt('Copy this visualization link:', shareUrl);
+        });
+      } else {
+        prompt('Copy this visualization link:', shareUrl);
+      }
+    });
+
+    // Initialize
+    loadFromUrlParams();
+  </script>
+</body>
+</html>
