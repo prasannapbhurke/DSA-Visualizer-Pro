@@ -10,7 +10,12 @@ const createPool = (databaseUrl) =>
   });
 
 const schemaPath = path.join(__dirname, 'postgres_schema.sql');
-const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+let schemaSql = '';
+try {
+  schemaSql = fs.readFileSync(schemaPath, 'utf8');
+} catch (error) {
+  console.warn('postgres_schema.sql could not be read directly:', error.message);
+}
 
 const rowsToCamel = (rows) =>
   rows.map((row) => ({
@@ -87,14 +92,18 @@ const asInt = (value) => (Number.isFinite(Number(value)) ? Math.trunc(Number(val
 const createPostgresStore = (databaseUrl) => {
   const pool = createPool(databaseUrl);
   const ready = (async () => {
-    await pool.query(schemaSql);
+    if (schemaSql) {
+      await pool.query(schemaSql);
+    }
     await pool.query('alter table app_users add column if not exists refresh_token text');
     await pool.query('create index if not exists idx_app_users_token on app_users(token)');
     await pool.query('create index if not exists idx_app_users_refresh_token on app_users(refresh_token)');
     await pool.query("alter table enrollments add column if not exists roll_number text not null default ''");
     await pool.query("alter table enrollments add column if not exists student_batch text not null default ''");
     await pool.query('create index if not exists idx_enrollments_roll_number on enrollments(class_id, roll_number)');
-  })();
+  })().catch((error) => {
+    console.warn('PostgresStore schema initialization warning:', error.message);
+  });
 
   const read = async () => {
     await ready;

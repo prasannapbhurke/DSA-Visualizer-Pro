@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { createPostgresStore } = require('./postgresStore');
 const { createCache } = require('./cache');
 const { createRateLimiter } = require('./middleware/rateLimiter');
@@ -15,8 +16,9 @@ const { createAdminRouter } = require('./routes/admin.routes');
 const { createControlCenterRouter } = require('./routes/control-center.routes');
 const { createLegacyRouter } = require('./routes/legacy.routes');
 
-const DEFAULT_DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
-const DEFAULT_UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DEFAULT_DATA_FILE = process.env.DATA_FILE || (isServerless ? path.join(os.tmpdir(), 'data.json') : path.join(__dirname, 'data.json'));
+const DEFAULT_UPLOAD_DIR = process.env.UPLOAD_DIR || (isServerless ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, 'uploads'));
 
 const createLogger = () => ({
   info(message, meta = {}) {
@@ -44,8 +46,14 @@ const createApp = ({
 
   const cache = createCache(300000);
 
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+  try {
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+  } catch (error) {
+    if (logger && typeof logger.warn === 'function') {
+      logger.warn('upload_dir.mkdir.failed', { uploadDir, error: error.message });
+    }
   }
 
   app.set('trust proxy', true);
@@ -58,7 +66,11 @@ const createApp = ({
   });
 
   app.use(express.static(path.join(__dirname, 'public')));
-  app.use('/uploads', express.static(uploadDir));
+  try {
+    if (fs.existsSync(uploadDir)) {
+      app.use('/uploads', express.static(uploadDir));
+    }
+  } catch (_) {}
   app.use('/admin', express.static(path.join(__dirname, 'public', 'admin')));
 
   // Rate Limiter
