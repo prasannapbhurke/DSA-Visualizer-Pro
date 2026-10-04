@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { api, getToken, setToken, removeToken, API_BASE_URL } from './api/api';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Classes from './pages/Classes';
 import Resources from './pages/Resources';
 import Feedback from './pages/Feedback';
+import RemoteConfig from './pages/RemoteConfig';
 import Audit from './pages/Audit';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
@@ -123,9 +124,12 @@ function App() {
   if (!user) {
     return (
       <div className="login-view">
-        <div className="brand-mark">DSA</div>
+        <div className="brand-mark" style={{ background: '#2563eb' }}>DSA</div>
         <div className="login-card">
-          <p className="system-label">Control Center</p>
+          <p className="system-label" style={{ color: '#38bdf8' }}>DSA Android Admin Console</p>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '20px' }}>
+            Sign in with your authorized Owner or Teacher Google account to control Android app data.
+          </p>
           {isElectron ? (
             <button type="button" className="google-browser-btn" onClick={handleDesktopLogin}>
               <span className="google-mark">G</span>
@@ -134,7 +138,7 @@ function App() {
           ) : (
             <div ref={googleBtnRef}></div>
           )}
-          {error && <p id="login-error" className="error-text" style={{ display: 'block' }}>{error}</p>}
+          {error && <p id="login-error" className="error-text" style={{ display: 'block', marginTop: '14px' }}>{error}</p>}
         </div>
       </div>
     );
@@ -151,6 +155,7 @@ function App() {
           <Route path="/classes" element={<Classes user={user} />} />
           <Route path="/resources" element={<Resources user={user} />} />
           <Route path="/feedback" element={<Feedback user={user} />} />
+          <Route path="/config" element={<RemoteConfig user={user} />} />
           <Route path="/audit" element={<Audit user={user} />} />
         </Routes>
       </section>
@@ -159,4 +164,3 @@ function App() {
 }
 
 export default App;
-

@@ -6,22 +6,30 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import androidx.annotation.NonNull;
 
 import androidx.annotation.Nullable;
 
+import com.dsavisualizer.app.ui.visualization.SortVisualizationEngine;
 import com.dsavisualizer.app.ui.visualization.VisualizationTechniqueRegistry;
+import com.dsavisualizer.app.ui.visualization.runtime.GraphExpandedStepEngine;
+import android.graphics.DashPathEffect;
+import com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine;
+import com.dsavisualizer.app.ui.visualization.runtime.HuffmanTreeModel;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Reusable animated visualizer for array-based algorithms, linear structures, trees, and graphs.
@@ -63,6 +71,11 @@ public class TechniqueVisualizerView extends View {
     private float mergeTransferProgress = 1f;
     private int radixDivisor = 1;
     private int radixActiveBucket = -1;
+    private int radixProcessedCount = -1;
+    private boolean radixComplete = false;
+    private int radixMaxValue = 0;
+    private int[] radixFinalValues = null;
+    private int[] radixOriginalValues = null;
     private int[][] matrixValues = new int[0][0];
     private int matrixK = -1;
     private int matrixRow = -1;
@@ -84,7 +97,14 @@ public class TechniqueVisualizerView extends View {
     private boolean[] dijkstraSettled = new boolean[0];
     private int dijkstraCurrentNode = -1;
     private int[] huffmanQueueWeights = new int[0];
+    private int[] huffmanSourceWeights = new int[0];
     private int huffmanMergedWeight = -1;
+    private int huffmanMergedLeft = -1;
+    private int huffmanMergedRight = -1;
+    private int huffmanStepIndex = -1;
+    private int currentStepIndex = -1;
+    private int[] auxiliaryArray = new int[0];
+    private int graphPreset = 1;
     private String overlayBadgeText = "";
     private String inlineTeachingMessage = "";
     private int inlineTeachingTarget = Integer.MIN_VALUE;
@@ -135,7 +155,12 @@ public class TechniqueVisualizerView extends View {
         new SearchVisualizerEngine(),
         new SortVisualizerEngine(),
         new StructureVisualizerEngine(),
-        new TraversalVisualizerEngine()
+        new TraversalVisualizerEngine(),
+        new BacktrackingVisualizerEngine(),
+        new DpVisualizerEngine(),
+        new StringPatternVisualizerEngine(),
+        new AdvancedDsVisualizerEngine(),
+        new SpecializedVisualizerEngine()
     );
 
     public TechniqueVisualizerView(Context context) {
@@ -196,6 +221,10 @@ public class TechniqueVisualizerView extends View {
     public void setExpressionInput(String expressionInput) {
         this.expressionInput = expressionInput == null ? "" : expressionInput.trim();
         invalidate();
+    }
+
+    public String getExpressionInput() {
+        return expressionInput == null ? "" : expressionInput;
     }
 
     public void setArrayState(int[] values, int activeIndex, int secondaryIndex, int foundIndex) {
@@ -333,6 +362,90 @@ public class TechniqueVisualizerView extends View {
         return movingStructureIndex;
     }
 
+    public int[] getArrayValues() {
+        return values == null ? new int[0] : values.clone();
+    }
+
+    public int getHighlightIndex() {
+        return activeIndex;
+    }
+
+    public int getSecondaryHighlightIndex() {
+        return secondaryIndex;
+    }
+
+    public int getFoundIndex() {
+        return foundIndex;
+    }
+
+    public float getTransitionProgress() {
+        return transitionProgress;
+    }
+
+    public float getPulseProgress() {
+        return pulseProgress;
+    }
+
+    public int getStepIndex() {
+        return currentStepIndex;
+    }
+
+    public void setStepIndex(int stepIndex) {
+        this.currentStepIndex = stepIndex;
+        invalidate();
+    }
+
+    public int[][] getMatrixValues() {
+        if (matrixValues == null) {
+            return new int[0][0];
+        }
+        int[][] copy = new int[matrixValues.length][];
+        for (int i = 0; i < matrixValues.length; i++) {
+            copy[i] = matrixValues[i] == null ? new int[0] : matrixValues[i].clone();
+        }
+        return copy;
+    }
+
+    public int getMatrixK() {
+        return matrixK;
+    }
+
+    public int getMatrixRow() {
+        return matrixRow;
+    }
+
+    public int getMatrixCol() {
+        return matrixCol;
+    }
+
+    public String resolveMatrixLabel() {
+        return matrixLabel == null || matrixLabel.trim().isEmpty() ? "Matrix" : matrixLabel;
+    }
+
+    public int getPatternWindowStart() {
+        return patternWindowStart;
+    }
+
+    public int getPatternMatchIndex() {
+        return patternMatchIndex;
+    }
+
+    public boolean isPatternFound() {
+        return patternFound;
+    }
+
+    public String getPatternText() {
+        return patternText == null ? "" : patternText;
+    }
+
+    public String getPatternQuery() {
+        return patternQuery == null ? "" : patternQuery;
+    }
+
+    public int[] getAuxiliaryArray() {
+        return auxiliaryArray == null ? new int[0] : auxiliaryArray.clone();
+    }
+
     public void setOverlayBadgeText(String badgeText) {
         String safe = badgeText == null ? "" : badgeText;
         if (safe.equals(overlayBadgeText)) {
@@ -388,9 +501,45 @@ public class TechniqueVisualizerView extends View {
     }
 
     public void setRadixState(int divisor, int activeBucket) {
+        setRadixState(divisor, activeBucket, -1);
+    }
+
+    public void setRadixState(int divisor, int activeBucket, int processedCount) {
         radixDivisor = Math.max(1, divisor);
         radixActiveBucket = activeBucket;
+        radixProcessedCount = processedCount;
+        radixComplete = false;
+        requestLayout();
         invalidate();
+    }
+
+    public void setRadixComplete(boolean complete, int[] finalValues) {
+        radixComplete = complete;
+        if (finalValues != null) {
+            radixFinalValues = finalValues.clone();
+        }
+        invalidate();
+    }
+
+    public void clearRadixComplete() {
+        radixComplete = false;
+        radixFinalValues = null;
+        radixMaxValue = 0;
+        invalidate();
+    }
+
+    public void setRadixMaxValue(int value) {
+        radixMaxValue = value;
+        invalidate();
+    }
+
+    public void setRadixOriginalValues(int[] original) {
+        if (original != null) {
+            radixOriginalValues = original.clone();
+            if (radixMaxValue <= 0) {
+                radixMaxValue = SortVisualizationEngine.resolveMaxAbsValue(original);
+            }
+        }
     }
 
     public void clearCustomSortState() {
@@ -400,6 +549,10 @@ public class TechniqueVisualizerView extends View {
         mergeWriteIndex = -1;
         radixDivisor = 1;
         radixActiveBucket = -1;
+        radixProcessedCount = -1;
+        radixComplete = false;
+        radixFinalValues = null;
+        radixMaxValue = 0;
         invalidate();
     }
 
@@ -495,7 +648,48 @@ public class TechniqueVisualizerView extends View {
             return;
         }
         huffmanQueueWeights = safeWeights.clone();
+        huffmanSourceWeights = safeWeights.clone();
         huffmanMergedWeight = mergedWeight;
+        huffmanMergedLeft = -1;
+        huffmanMergedRight = -1;
+        huffmanStepIndex = -1;
+        invalidate();
+    }
+
+    public void setHuffmanState(int[] sourceWeights, int[] queueWeights, int mergedWeight, int leftWeight, int rightWeight, int stepIndex) {
+        int[] safeSource = sourceWeights == null ? new int[0] : sourceWeights;
+        int[] safeQueue = queueWeights == null ? new int[0] : queueWeights;
+        if (Arrays.equals(huffmanSourceWeights, safeSource)
+            && Arrays.equals(huffmanQueueWeights, safeQueue)
+            && huffmanMergedWeight == mergedWeight
+            && huffmanMergedLeft == leftWeight
+            && huffmanMergedRight == rightWeight
+            && huffmanStepIndex == stepIndex) {
+            return;
+        }
+        huffmanSourceWeights = safeSource.clone();
+        huffmanQueueWeights = safeQueue.clone();
+        huffmanMergedWeight = mergedWeight;
+        huffmanMergedLeft = leftWeight;
+        huffmanMergedRight = rightWeight;
+        huffmanStepIndex = stepIndex;
+        invalidate();
+    }
+
+    public void setGraphPreset(int preset) {
+        if (graphPreset == preset) {
+            return;
+        }
+        graphPreset = preset;
+        invalidate();
+    }
+
+    public void setAuxiliaryArray(int[] aux) {
+        int[] safeAux = aux == null ? new int[0] : aux;
+        if (Arrays.equals(auxiliaryArray, safeAux)) {
+            return;
+        }
+        auxiliaryArray = safeAux.clone();
         invalidate();
     }
 
@@ -548,10 +742,33 @@ public class TechniqueVisualizerView extends View {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
         int measuredWidth = resolveSize(requestedWidth, widthMeasureSpec);
-        if (isLandscapeCanvas() && widthMode != MeasureSpec.UNSPECIFIED && widthSize > 0) {
-            measuredWidth = widthSize;
+
+        ViewGroup.LayoutParams lp = getLayoutParams();
+        if (lp != null && lp.width > 0) {
+            measuredWidth = lp.width;
+        } else if (isLandscapeCanvas()) {
+            int parentWidth = 0;
+            if (getParent() instanceof View) {
+                parentWidth = ((View) getParent()).getWidth();
+            }
+            if (parentWidth > 0) {
+                measuredWidth = parentWidth;
+            } else if (widthMode != MeasureSpec.UNSPECIFIED && widthSize > 0) {
+                measuredWidth = widthSize;
+            }
         }
-        int requestedHeight = engine == null ? resolveStandardDesiredHeight() : engine.resolveDesiredHeight(this, techniqueId);
+
+        int requestedHeight;
+        if ("radix_sort".equals(techniqueId)) {
+            requestedHeight = resolveRadixDesiredHeight();
+        } else {
+            requestedHeight = engine == null ? resolveStandardDesiredHeight() : engine.resolveDesiredHeight(this, techniqueId);
+        }
+
+        if (lp != null && lp.height > 0) {
+            requestedHeight = lp.height;
+        }
+
         int measuredHeight = resolveSize(requestedHeight, heightMeasureSpec);
         setMeasuredDimension(measuredWidth, measuredHeight);
     }
@@ -1260,6 +1477,8 @@ public class TechniqueVisualizerView extends View {
         for (int[] edge : edges) {
             drawGraphEdge(canvas, points, edge[0], edge[1]);
         }
+        drawPrimMstOverlay(canvas, points);
+        drawKruskalMstOverlay(canvas, points);
         drawTraversalTravelTrail(canvas, points);
 
         for (int i = 0; i < nodeCount; i++) {
@@ -1473,49 +1692,412 @@ public class TechniqueVisualizerView extends View {
 
     void drawHuffmanScene(Canvas canvas) {
         boolean compact = isCompactTreeLayout();
-        float y = getHeight() * (compact ? 0.22f : 0.26f);
-        textPaint.setTextAlign(Paint.Align.LEFT);
-        textPaint.setTextSize(compact ? 22f : 28f);
-        float startX = compact ? 16f : 24f;
-        canvas.drawText("Priority Queue", startX, compact ? 38f : 44f, textPaint);
-        float x = startX;
-        float boxWidth = compact ? 54f : 64f;
-        float boxHeight = compact ? 48f : 56f;
-        float gap = compact ? 64f : 78f;
-        for (int i = 0; i < huffmanQueueWeights.length; i++) {
-            drawMiniValueBox(canvas, huffmanQueueWeights[i], x, y, x + boxWidth, y + boxHeight, i == 0 || i == 1);
-            x += gap;
-        }
-        if (huffmanQueueWeights.length > 0) {
-            drawTreeRoleBadge(canvas, startX + 46f, y - 24f, compact ? "Pick 2" : "Pick Min 2", "#2563EB");
-        }
-        if (huffmanMergedWeight >= 0) {
-            float centerX = getWidth() / 2f;
-            float centerY = getHeight() * (compact ? 0.56f : 0.64f);
-            drawAnimatedConnector(canvas, getWidth() * 0.34f, y + (compact ? 58f : 72f), centerX - 24f, centerY - 30f, false);
-            drawAnimatedConnector(canvas, getWidth() * 0.66f, y + (compact ? 58f : 72f), centerX + 24f, centerY - 30f, false);
-            applyNodeShader(centerX, centerY, Color.parseColor("#22C55E"));
-            float mergedRadius = compact ? 36f : 44f;
-            canvas.drawCircle(centerX, centerY, mergedRadius, fillPaint);
-            canvas.drawCircle(centerX, centerY, mergedRadius, strokePaint);
-            textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setTextSize(compact ? 22f : 24f);
-            canvas.drawText(String.valueOf(huffmanMergedWeight), centerX, centerY + 8f, textPaint);
-            drawTreeRoleBadge(canvas, centerX, centerY + (compact ? 56f : 66f), compact ? "Merge" : "Merged Node", "#16A34A");
-            if (huffmanQueueWeights.length >= 1) {
-                int mergedSource = huffmanMergedWeight - huffmanQueueWeights[0];
-                if (mergedSource >= 0) {
-                    drawInlineMathBadge(
-                        canvas,
-                        centerX,
-                        centerY - (compact ? 62f : 76f),
-                        mergedSource + " + " + huffmanQueueWeights[0] + " = " + huffmanMergedWeight,
-                        "#16A34A"
-                    );
+
+        // 1. Resolve deterministic source weights and build complete prefix tree model
+        int[] source = (huffmanSourceWeights != null && huffmanSourceWeights.length >= 2)
+            ? huffmanSourceWeights
+            : ((huffmanQueueWeights != null && huffmanQueueWeights.length >= 2)
+                ? huffmanQueueWeights
+                : HuffmanStepEngine.getDefaultWeights(1));
+        HuffmanTreeModel treeModel = HuffmanTreeModel.build(source);
+
+        // 2. Resolve active step index for progressive tree emergence
+        int currentStep = huffmanStepIndex;
+        if (currentStep < 0) {
+            if (huffmanMergedWeight > 0) {
+                currentStep = 0;
+                for (HuffmanTreeModel.Node n : treeModel.getAllNodes()) {
+                    if (!n.isLeaf() && n.weight == huffmanMergedWeight) {
+                        currentStep = n.stepCreated;
+                        break;
+                    }
                 }
+            } else {
+                currentStep = 0;
             }
         }
+
+        // 3. Draw Priority Queue (Min-Heap array) at top
+        float startX = compact ? 16f : 24f;
+        float headerY = compact ? 34f : 40f;
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setTextSize(compact ? 20f : 24f);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setFakeBoldText(true);
+        canvas.drawText("Priority Queue (Min-Heap)", startX, headerY, textPaint);
+        textPaint.setFakeBoldText(false);
+
+        float queueY = compact ? 46f : 54f;
+        float boxWidth = compact ? 48f : 58f;
+        float boxHeight = compact ? 38f : 44f;
+        float gap = compact ? 56f : 68f;
+
+        float x = startX;
+        int qLen = huffmanQueueWeights.length;
+        for (int i = 0; i < qLen; i++) {
+            boolean isMinTwo = (i == 0 || i == 1) && qLen > 1;
+            drawMiniValueBox(canvas, huffmanQueueWeights[i], x, queueY, x + boxWidth, queueY + boxHeight, isMinTwo);
+            x += gap;
+        }
+
+        if (qLen > 1) {
+            drawTreeRoleBadge(canvas, startX + boxWidth, queueY - 14f, compact ? "Min 2" : "Extract Min 2", "#2563EB");
+        }
+
+        // Active merge math badge at the top right
+        if (huffmanMergedWeight >= 0) {
+            int leftVal = huffmanMergedLeft >= 0 ? huffmanMergedLeft : -1;
+            int rightVal = huffmanMergedRight >= 0 ? huffmanMergedRight : -1;
+            if (leftVal >= 0 && rightVal >= 0) {
+                drawInlineMathBadge(
+                    canvas,
+                    getWidth() - (compact ? 96f : 124f),
+                    queueY + (boxHeight / 2f),
+                    leftVal + " + " + rightVal + " = " + huffmanMergedWeight,
+                    "#16A34A"
+                );
+            }
+        }
+
+        // 4. Compute Tree Layout Geometry
+        float bottomBarHeight = compact ? 38f : 46f;
+        float bottomBarY = getHeight() - bottomBarHeight - (compact ? 10f : 14f);
+        float treeTop = queueY + boxHeight + (compact ? 32f : 40f);
+        float treeBottom = bottomBarY - (compact ? 26f : 34f);
+        float treeLeft = compact ? 18f : 28f;
+        float treeWidth = getWidth() - (2f * treeLeft);
+        float treeHeight = Math.max(140f, treeBottom - treeTop);
+
+        treeModel.layout(treeLeft, treeTop, treeWidth, treeHeight, compact);
+
+        // 5. Draw Tree: Edges first, then Nodes
+        drawHuffmanTreeEdges(canvas, treeModel.getRoot(), currentStep, compact);
+        drawHuffmanTreeNodes(canvas, treeModel.getRoot(), currentStep, compact, treeModel);
+
+        // 6. Draw Prefix Code Dictionary Summary Bar at Bottom
+        drawHuffmanCodeDictionary(canvas, treeModel, bottomBarY, bottomBarHeight, compact);
+
+        // Reset painter states
+        strokePaint.setPathEffect(null);
         textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setFakeBoldText(false);
+    }
+
+    private void drawHuffmanTreeEdges(Canvas canvas, HuffmanTreeModel.Node node, int currentStep, boolean compact) {
+        if (node == null || node.isLeaf()) {
+            return;
+        }
+        drawHuffmanTreeEdges(canvas, node.left, currentStep, compact);
+        drawHuffmanTreeEdges(canvas, node.right, currentStep, compact);
+
+        boolean parentFormed = node.stepCreated <= currentStep;
+        boolean isCurrentMerge = node.stepCreated == currentStep && currentStep > 0;
+
+        if (node.left != null) {
+            drawSingleHuffmanEdge(canvas, node.x, node.y, node.left.x, node.left.y, "0", parentFormed, isCurrentMerge, true, compact);
+        }
+        if (node.right != null) {
+            drawSingleHuffmanEdge(canvas, node.x, node.y, node.right.x, node.right.y, "1", parentFormed, isCurrentMerge, false, compact);
+        }
+    }
+
+    private void drawSingleHuffmanEdge(Canvas canvas, float startX, float startY, float endX, float endY,
+                                       String bit, boolean formed, boolean activeMerge, boolean isLeft, boolean compact) {
+        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setStyle(Paint.Style.STROKE);
+
+        if (formed) {
+            linePaint.setStrokeWidth(activeMerge ? 6f : (compact ? 3.5f : 4.5f));
+            int baseColor = activeMerge
+                ? Color.parseColor("#38BDF8")
+                : (isLeft ? Color.parseColor("#38BDF8") : Color.parseColor("#F59E0B"));
+            linePaint.setColor(baseColor);
+            linePaint.setAlpha(activeMerge ? Math.round(180f + (pulseProgress * 75f)) : 220);
+            canvas.drawLine(startX, startY, endX, endY, linePaint);
+
+            if (activeMerge) {
+                Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                dotPaint.setColor(Color.parseColor("#FCD34D"));
+                float dotX = lerp(startX, endX, pulseProgress);
+                float dotY = lerp(startY, endY, pulseProgress);
+                canvas.drawCircle(dotX, dotY, 6f + (pulseProgress * 2f), dotPaint);
+            }
+        } else {
+            linePaint.setStrokeWidth(2f);
+            linePaint.setColor(Color.parseColor("#475569"));
+            linePaint.setAlpha(110);
+            linePaint.setPathEffect(new DashPathEffect(new float[]{8f, 6f}, 0f));
+            canvas.drawLine(startX, startY, endX, endY, linePaint);
+        }
+
+        // Branch bit pill ("0" or "1")
+        float midX = startX + ((endX - startX) * 0.44f);
+        float midY = startY + ((endY - startY) * 0.44f);
+        float pillHalfW = compact ? 11f : 13f;
+        float pillHalfH = compact ? 9f : 11f;
+
+        Paint pillFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pillFill.setStyle(Paint.Style.FILL);
+        int pillBg = formed
+            ? (isLeft ? Color.parseColor("#0369A1") : Color.parseColor("#B45309"))
+            : Color.parseColor("#1E293B");
+        pillFill.setColor(pillBg);
+        pillFill.setAlpha(formed ? 230 : 130);
+
+        Paint pillStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pillStroke.setStyle(Paint.Style.STROKE);
+        pillStroke.setStrokeWidth(1.5f);
+        pillStroke.setColor(formed ? (isLeft ? Color.parseColor("#38BDF8") : Color.parseColor("#FBBF24")) : Color.parseColor("#475569"));
+        pillStroke.setAlpha(formed ? 255 : 120);
+
+        canvas.drawRoundRect(midX - pillHalfW, midY - pillHalfH, midX + pillHalfW, midY + pillHalfH, 6f, 6f, pillFill);
+        canvas.drawRoundRect(midX - pillHalfW, midY - pillHalfH, midX + pillHalfW, midY + pillHalfH, 6f, 6f, pillStroke);
+
+        Paint textP = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textP.setColor(formed ? Color.WHITE : Color.parseColor("#94A3B8"));
+        textP.setTextAlign(Paint.Align.CENTER);
+        textP.setTextSize(compact ? 13f : 15f);
+        textP.setFakeBoldText(true);
+        canvas.drawText(bit, midX, midY + (compact ? 4.5f : 5.5f), textP);
+    }
+
+    private void drawHuffmanTreeNodes(Canvas canvas, HuffmanTreeModel.Node node, int currentStep,
+                                      boolean compact, HuffmanTreeModel model) {
+        if (node == null) {
+            return;
+        }
+        drawSingleHuffmanNode(canvas, node, currentStep, compact, model);
+        drawHuffmanTreeNodes(canvas, node.left, currentStep, compact, model);
+        drawHuffmanTreeNodes(canvas, node.right, currentStep, compact, model);
+    }
+
+    private void drawSingleHuffmanNode(Canvas canvas, HuffmanTreeModel.Node node, int currentStep,
+                                       boolean compact, HuffmanTreeModel model) {
+        float nodeRadius = compact ? 20f : 24f;
+        boolean isLeaf = node.isLeaf();
+        boolean isFormed = node.stepCreated <= currentStep;
+        boolean isActiveMerge = !isLeaf && node.stepCreated == currentStep && currentStep > 0;
+        boolean isCompletedRoot = (node == model.getRoot()) && (huffmanQueueWeights.length <= 1 || currentStep >= (model.getAllNodes().size() - model.getLeaves().size()));
+
+        float effectiveRadius = nodeRadius + (isActiveMerge ? pulseProgress * 4f : 0f);
+
+        if (isActiveMerge) {
+            Paint haloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            haloPaint.setStyle(Paint.Style.STROKE);
+            haloPaint.setStrokeWidth(6f);
+            haloPaint.setColor(Color.parseColor("#22C55E"));
+            haloPaint.setAlpha(Math.round(120f + (pulseProgress * 80f)));
+            canvas.drawCircle(node.x, node.y, effectiveRadius + 8f + (pulseProgress * 6f), haloPaint);
+        } else if (isCompletedRoot) {
+            Paint haloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            haloPaint.setStyle(Paint.Style.STROKE);
+            haloPaint.setStrokeWidth(5f);
+            haloPaint.setColor(Color.parseColor("#10B981"));
+            haloPaint.setAlpha(120);
+            canvas.drawCircle(node.x, node.y, effectiveRadius + 7f, haloPaint);
+        }
+
+        if (isLeaf) {
+            applyNodeShader(node.x, node.y, Color.parseColor("#0D9488"));
+            canvas.drawCircle(node.x, node.y, effectiveRadius, fillPaint);
+
+            strokePaint.setColor(Color.parseColor("#2DD4BF"));
+            strokePaint.setStrokeWidth(2.5f);
+            strokePaint.setPathEffect(null);
+            canvas.drawCircle(node.x, node.y, effectiveRadius, strokePaint);
+
+            // Character badge above leaf circle
+            drawHuffmanCharBadge(canvas, node.x, node.y - effectiveRadius - (compact ? 12f : 14f), node.character, compact);
+
+            // Frequency inside circle
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(compact ? 16f : 18f);
+            textPaint.setColor(Color.WHITE);
+            textPaint.setFakeBoldText(true);
+            canvas.drawText(String.valueOf(node.weight), node.x, node.y + (compact ? 5f : 6f), textPaint);
+
+            // Prefix code pill below leaf circle
+            drawHuffmanCodePill(canvas, node.x, node.y + effectiveRadius + (compact ? 13f : 15f), node.code, isFormed, compact);
+        } else {
+            if (isFormed) {
+                int baseColor = isActiveMerge
+                    ? Color.parseColor("#16A34A")
+                    : (isCompletedRoot ? Color.parseColor("#059669") : Color.parseColor("#1E293B"));
+                applyNodeShader(node.x, node.y, baseColor);
+                canvas.drawCircle(node.x, node.y, effectiveRadius, fillPaint);
+
+                strokePaint.setColor(isActiveMerge ? Color.parseColor("#86EFAC") : (isCompletedRoot ? Color.parseColor("#34D399") : Color.parseColor("#60A5FA")));
+                strokePaint.setStrokeWidth(isActiveMerge ? 3.5f : 2.5f);
+                strokePaint.setPathEffect(null);
+                canvas.drawCircle(node.x, node.y, effectiveRadius, strokePaint);
+
+                if (isActiveMerge) {
+                    drawTreeRoleBadge(canvas, node.x, node.y - effectiveRadius - (compact ? 12f : 14f), compact ? "Merged" : "New Node", "#16A34A");
+                } else if (isCompletedRoot) {
+                    drawTreeRoleBadge(canvas, node.x, node.y - effectiveRadius - (compact ? 12f : 14f), "Root", "#059669");
+                }
+
+                textPaint.setTextAlign(Paint.Align.CENTER);
+                textPaint.setTextSize(compact ? 16f : 18f);
+                textPaint.setColor(Color.WHITE);
+                textPaint.setFakeBoldText(true);
+                canvas.drawText(String.valueOf(node.weight), node.x, node.y + (compact ? 5f : 6f), textPaint);
+            } else {
+                Paint unformedFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+                unformedFill.setStyle(Paint.Style.FILL);
+                unformedFill.setColor(Color.parseColor("#0F172A"));
+                unformedFill.setAlpha(120);
+                canvas.drawCircle(node.x, node.y, effectiveRadius, unformedFill);
+
+                Paint unformedStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+                unformedStroke.setStyle(Paint.Style.STROKE);
+                unformedStroke.setStrokeWidth(2f);
+                unformedStroke.setColor(Color.parseColor("#475569"));
+                unformedStroke.setPathEffect(new DashPathEffect(new float[]{6f, 5f}, 0f));
+                canvas.drawCircle(node.x, node.y, effectiveRadius, unformedStroke);
+
+                textPaint.setTextAlign(Paint.Align.CENTER);
+                textPaint.setTextSize(compact ? 15f : 17f);
+                textPaint.setColor(Color.parseColor("#64748B"));
+                textPaint.setFakeBoldText(false);
+                canvas.drawText(String.valueOf(node.weight), node.x, node.y + (compact ? 5f : 6f), textPaint);
+            }
+        }
+    }
+
+    private void drawHuffmanCharBadge(Canvas canvas, float centerX, float centerY, String character, boolean compact) {
+        if (character == null || character.isEmpty()) {
+            return;
+        }
+        float halfW = compact ? 12f : 14f;
+        float halfH = compact ? 10f : 12f;
+
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setStyle(Paint.Style.FILL);
+        fill.setColor(Color.parseColor("#0284C7"));
+
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(1.5f);
+        stroke.setColor(Color.parseColor("#38BDF8"));
+
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, fill);
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, stroke);
+
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.WHITE);
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setTextSize(compact ? 13f : 15f);
+        text.setFakeBoldText(true);
+        canvas.drawText(character, centerX, centerY + (compact ? 4.5f : 5.5f), text);
+    }
+
+    private void drawHuffmanCodePill(Canvas canvas, float centerX, float centerY, String code, boolean isFormed, boolean compact) {
+        if (code == null || code.isEmpty()) {
+            return;
+        }
+        float textWidth = Math.max(code.length() * (compact ? 8f : 9.5f), compact ? 20f : 24f);
+        float halfW = (textWidth / 2f) + (compact ? 6f : 8f);
+        float halfH = compact ? 9f : 11f;
+
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setStyle(Paint.Style.FILL);
+        fill.setColor(Color.parseColor(isFormed ? "#064E3B" : "#1E293B"));
+        fill.setAlpha(isFormed ? 230 : 140);
+
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(1.5f);
+        stroke.setColor(Color.parseColor(isFormed ? "#34D399" : "#475569"));
+
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, fill);
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, stroke);
+
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.parseColor(isFormed ? "#A7F3D0" : "#94A3B8"));
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setTextSize(compact ? 12f : 14f);
+        text.setFakeBoldText(true);
+        canvas.drawText(code, centerX, centerY + (compact ? 4f : 5f), text);
+    }
+
+    private void drawHuffmanCodeDictionary(Canvas canvas, HuffmanTreeModel model, float topY, float height, boolean compact) {
+        List<HuffmanTreeModel.CodeEntry> codes = model.getCodesList();
+        if (codes.isEmpty()) {
+            return;
+        }
+        float left = compact ? 12f : 18f;
+        float right = getWidth() - left;
+        float bottomY = topY + height;
+
+        Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bgPaint.setStyle(Paint.Style.FILL);
+        bgPaint.setColor(Color.parseColor("#0F172A"));
+        bgPaint.setAlpha(230);
+
+        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderPaint.setStyle(Paint.Style.STROKE);
+        borderPaint.setStrokeWidth(1.5f);
+        borderPaint.setColor(Color.parseColor("#334155"));
+
+        canvas.drawRoundRect(left, topY, right, bottomY, 12f, 12f, bgPaint);
+        canvas.drawRoundRect(left, topY, right, bottomY, 12f, 12f, borderPaint);
+
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.parseColor("#94A3B8"));
+        labelPaint.setTextAlign(Paint.Align.LEFT);
+        labelPaint.setTextSize(compact ? 14f : 16f);
+        labelPaint.setFakeBoldText(true);
+        float labelX = left + (compact ? 12f : 16f);
+        float centerY = topY + (height / 2f);
+        canvas.drawText("Codes:", labelX, centerY + (compact ? 4.5f : 5.5f), labelPaint);
+
+        float labelWidth = compact ? 54f : 66f;
+        float entriesStartX = labelX + labelWidth;
+        float availableW = Math.max(10f, right - entriesStartX - (compact ? 8f : 12f));
+        int count = codes.size();
+        float itemGap = availableW / count;
+
+        Paint charPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        charPaint.setColor(Color.WHITE);
+        charPaint.setTextAlign(Paint.Align.LEFT);
+        charPaint.setTextSize(compact ? 13f : 15f);
+        charPaint.setFakeBoldText(true);
+
+        Paint codePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        codePaint.setColor(Color.parseColor("#FCD34D"));
+        codePaint.setTextAlign(Paint.Align.LEFT);
+        codePaint.setTextSize(compact ? 13f : 15f);
+        codePaint.setFakeBoldText(true);
+
+        for (int i = 0; i < count; i++) {
+            HuffmanTreeModel.CodeEntry entry = codes.get(i);
+            float itemCenterX = entriesStartX + (i * itemGap) + (itemGap * 0.45f);
+
+            String text = entry.character + ":" + entry.code;
+            float pillW = Math.max(text.length() * (compact ? 8.5f : 10f), compact ? 36f : 44f);
+            float pillHalfW = pillW / 2f;
+            float pillHalfH = compact ? 10f : 12f;
+
+            Paint pillBg = new Paint(Paint.ANTI_ALIAS_FLAG);
+            pillBg.setStyle(Paint.Style.FILL);
+            pillBg.setColor(Color.parseColor("#1E293B"));
+            pillBg.setAlpha(200);
+
+            Paint pillStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+            pillStroke.setStyle(Paint.Style.STROKE);
+            pillStroke.setStrokeWidth(1f);
+            pillStroke.setColor(Color.parseColor("#475569"));
+
+            canvas.drawRoundRect(itemCenterX - pillHalfW, centerY - pillHalfH, itemCenterX + pillHalfW, centerY + pillHalfH, 6f, 6f, pillBg);
+            canvas.drawRoundRect(itemCenterX - pillHalfW, centerY - pillHalfH, itemCenterX + pillHalfW, centerY + pillHalfH, 6f, 6f, pillStroke);
+
+            float textStartX = itemCenterX - pillHalfW + (compact ? 5f : 7f);
+            float textBaseline = centerY + (compact ? 4.5f : 5.5f);
+            canvas.drawText(entry.character + ":", textStartX, textBaseline, charPaint);
+            float colonOffset = charPaint.measureText(entry.character + ":") + 2f;
+            canvas.drawText(entry.code, textStartX + colonOffset, textBaseline, codePaint);
+        }
     }
 
     void drawTrieScene(Canvas canvas) {
@@ -1533,41 +2115,207 @@ public class TechniqueVisualizerView extends View {
     }
 
     void drawAvlScene(Canvas canvas) {
-        float[][] basePoints = resolveTreeLayout(0.22f, 0.46f, 0.70f);
-        float[][] points = {
-            {basePoints[0][0], basePoints[0][1]},
-            {basePoints[1][0], basePoints[1][1]},
-            {basePoints[2][0], basePoints[2][1]},
-            {basePoints[3][0], basePoints[3][1]},
-            {basePoints[4][0], basePoints[4][1]}
-        };
-        float rotationShift = (activeIndex >= 0 && secondaryIndex >= 0)
-            ? (1f - Math.abs((pulseProgress * 2f) - 1f)) * (isCompactTreeLayout() ? 20f : 28f)
-            : 0f;
-        if (activeIndex == 1 || secondaryIndex == 1) {
-            points[1][0] += rotationShift;
-            points[3][0] += rotationShift * 0.6f;
-            points[4][0] += rotationShift * 0.4f;
+        int[] srcValues = (values != null && values.length > 0) ? values : new int[] {30, 20, 40, 10, 25};
+        int step = getStepIndex();
+        boolean compact = isCompactTreeLayout();
+
+        if (step <= 0) {
+            drawAvlPreviewScene(canvas, srcValues, compact);
+            return;
         }
-        if (activeIndex == 0 || secondaryIndex == 0) {
+
+        if (srcValues.length == 3) {
+            drawAvlScene3Nodes(canvas, srcValues, step, compact);
+            return;
+        }
+
+        drawAvlSceneMultiNodes(canvas, srcValues, step, compact);
+    }
+
+    private void drawAvlPreviewScene(Canvas canvas, int[] srcValues, boolean compact) {
+        float cx = getWidth() / 2f;
+        float topY = getHeight() * (compact ? 0.22f : 0.26f);
+        int n = srcValues.length;
+        int display = Math.min(n, 7);
+        float boxR = compact ? 26f : 32f;
+        float gap = compact ? 16f : 20f;
+        float totalW = display * 2 * boxR + (display - 1) * gap;
+        float startX = cx - totalW / 2f + boxR;
+
+        Paint headerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        headerPaint.setColor(Color.parseColor("#94A3B8"));
+        headerPaint.setTextAlign(Paint.Align.CENTER);
+        headerPaint.setTextSize(compact ? 18f : 22f);
+        canvas.drawText("Input sequence (" + n + " keys) — tap Step or Play to build AVL tree:", cx, topY - 30f, headerPaint);
+
+        for (int i = 0; i < display; i++) {
+            float x = startX + i * (2 * boxR + gap);
+            float y = topY + boxR + 10f;
+            drawLabeledNode(canvas, x, y, String.valueOf(srcValues[i]), i == 0);
+            if (i < display - 1) {
+                Paint arrowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                arrowPaint.setColor(Color.parseColor("#38BDF8"));
+                arrowPaint.setTextSize(compact ? 22f : 26f);
+                arrowPaint.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText("›", x + boxR + gap / 2f, y + 8f, arrowPaint);
+            }
+        }
+        if (n > 7) {
+            Paint morePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            morePaint.setColor(Color.parseColor("#94A3B8"));
+            morePaint.setTextSize(16f);
+            morePaint.setTextAlign(Paint.Align.LEFT);
+            canvas.drawText("+" + (n - 7) + " more", cx + totalW / 2f + 16f, topY + boxR + 16f, morePaint);
+        }
+
+        Paint subPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        subPaint.setColor(Color.parseColor("#38BDF8"));
+        subPaint.setTextSize(compact ? 15f : 17f);
+        subPaint.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText("AVL Tree self-balances after every insertion via LL, RR, LR, RL rotations", cx, topY + boxR * 2 + 58f, subPaint);
+        drawTreeRoleBadge(canvas, cx, topY + boxR * 2 + 96f, "Ready to Insert", "#0284C7");
+    }
+
+    private void drawAvlScene3Nodes(Canvas canvas, int[] srcValues, int step, boolean compact) {
+        int v0 = srcValues[0];
+        int v1 = srcValues[1];
+        int v2 = srcValues[2];
+
+        boolean isLL = (v0 > v1 && v1 > v2);
+        boolean isRR = (v0 < v1 && v1 < v2);
+        boolean isLR = (v0 > v1 && v2 > v1 && v2 < v0);
+        boolean isRL = (v0 < v1 && v2 < v1 && v2 > v0);
+        boolean isRotated = (step >= 2);
+
+        float cx = getWidth() / 2f;
+        float rootY = getHeight() * (compact ? 0.20f : 0.24f);
+        float dx = getWidth() * (compact ? 0.20f : 0.24f);
+        float dy = getHeight() * (compact ? 0.20f : 0.22f);
+
+        if (isRotated) {
+            float xL = cx - dx;
+            float xR = cx + dx;
+            float childY = rootY + dy;
+
+            Paint edgePaint = new Paint(strokePaint);
+            edgePaint.setColor(Color.parseColor("#64748B"));
+            edgePaint.setStrokeWidth(4f);
+            canvas.drawLine(cx, rootY, xL, childY, edgePaint);
+            canvas.drawLine(cx, rootY, xR, childY, edgePaint);
+
+            drawLabeledNode(canvas, cx, rootY, String.valueOf(v0), true);
+            drawTreeRoleBadge(canvas, cx + 46f, rootY - 14f, "BF: 0", "#10B981");
+            drawTreeRoleBadge(canvas, cx, rootY - (compact ? 44f : 52f), "Balanced Root", "#10B981");
+
+            drawLabeledNode(canvas, xL, childY, String.valueOf(v1), false);
+            drawTreeRoleBadge(canvas, xL + 42f, childY - 12f, "BF: 0", "#10B981");
+
+            drawLabeledNode(canvas, xR, childY, String.valueOf(v2), false);
+            drawTreeRoleBadge(canvas, xR + 42f, childY - 12f, "BF: 0", "#10B981");
+            return;
+        }
+
+        // Before rotation: Draw insertion structure showing imbalance
+        float p0x = cx;
+        float p0y = rootY;
+        float p1x = (isLL || isLR) ? (cx - dx) : (cx + dx);
+        float p1y = rootY + dy;
+        float p2x;
+        float p2y = rootY + (dy * 1.85f);
+        if (isLL) {
+            p2x = p1x - (dx * 0.8f);
+        } else if (isRR) {
+            p2x = p1x + (dx * 0.8f);
+        } else if (isLR) {
+            p2x = p1x + (dx * 0.7f);
+        } else {
+            p2x = p1x - (dx * 0.7f);
+        }
+
+        Paint edge01 = new Paint(strokePaint);
+        edge01.setColor(step == 1 ? Color.parseColor("#F59E0B") : Color.parseColor("#64748B"));
+        edge01.setStrokeWidth(step == 1 ? 7f : 4f);
+        canvas.drawLine(p0x, p0y, p1x, p1y, edge01);
+
+        Paint edge12 = new Paint(strokePaint);
+        edge12.setColor(step == 0 ? Color.parseColor("#38BDF8") : Color.parseColor("#64748B"));
+        edge12.setStrokeWidth(step == 0 ? 7f : 4f);
+        canvas.drawLine(p1x, p1y, p2x, p2y, edge12);
+
+        drawLabeledNode(canvas, p0x, p0y, String.valueOf(v0), step == 1);
+        String rootBf = (isLL || isLR) ? "BF: +2" : "BF: -2";
+        drawTreeRoleBadge(canvas, p0x + 48f, p0y - 14f, rootBf, "#EF4444");
+        if (step == 1) {
+            drawTreeRoleBadge(canvas, p0x, p0y - (compact ? 44f : 52f), "Imbalance", "#EF4444");
+        }
+
+        drawLabeledNode(canvas, p1x, p1y, String.valueOf(v1), step == 0 || (step == 1 && (isLL || isRR)));
+        String childBf = isLR ? "BF: -1" : (isLL ? "BF: +1" : (isRL ? "BF: +1" : "BF: -1"));
+        drawTreeRoleBadge(canvas, p1x + 44f, p1y - 12f, childBf, "#F59E0B");
+        if (step == 0) {
+            drawTreeRoleBadge(canvas, p1x - 44f, p1y, "Parent", "#0EA5E9");
+        } else if (step == 1 && (isLL || isRR)) {
+            drawTreeRoleBadge(canvas, p1x - 44f, p1y, "Pivot", "#F59E0B");
+        }
+
+        drawLabeledNode(canvas, p2x, p2y, String.valueOf(v2), step == 0 || (step == 1 && (isLR || isRL)));
+        drawTreeRoleBadge(canvas, p2x + 42f, p2y - 12f, "BF: 0", "#10B981");
+        if (step == 0) {
+            drawTreeRoleBadge(canvas, p2x, p2y + (compact ? 44f : 50f), "Inserted", "#38BDF8");
+        } else if (step == 1 && (isLR || isRL)) {
+            drawTreeRoleBadge(canvas, p2x, p2y + (compact ? 44f : 50f), "Pivot", "#F59E0B");
+        }
+    }
+
+    private void drawAvlSceneMultiNodes(Canvas canvas, int[] srcValues, int step, boolean compact) {
+        float[][] basePoints = resolveTreeLayout(0.22f, 0.46f, 0.70f);
+        int nodeCount = Math.max(1, Math.min(srcValues.length, basePoints.length));
+        float[][] points = new float[nodeCount][2];
+        for (int i = 0; i < nodeCount; i++) {
+            points[i][0] = basePoints[i][0];
+            points[i][1] = basePoints[i][1];
+        }
+
+        float rotationShift = (activeIndex >= 0 && secondaryIndex >= 0)
+            ? (1f - Math.abs((pulseProgress * 2f) - 1f)) * (compact ? 20f : 28f)
+            : 0f;
+        if ((activeIndex == 1 || secondaryIndex == 1) && nodeCount > 1) {
+            points[1][0] += rotationShift;
+            if (nodeCount > 3) {
+                points[3][0] += rotationShift * 0.6f;
+            }
+            if (nodeCount > 4) {
+                points[4][0] += rotationShift * 0.4f;
+            }
+        }
+        if ((activeIndex == 0 || secondaryIndex == 0) && nodeCount > 0) {
             points[0][0] -= rotationShift * 0.45f;
         }
-        int[][] edges = {{0,1},{0,2},{1,3},{1,4}};
-        for (int[] edge : edges) {
+
+        for (int i = 1; i < nodeCount; i++) {
+            int parent = (i - 1) / 2;
             Paint linePaint = new Paint(strokePaint);
-            if ((edge[0] == activeIndex && edge[1] == secondaryIndex) || (edge[0] == secondaryIndex && edge[1] == activeIndex)) {
+            if ((parent == activeIndex && i == secondaryIndex) || (parent == secondaryIndex && i == activeIndex)) {
                 linePaint.setColor(Color.parseColor("#38BDF8"));
                 linePaint.setStrokeWidth(8f);
             }
-            canvas.drawLine(points[edge[0]][0], points[edge[0]][1], points[edge[1]][0], points[edge[1]][1], linePaint);
+            canvas.drawLine(points[parent][0], points[parent][1], points[i][0], points[i][1], linePaint);
         }
-        String[] labels = {"30", "20", "40", "10", "25"};
-        for (int i = 0; i < labels.length; i++) {
-            drawLabeledNode(canvas, points[i][0], points[i][1], labels[i], i == activeIndex || i == secondaryIndex);
+
+        for (int i = 0; i < nodeCount; i++) {
+            drawLabeledNode(canvas, points[i][0], points[i][1], String.valueOf(srcValues[i]), i == activeIndex || i == secondaryIndex);
+            if (i == 0 && step < 2) {
+                drawTreeRoleBadge(canvas, points[i][0] + 46f, points[i][1] - 14f, "BF: +2", "#EF4444");
+            } else if (i < 3) {
+                drawTreeRoleBadge(canvas, points[i][0] + 42f, points[i][1] - 12f, (i == 1 && step < 2) ? "BF: +1" : "BF: 0", "#10B981");
+            } else {
+                drawTreeRoleBadge(canvas, points[i][0] + 38f, points[i][1] - 10f, "BF: 0", "#10B981");
+            }
         }
-        drawTreeTeachingOverlays(canvas, points, labels.length, false, true);
-        if (activeIndex >= 0 && activeIndex < labels.length) {
-            drawTreeRoleBadge(canvas, points[activeIndex][0], points[activeIndex][1] + (isCompactTreeLayout() ? 48f : 58f), isCompactTreeLayout() ? "Rebal." : "Rebalancing", "#D97706");
+
+        drawTreeTeachingOverlays(canvas, points, nodeCount, false, true);
+        if (activeIndex >= 0 && activeIndex < nodeCount) {
+            drawTreeRoleBadge(canvas, points[activeIndex][0], points[activeIndex][1] + (compact ? 48f : 58f), compact ? "Rebal." : "Rebalancing", "#D97706");
         }
     }
 
@@ -1584,40 +2332,381 @@ public class TechniqueVisualizerView extends View {
     }
 
     void drawRadixScene(Canvas canvas) {
-        drawHorizontalBoxes(canvas, false);
-        float baseY = getHeight() * 0.56f;
-        textPaint.setTextSize(26f);
-        textPaint.setTextAlign(Paint.Align.LEFT);
-        canvas.drawText("Buckets (" + resolveDigitLabel() + ")", 24f, baseY - 20f, textPaint);
-        int[][] bucketValues = new int[10][values.length];
-        int[] bucketCounts = new int[10];
-        for (int value : values) {
-            int digit = Math.abs(value / radixDivisor) % 10;
-            bucketValues[digit][bucketCounts[digit]++] = value;
+        if (values == null || values.length == 0) {
+            return;
         }
-        for (int bucket = 0; bucket < 10; bucket++) {
-            float rowY = baseY + (bucket * 42f);
-            Paint bucketPaint = new Paint(strokePaint);
-            bucketPaint.setColor(Color.parseColor("#64748B"));
-            canvas.drawRoundRect(18f, rowY - 26f, getWidth() - 18f, rowY + 10f, 18f, 18f, bucketPaint);
-            textPaint.setTextSize(22f);
-            canvas.drawText(bucket + ":", 30f, rowY, textPaint);
-            float x = 76f;
-            for (int i = 0; i < bucketCounts[bucket]; i++) {
-                float dropOffset = resolveRadixDropOffset(bucket, i);
-                drawMiniValueBox(
-                    canvas,
-                    bucketValues[bucket][i],
-                    x,
-                    rowY - 30f - dropOffset,
-                    x + 56f,
-                    rowY + 6f - dropOffset,
-                    bucket == radixActiveBucket
-                );
-                x += 66f;
+
+        float width = getWidth() > 0 ? getWidth() : resolveRadixDesiredWidth();
+        float height = getHeight() > 0 ? getHeight() : resolveRadixDesiredHeight();
+
+        int divisor = Math.max(1, radixDivisor);
+        int maxVal = radixMaxValue > 0 ? radixMaxValue : SortVisualizationEngine.resolveMaxAbsValue(values);
+        boolean isFinished = radixComplete || (maxVal > 0 && divisor > maxVal && radixActiveBucket == -1);
+
+        // 1. Array Row at Top - reusing existing app array box design
+        int n = values.length;
+        float padding = 16f;
+        float availW = width - (padding * 2f);
+        float cellGap = Math.min(8f, Math.max(3f, (availW / n) * 0.10f));
+        float cellWidth = Math.min(76f, Math.max(38f, (availW - (n - 1) * cellGap) / Math.max(n, 1)));
+        float totalArrayW = n * cellWidth + (n - 1) * cellGap;
+        float arrayStartX = Math.max(padding, (width - totalArrayW) / 2f);
+
+        float arrayTop = isLandscapeCanvas() ? 80f : 96f;
+        float boxHeight = Math.min(60f, Math.max(44f, resolveBoxHeight() * 0.65f));
+        float arrayBottom = arrayTop + boxHeight;
+        float textSize = resolveResponsiveTextSize(18f, 24f);
+
+        float activeCellCenterX = -1f;
+        float activeCellBottomY = arrayBottom;
+        int activeDigit = -1;
+
+        for (int i = 0; i < n; i++) {
+            float left = arrayStartX + i * (cellWidth + cellGap);
+            float right = left + cellWidth;
+            float top = arrayTop;
+            float bottom = arrayBottom;
+
+            boolean isActive = (i == activeIndex && radixActiveBucket >= 0);
+            boolean isCompleted = isFinished || isCompletedIndex(i);
+
+            int val = values[i];
+            int digit = Math.abs(val / divisor) % 10;
+
+            if (isActive) {
+                activeCellCenterX = (left + right) / 2f;
+                activeCellBottomY = bottom;
+                activeDigit = digit;
+            }
+
+            // Box fill using app's box shader
+            applyBoxShader(left, top, right, bottom, i);
+            canvas.drawRoundRect(left, top, right, bottom, 18f, 18f, fillPaint);
+
+            // Neon gradient stroke matching app's standard design
+            int strokeColorA = Color.parseColor("#38BDF8"); // Cyan
+            int strokeColorB = Color.parseColor("#C084FC"); // Purple
+            if (isActive) {
+                strokeColorA = Color.parseColor("#F59E0B"); // Amber
+                strokeColorB = Color.parseColor("#EF4444"); // Red
+            } else if (isCompleted) {
+                strokeColorA = Color.parseColor("#34D399"); // Emerald
+                strokeColorB = Color.parseColor("#10B981"); // Green
+            }
+
+            Paint boxStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+            boxStroke.setStyle(Paint.Style.STROKE);
+            boxStroke.setStrokeWidth(isActive ? 4.5f : 3.5f);
+            boxStroke.setShader(new LinearGradient(left, top, right, bottom, strokeColorA, strokeColorB, Shader.TileMode.CLAMP));
+            canvas.drawRoundRect(left, top, right, bottom, 18f, 18f, boxStroke);
+
+            // Outer glow
+            drawGlow(canvas, left, top, right, bottom, i);
+
+            // Number value text
+            textPaint.setColor(Color.WHITE);
+            textPaint.setFakeBoldText(true);
+            textPaint.setTextSize(textSize);
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText(String.valueOf(val), (left + right) / 2f, top + (boxHeight * 0.58f), textPaint);
+
+            // Highlight the active digit being examined with a dedicated prominent badge
+            if (isActive) {
+                String badgeText;
+                if (primaryPointerLabel != null && !primaryPointerLabel.isEmpty()) {
+                    badgeText = primaryPointerLabel;
+                } else {
+                    String placeName = SortVisualizationEngine.describeDigit(divisor);
+                    badgeText = placeName.substring(0, 1).toUpperCase(java.util.Locale.US) + placeName.substring(1) + " = " + digit;
+                }
+
+                float badgeCenterX = (left + right) / 2f;
+                float arrowTipY = top - 4f;
+                float arrowBaseY = top - 12f;
+                float badgeBottomY = arrowBaseY;
+                float badgeH = isLandscapeCanvas() ? 26f : 28f;
+                float badgeTopY = badgeBottomY - badgeH;
+
+                Paint badgeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                badgeTextPaint.setColor(Color.parseColor("#FCD34D"));
+                badgeTextPaint.setTextSize(isLandscapeCanvas() ? 14f : 15f);
+                badgeTextPaint.setFakeBoldText(true);
+                badgeTextPaint.setTextAlign(Paint.Align.CENTER);
+
+                float textW = badgeTextPaint.measureText(badgeText);
+                float badgeW = textW + 20f;
+                float badgeLeft = badgeCenterX - (badgeW / 2f);
+                float badgeRight = badgeLeft + badgeW;
+
+                if (badgeLeft < 6f) {
+                    float shift = 6f - badgeLeft;
+                    badgeLeft += shift;
+                    badgeRight += shift;
+                } else if (badgeRight > width - 6f) {
+                    float shift = badgeRight - (width - 6f);
+                    badgeLeft -= shift;
+                    badgeRight -= shift;
+                }
+
+                // Badge pill background
+                RectF badgeRect = new RectF(badgeLeft, badgeTopY, badgeRight, badgeBottomY);
+                Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                bgPaint.setStyle(Paint.Style.FILL);
+                bgPaint.setColor(Color.parseColor("#0F172A")); // Slate 900
+                canvas.drawRoundRect(badgeRect, 8f, 8f, bgPaint);
+
+                // Badge border
+                Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                borderPaint.setStyle(Paint.Style.STROKE);
+                borderPaint.setStrokeWidth(2f);
+                borderPaint.setColor(Color.parseColor("#F59E0B"));
+                canvas.drawRoundRect(badgeRect, 8f, 8f, borderPaint);
+
+                // Pointer downward triangle
+                Path arrowPath = new Path();
+                arrowPath.moveTo(badgeCenterX - 5.5f, arrowBaseY);
+                arrowPath.lineTo(badgeCenterX + 5.5f, arrowBaseY);
+                arrowPath.lineTo(badgeCenterX, arrowTipY);
+                arrowPath.close();
+
+                Paint arrowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                arrowPaint.setStyle(Paint.Style.FILL);
+                arrowPaint.setColor(Color.parseColor("#F59E0B"));
+                canvas.drawPath(arrowPath, arrowPaint);
+
+                // Badge text
+                float textBaseline = badgeTopY + (badgeH * 0.72f);
+                canvas.drawText(badgeText, (badgeLeft + badgeRight) / 2f, textBaseline, badgeTextPaint);
+
+                // Small pill badge underneath value showing digit
+                Paint pillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                pillPaint.setStyle(Paint.Style.FILL);
+                pillPaint.setColor(Color.parseColor("#F59E0B"));
+                float pillW = 30f;
+                float pillH = 14f;
+                float pillX = (left + right) / 2f - pillW / 2f;
+                float pillY = bottom - 15f;
+                canvas.drawRoundRect(pillX, pillY, pillX + pillW, pillY + pillH, 6f, 6f, pillPaint);
+
+                Paint pillText = new Paint(Paint.ANTI_ALIAS_FLAG);
+                pillText.setColor(Color.BLACK);
+                pillText.setTextSize(9.5f);
+                pillText.setFakeBoldText(true);
+                pillText.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText("d=" + digit, pillX + pillW / 2f, pillY + 10.5f, pillText);
+            }
+
+            // Array index [i] below card
+            Paint indexPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            indexPaint.setColor(Color.parseColor("#94A3B8"));
+            indexPaint.setTextAlign(Paint.Align.CENTER);
+            indexPaint.setTextSize(12f);
+            canvas.drawText("[" + i + "]", (left + right) / 2f, bottom + 16f, indexPaint);
+        }
+
+        // Elements placed into buckets so far in this pass
+        int processedLimit;
+        if (radixActiveBucket == -1) {
+            processedLimit = values.length;
+        } else if (radixProcessedCount >= 0) {
+            processedLimit = Math.min(radixProcessedCount, values.length);
+        } else if (activeIndex >= 0) {
+            processedLimit = Math.min(activeIndex + 1, values.length);
+        } else {
+            processedLimit = 0;
+        }
+
+        int maxBucketItems = 0;
+        java.util.List<java.util.List<Integer>> bucketLists = new java.util.ArrayList<>(10);
+        for (int b = 0; b < 10; b++) {
+            java.util.List<Integer> list = new java.util.ArrayList<>();
+            for (int k = 0; k < processedLimit; k++) {
+                if (Math.abs(values[k] / divisor) % 10 == b) {
+                    list.add(values[k]);
+                }
+            }
+            if (list.size() > maxBucketItems) {
+                maxBucketItems = list.size();
+            }
+            bucketLists.add(list);
+        }
+
+        // 2. Buckets Row - exactly 10 horizontal buckets (0 to 9)
+        float bMargin = 10f;
+        float bAvailableW = width - (bMargin * 2f);
+        float bGap = Math.min(6f, Math.max(2.5f, (bAvailableW / 10f) * 0.06f));
+        float bWidth = (bAvailableW - (9f * bGap)) / 10f;
+        float bTop = arrayBottom + (isLandscapeCanvas() ? 28f : 34f);
+
+        float headerH = 22f;
+        float chipH = isLandscapeCanvas() ? 17f : 20f;
+        float chipGap = 3f;
+        float baseEmptyHeight = headerH + 24f;
+        float bHeight = maxBucketItems == 0
+            ? baseEmptyHeight
+            : (headerH + 8f + (maxBucketItems * (chipH + chipGap)) + 4f);
+        float bBottom = bTop + bHeight;
+
+        // Animated trajectory from active array cell to target bucket
+        if (activeCellCenterX > 0 && radixActiveBucket >= 0 && radixActiveBucket < 10) {
+            float targetBucketX = bMargin + radixActiveBucket * (bWidth + bGap) + (bWidth / 2f);
+            float targetBucketY = bTop;
+
+            Path trajectory = new Path();
+            trajectory.moveTo(activeCellCenterX, activeCellBottomY);
+            float ctrlY = (activeCellBottomY + targetBucketY) / 2f;
+            trajectory.quadTo((activeCellCenterX + targetBucketX) / 2f, ctrlY, targetBucketX, targetBucketY);
+
+            Paint trajPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            trajPaint.setStyle(Paint.Style.STROKE);
+            trajPaint.setStrokeWidth(3f);
+            trajPaint.setColor(Color.parseColor("#F59E0B"));
+            trajPaint.setAlpha(170);
+            canvas.drawPath(trajectory, trajPaint);
+
+            // Particle along path
+            float t = pulseProgress;
+            float omt = 1f - t;
+            float midX = (activeCellCenterX + targetBucketX) / 2f;
+            float px = omt * omt * activeCellCenterX + 2f * omt * t * midX + t * t * targetBucketX;
+            float py = omt * omt * activeCellBottomY + 2f * omt * t * ctrlY + t * t * targetBucketY;
+
+            Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            dotPaint.setColor(Color.parseColor("#FCD34D"));
+            canvas.drawCircle(px, py, 5f + (pulseProgress * 2f), dotPaint);
+        }
+
+        for (int b = 0; b < 10; b++) {
+            float bLeft = bMargin + b * (bWidth + bGap);
+            float bRight = bLeft + bWidth;
+
+            boolean isBucketActive = (b == radixActiveBucket);
+            boolean isGatherPhase = (radixActiveBucket == -1);
+
+            // Bucket Container Card (using app's card/box aesthetic)
+            RectF bRect = new RectF(bLeft, bTop, bRight, bBottom);
+            Paint bFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bFill.setStyle(Paint.Style.FILL);
+            bFill.setColor(isBucketActive ? Color.parseColor("#172033") : Color.parseColor("#0B1020"));
+            canvas.drawRoundRect(bRect, 12f, 12f, bFill);
+
+            // Bucket Border
+            Paint bStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bStroke.setStyle(Paint.Style.STROKE);
+            if (isBucketActive) {
+                bStroke.setColor(Color.parseColor("#F59E0B"));
+                bStroke.setStrokeWidth(3f);
+                softGlowPaint.setColor(Color.parseColor("#F59E0B"));
+                softGlowPaint.setAlpha((int) (40 + pulseProgress * 50));
+                canvas.drawRoundRect(bLeft - 3f, bTop - 3f, bRight + 3f, bBottom + 3f, 14f, 14f, softGlowPaint);
+            } else if (isGatherPhase) {
+                bStroke.setColor(Color.parseColor("#10B981"));
+                bStroke.setStrokeWidth(1.8f);
+            } else {
+                bStroke.setColor(Color.parseColor("#1E293B"));
+                bStroke.setStrokeWidth(1.2f);
+            }
+            canvas.drawRoundRect(bRect, 12f, 12f, bStroke);
+
+            // Bucket Header Strip
+            RectF headerRect = new RectF(bLeft, bTop, bRight, bTop + headerH);
+            Paint hFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+            hFill.setStyle(Paint.Style.FILL);
+            hFill.setColor(isBucketActive ? Color.parseColor("#F59E0B") : (isGatherPhase ? Color.parseColor("#065F46") : Color.parseColor("#1E293B")));
+            canvas.drawRoundRect(headerRect, 12f, 12f, hFill);
+            canvas.drawRect(bLeft, bTop + headerH - 6f, bRight, bTop + headerH, hFill);
+
+            // Header Digit Label ("0", "1", ... "9")
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(12f);
+            textPaint.setFakeBoldText(true);
+            textPaint.setColor(isBucketActive ? Color.BLACK : Color.WHITE);
+            canvas.drawText(String.valueOf(b), bRect.centerX(), bTop + 15.5f, textPaint);
+
+            // Items inside this bucket in FIFO order
+            java.util.List<Integer> inBucket = bucketLists.get(b);
+            if (inBucket.isEmpty()) {
+                textPaint.setColor(Color.parseColor("#475569"));
+                textPaint.setTextSize(13f);
+                textPaint.setFakeBoldText(false);
+                canvas.drawText("—", bRect.centerX(), bTop + headerH + 16f, textPaint);
+            } else {
+                float itemStartY = bTop + headerH + 5f;
+                int count = inBucket.size();
+                for (int m = 0; m < count; m++) {
+                    int itemVal = inBucket.get(m);
+                    boolean isLatest = isBucketActive && (m == count - 1);
+                    float cY = itemStartY + m * (chipH + chipGap);
+
+                    // Reusing the app's mini value box design
+                    drawMiniValueBox(canvas, itemVal, bLeft + 2.5f, cY, bRight - 2.5f, cY + chipH, isLatest);
+                }
             }
         }
-        textPaint.setTextAlign(Paint.Align.CENTER);
+
+        // 3. Collection Notice Banner when buckets are collected
+        if (radixActiveBucket == -1 && !isFinished && processedLimit > 0) {
+            float bannerY = bBottom + 8f;
+            RectF bannerRect = new RectF(bMargin, bannerY, width - bMargin, bannerY + 24f);
+            Paint bFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bFill.setStyle(Paint.Style.FILL);
+            bFill.setColor(Color.parseColor("#064E3B"));
+            canvas.drawRoundRect(bannerRect, 6f, 6f, bFill);
+
+            Paint bStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bStroke.setStyle(Paint.Style.STROKE);
+            bStroke.setColor(Color.parseColor("#10B981"));
+            bStroke.setStrokeWidth(1.2f);
+            canvas.drawRoundRect(bannerRect, 6f, 6f, bStroke);
+
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setColor(Color.parseColor("#34D399"));
+            textPaint.setTextSize(11f);
+            textPaint.setFakeBoldText(true);
+            canvas.drawText("✓ COLLECTED BUCKETS 0 → 9 (FIFO Stable)", bannerRect.centerX(), bannerRect.centerY() + 4f, textPaint);
+        }
+    }
+
+    public int resolveRadixDesiredWidth() {
+        if (isLandscapeCanvas() && getParent() instanceof View) {
+            int parentWidth = ((View) getParent()).getWidth();
+            if (parentWidth > 0) {
+                return parentWidth;
+            }
+        }
+        return getResources().getDisplayMetrics().widthPixels;
+    }
+
+    public int resolveRadixDesiredHeight() {
+        int n = values != null ? values.length : 0;
+        int divisor = Math.max(1, radixDivisor);
+        int maxCount = 0;
+        if (n > 0) {
+            int limit = radixActiveBucket == -1 ? n : (radixProcessedCount >= 0 ? Math.min(radixProcessedCount, n) : 0);
+            int[] counts = new int[10];
+            for (int i = 0; i < limit; i++) {
+                int d = Math.abs(values[i] / divisor) % 10;
+                counts[d]++;
+                if (counts[d] > maxCount) {
+                    maxCount = counts[d];
+                }
+            }
+        }
+        float arrayTop = isLandscapeCanvas() ? 80f : 96f;
+        float boxHeight = Math.min(60f, Math.max(44f, resolveBoxHeight() * 0.65f));
+        float arrayBottom = arrayTop + boxHeight + 18f;
+        float bTop = arrayBottom + (isLandscapeCanvas() ? 28f : 34f);
+        float headerH = 22f;
+        float chipH = isLandscapeCanvas() ? 17f : 20f;
+        float chipGap = 3f;
+        float bHeight = maxCount == 0
+            ? (headerH + 24f)
+            : (headerH + 8f + (maxCount * (chipH + chipGap)) + 4f);
+        float totalH = bTop + bHeight + (isLandscapeCanvas() ? 16f : 26f);
+        if (radixActiveBucket == -1 && n > 0) {
+            totalH += 32f;
+        }
+        return Math.max(Math.round(totalH), isLandscapeCanvas() ? 200 : 250);
     }
 
     private String resolveDigitLabel() {
@@ -1790,10 +2879,22 @@ public class TechniqueVisualizerView extends View {
     }
 
     private void drawLabeledNode(Canvas canvas, float centerX, float centerY, String label, boolean active) {
+        float effectiveRadius = 38f + (active ? pulseProgress * 5f : 0f);
+        if (active) {
+            Paint halo = new Paint(Paint.ANTI_ALIAS_FLAG);
+            halo.setStyle(Paint.Style.FILL);
+            halo.setColor(Color.parseColor("#F59E0B"));
+            halo.setAlpha((int) (40 + pulseProgress * 60));
+            canvas.drawCircle(centerX, centerY, effectiveRadius + 8f + pulseProgress * 4f, halo);
+        }
         applyNodeShader(centerX, centerY, active ? Color.parseColor("#F59E0B") : Color.parseColor("#1E293B"));
-        canvas.drawCircle(centerX, centerY, 38f, fillPaint);
-        canvas.drawCircle(centerX, centerY, 38f, strokePaint);
-        textPaint.setTextSize(24f);
+        canvas.drawCircle(centerX, centerY, effectiveRadius, fillPaint);
+        Paint stroke = new Paint(strokePaint);
+        stroke.setColor(active ? Color.parseColor("#FDE68A") : Color.parseColor("#475569"));
+        stroke.setStrokeWidth(active ? 4.5f : 3f);
+        canvas.drawCircle(centerX, centerY, effectiveRadius, stroke);
+        textPaint.setTextSize(active ? 25f + pulseProgress * 2.5f : 24f);
+        textPaint.setFakeBoldText(true);
         canvas.drawText(label, centerX, centerY + 8f, textPaint);
     }
 
@@ -1971,7 +3072,7 @@ public class TechniqueVisualizerView extends View {
 
     private void drawGraphEdgeWeight(Canvas canvas, float[][] points, int from, int to, boolean active) {
         int weight = resolveGraphEdgeWeight(from, to);
-        if (weight <= 0) {
+        if (weight == Integer.MIN_VALUE) {
             return;
         }
         float midX = (points[from][0] + points[to][0]) / 2f;
@@ -1983,13 +3084,13 @@ public class TechniqueVisualizerView extends View {
         stroke.setStyle(Paint.Style.STROKE);
         stroke.setStrokeWidth(2f);
         stroke.setColor(active ? Color.parseColor("#93C5FD") : Color.parseColor("#64748B"));
-        canvas.drawRoundRect(midX - 18f, midY - 14f, midX + 18f, midY + 14f, 12f, 12f, fill);
-        canvas.drawRoundRect(midX - 18f, midY - 14f, midX + 18f, midY + 14f, 12f, 12f, stroke);
+        canvas.drawRoundRect(midX - 24f, midY - 18f, midX + 24f, midY + 18f, 14f, 14f, fill);
+        canvas.drawRoundRect(midX - 24f, midY - 18f, midX + 24f, midY + 18f, 14f, 14f, stroke);
         Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
         text.setColor(Color.WHITE);
         text.setTextAlign(Paint.Align.CENTER);
-        text.setTextSize(16f);
-        canvas.drawText(String.valueOf(weight), midX, midY + 5f, text);
+        text.setTextSize(22f);
+        canvas.drawText(String.valueOf(weight), midX, midY + 8f, text);
     }
 
     private void drawLinkedMemoryView(Canvas canvas, float padding, float cellWidth, float baseWidth, float bottom) {
@@ -2090,7 +3191,8 @@ public class TechniqueVisualizerView extends View {
     }
 
     private boolean isDirectedGraphMode() {
-        return "topological_sort".equals(techniqueId)
+        return GraphExpandedStepEngine.isDirected(techniqueId)
+            || "topological_sort".equals(techniqueId)
             || "warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
             || "shortest_paths".equals(techniqueId)
@@ -2137,6 +3239,741 @@ public class TechniqueVisualizerView extends View {
         }
     }
 
+
+    private void drawPrimMstOverlay(Canvas canvas, float[][] points) {
+        if (!("graph_prim".equals(techniqueId) || "graph_prims".equals(techniqueId))) {
+            return;
+        }
+        String message = inlineTeachingMessage == null ? "" : inlineTeachingMessage;
+        int visualStep = 0;
+        if (message.contains("Step 5")) visualStep = 5;
+        else if (message.contains("Step 4")) visualStep = 4;
+        else if (message.contains("Step 3")) visualStep = 3;
+        else if (message.contains("Step 2")) visualStep = 2;
+        else if (message.contains("Step 1")) visualStep = 1;
+
+        int[][] selected = new int[4][3];
+        int selectedCount = 0;
+        int totalWeight = 0;
+        if (visualStep >= 2) { selected[selectedCount++] = new int[]{0, 1, 2}; totalWeight += 2; }
+        if (visualStep >= 3) { selected[selectedCount++] = new int[]{1, 2, 3}; totalWeight += 3; }
+        if (visualStep >= 4) { selected[selectedCount++] = new int[]{1, 4, 5}; totalWeight += 5; }
+        if (visualStep >= 5) { selected[selectedCount++] = new int[]{0, 3, 6}; totalWeight += 6; }
+
+        Paint mstPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mstPaint.setStyle(Paint.Style.STROKE);
+        mstPaint.setStrokeCap(Paint.Cap.ROUND);
+        mstPaint.setStrokeWidth(10f);
+        mstPaint.setColor(Color.parseColor("#22C55E"));
+        mstPaint.setAlpha(205);
+        for (int i = 0; i < selectedCount; i++) {
+            int from = selected[i][0];
+            int to = selected[i][1];
+            if (from >= points.length || to >= points.length) continue;
+            canvas.drawLine(points[from][0], points[from][1], points[to][0], points[to][1], mstPaint);
+            drawTreeRoleBadge(canvas, (points[from][0] + points[to][0]) / 2f, (points[from][1] + points[to][1]) / 2f + 34f, "MST", "#16A34A");
+            drawGraphEdgeWeight(canvas, points, from, to, true);
+        }
+        if (selectedCount > 0) {
+            drawInlineMathBadge(canvas, getWidth() * 0.50f, 58f, "Prim MST edges: " + selectedCount + "/4  •  total = " + totalWeight, "#0F766E");
+        }
+    }
+
+
+    private void drawKruskalMstOverlay(Canvas canvas, float[][] points) {
+        if (!("graph_kruskal".equals(techniqueId) || "graph_kruskals".equals(techniqueId))) {
+            return;
+        }
+        String message = inlineTeachingMessage == null ? "" : inlineTeachingMessage;
+        int visualStep = 0;
+        if (message.contains("Step 7")) visualStep = 7;
+        else if (message.contains("Step 6")) visualStep = 6;
+        else if (message.contains("Step 5")) visualStep = 5;
+        else if (message.contains("Step 4")) visualStep = 4;
+        else if (message.contains("Step 3")) visualStep = 3;
+        else if (message.contains("Step 2")) visualStep = 2;
+        else if (message.contains("Step 1")) visualStep = 1;
+
+        int[][] selected = new int[4][3];
+        int selectedCount = 0;
+        int totalWeight = 0;
+        if (visualStep >= 1) { selected[selectedCount++] = new int[]{1, 2, 1}; totalWeight += 1; }
+        if (visualStep >= 2) { selected[selectedCount++] = new int[]{2, 3, 2}; totalWeight += 2; }
+        if (visualStep >= 4) { selected[selectedCount++] = new int[]{0, 1, 4}; totalWeight += 4; }
+        if (visualStep >= 6) { selected[selectedCount++] = new int[]{1, 4, 6}; totalWeight += 6; }
+
+        Paint mstPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mstPaint.setStyle(Paint.Style.STROKE);
+        mstPaint.setStrokeCap(Paint.Cap.ROUND);
+        mstPaint.setStrokeWidth(10f);
+        mstPaint.setColor(Color.parseColor("#22C55E"));
+        mstPaint.setAlpha(205);
+        for (int i = 0; i < selectedCount; i++) {
+            int from = selected[i][0];
+            int to = selected[i][1];
+            if (from >= points.length || to >= points.length) continue;
+            canvas.drawLine(points[from][0], points[from][1], points[to][0], points[to][1], mstPaint);
+            drawTreeRoleBadge(canvas, (points[from][0] + points[to][0]) / 2f, (points[from][1] + points[to][1]) / 2f + 34f, "MST", "#16A34A");
+            drawGraphEdgeWeight(canvas, points, from, to, true);
+        }
+
+        if ((visualStep == 3 || visualStep == 5) && points.length > 3) {
+            Paint rejectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            rejectPaint.setStyle(Paint.Style.STROKE);
+            rejectPaint.setStrokeCap(Paint.Cap.ROUND);
+            rejectPaint.setStrokeWidth(10f);
+            rejectPaint.setColor(Color.parseColor("#EF4444"));
+            rejectPaint.setAlpha(215);
+            int rejectFrom = visualStep == 5 ? 0 : 1;
+            int rejectTo = 3;
+            canvas.drawLine(points[rejectFrom][0], points[rejectFrom][1], points[rejectTo][0], points[rejectTo][1], rejectPaint);
+            drawTreeRoleBadge(canvas, (points[rejectFrom][0] + points[rejectTo][0]) / 2f, (points[rejectFrom][1] + points[rejectTo][1]) / 2f - 34f, "Cycle", "#DC2626");
+            drawGraphEdgeWeight(canvas, points, rejectFrom, rejectTo, true);
+        }
+
+        String decisionText;
+        if (visualStep == 0) {
+            decisionText = "Rule: sort + DSU no-cycle";
+        } else if (visualStep == 1) {
+            decisionText = "Accept: 1-2 is lightest";
+        } else if (visualStep == 2) {
+            decisionText = "Accept: new component";
+        } else if (visualStep == 3) {
+            decisionText = "Reject: cycle found";
+        } else if (visualStep == 4) {
+            decisionText = "Accept: adds vertex 0";
+        } else if (visualStep == 5) {
+            decisionText = "Reject: cycle found";
+        } else if (visualStep == 6) {
+            decisionText = "Accept: adds vertex 4";
+        } else {
+            decisionText = "Done: total = 13";
+        }
+        if (selectedCount > 0) {
+            drawInlineMathBadge(canvas, getWidth() * 0.50f, 58f, "Kruskal MST edges: " + selectedCount + "/4  •  total = " + totalWeight, "#0F766E");
+        }
+        drawInlineMathBadge(canvas, getWidth() * 0.50f, 104f, decisionText, (visualStep == 3 || visualStep == 5) ? "#DC2626" : "#7C3AED");
+        drawKruskalSortedEdgeStrip(canvas, visualStep);
+    }
+
+    private void drawKruskalSortedEdgeStrip(Canvas canvas, int visualStep) {
+        String[] labels = {"1-2", "2-3", "1-3", "0-1", "0-3", "1-4"};
+        int[] weights = {1, 2, 3, 4, 5, 6};
+        float boxWidth = Math.max(70f, Math.min(92f, (getWidth() - 48f) / labels.length - 8f));
+        float gap = 8f;
+        float totalWidth = (boxWidth * labels.length) + (gap * (labels.length - 1));
+        float startX = (getWidth() - totalWidth) / 2f;
+        float top = getHeight() - 86f;
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(2f);
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        labelPaint.setColor(Color.WHITE);
+        labelPaint.setTextSize(16f);
+        for (int i = 0; i < labels.length; i++) {
+            int orderStep = i + 1;
+            boolean accepted = (visualStep >= 1 && i == 0) || (visualStep >= 2 && i == 1) || (visualStep >= 4 && i == 3) || (visualStep >= 6 && i == 5);
+            boolean rejected = (visualStep >= 3 && i == 2) || (visualStep >= 5 && i == 4);
+            boolean current = visualStep == orderStep;
+            int color = accepted ? Color.parseColor("#16A34A") : rejected ? Color.parseColor("#DC2626") : current ? Color.parseColor("#7C3AED") : Color.parseColor("#1E293B");
+            fill.setColor(color);
+            fill.setAlpha(current || accepted || rejected ? 235 : 185);
+            stroke.setColor(lightenColor(color, 0.20f));
+            float left = startX + (i * (boxWidth + gap));
+            float right = left + boxWidth;
+            canvas.drawRoundRect(left, top, right, top + 54f, 14f, 14f, fill);
+            canvas.drawRoundRect(left, top, right, top + 54f, 14f, 14f, stroke);
+            canvas.drawText(labels[i], (left + right) / 2f, top + 22f, labelPaint);
+            String status = accepted ? "✓" : rejected ? "×" : "w=" + weights[i];
+            canvas.drawText(status, (left + right) / 2f, top + 42f, labelPaint);
+        }
+    }
+
+
+    void drawAStarScene(Canvas canvas) {
+        boolean compact = isCompactGraphLayout();
+        float width = getWidth();
+        float height = getHeight();
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        // 1. Resolve active A* visual step (1 to 5)
+        String msg = inlineTeachingMessage == null ? "" : inlineTeachingMessage;
+        int visualStep = 1;
+        if (msg.contains("Step 5") || (dijkstraSettled != null && dijkstraSettled.length > 4 && dijkstraSettled[4])) {
+            visualStep = 5;
+        } else if (msg.contains("Step 4") || (dijkstraSettled != null && dijkstraSettled.length > 3 && dijkstraSettled[3])) {
+            visualStep = 4;
+        } else if (msg.contains("Step 3") || (dijkstraSettled != null && dijkstraSettled.length > 1 && dijkstraSettled[1])) {
+            visualStep = 3;
+        } else if (msg.contains("Step 2") || (dijkstraDistances != null && dijkstraDistances.length > 1 && dijkstraDistances[1] == 2)) {
+            visualStep = 2;
+        } else {
+            visualStep = 1;
+        }
+
+        // 2. Exact A* metrics: Heuristic estimate h(n) and g-scores
+        int[] h = {10, 6, 7, 2, 0};
+        int[] gScores = new int[5];
+        if (dijkstraDistances != null && dijkstraDistances.length >= 5) {
+            for (int i = 0; i < 5; i++) {
+                gScores[i] = dijkstraDistances[i];
+            }
+        } else {
+            if (visualStep == 1) gScores = new int[]{0, 9999, 9999, 9999, 9999};
+            else if (visualStep == 2) gScores = new int[]{0, 2, 5, 9999, 9999};
+            else if (visualStep == 3) gScores = new int[]{0, 2, 5, 5, 9};
+            else if (visualStep == 4) gScores = new int[]{0, 2, 5, 5, 7};
+            else gScores = new int[]{0, 2, 5, 5, 7};
+        }
+
+        // 3. Header & Decision Banner
+        float bannerCenterY = compact ? 26f : 32f;
+        drawAStarHeaderBanner(canvas, width, bannerCenterY, compact);
+
+        float decisionY = compact ? 62f : 74f;
+        drawAStarDecisionBanner(canvas, width, decisionY, visualStep, compact);
+
+        // 4. Spatial 5-Node Graph Layout (Left-to-Right directional flow)
+        float graphTop = compact ? 98f : 114f;
+        float bottomPanelH = compact ? 76f : 88f;
+        float graphBottom = height - bottomPanelH - (compact ? 20f : 26f);
+        float midY = (graphTop + graphBottom) / 2f;
+        float vertSpan = (graphBottom - graphTop) * 0.38f;
+
+        float[][] points = new float[][]{
+            {width * 0.12f, midY},               // Node 0: Start
+            {width * 0.37f, midY - vertSpan},    // Node 1: Upper intermediate
+            {width * 0.37f, midY + vertSpan},    // Node 2: Lower intermediate
+            {width * 0.65f, midY},               // Node 3: Pre-goal junction
+            {width * 0.88f, midY}                // Node 4: Goal
+        };
+        float nodeRadius = compact ? 28f : 35f;
+
+        // 5. Draw Directed Edges with Weight Badges and Highlighting
+        drawAStarEdges(canvas, points, nodeRadius, visualStep, compact);
+
+        // 6. Draw Nodes with Badges, Evaluation Metric Pills (h, g, f), and Halos
+        drawAStarNodes(canvas, points, nodeRadius, visualStep, h, gScores, compact);
+
+        // 7. Bottom Dual Cards: Open Set (Priority Queue) and Closed Set (Visited)
+        drawAStarBottomPanels(canvas, width, height - bottomPanelH - (compact ? 8f : 12f), bottomPanelH, visualStep, compact);
+
+        // Reset text alignment and paint state
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setFakeBoldText(false);
+        strokePaint.setPathEffect(null);
+        fillPaint.setShader(null);
+    }
+
+    private void drawAStarHeaderBanner(Canvas canvas, float width, float centerY, boolean compact) {
+        float centerX = width / 2f;
+        float halfW = compact ? 150f : 180f;
+        float halfH = compact ? 14f : 17f;
+
+        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bg.setColor(Color.parseColor("#0F172A"));
+        bg.setAlpha(220);
+        Paint border = new Paint(Paint.ANTI_ALIAS_FLAG);
+        border.setStyle(Paint.Style.STROKE);
+        border.setStrokeWidth(1.5f);
+        border.setColor(Color.parseColor("#38BDF8"));
+        border.setAlpha(180);
+
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 14f, 14f, bg);
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 14f, 14f, border);
+
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tp.setTextAlign(Paint.Align.CENTER);
+        tp.setColor(Color.parseColor("#38BDF8"));
+        tp.setTextSize(compact ? 13f : 15f);
+        tp.setFakeBoldText(true);
+        canvas.drawText("A* SEARCH: f(n) = g(n) + h(n)", centerX, centerY + (compact ? 4.5f : 5.5f), tp);
+    }
+
+    private void drawAStarDecisionBanner(Canvas canvas, float width, float centerY, int visualStep, boolean compact) {
+        float centerX = width / 2f;
+        String text;
+        String colorHex;
+        if (visualStep == 1) {
+            text = "Step 1: Init Start 0 | g=0, h=10 ⇒ f=10. Put into Open Set.";
+            colorHex = "#2563EB";
+        } else if (visualStep == 2) {
+            text = "Step 2: Expand 0 | Node 1 (f=2+6=8) vs Node 2 (f=5+7=12) → Pop Node 1";
+            colorHex = "#7C3AED";
+        } else if (visualStep == 3) {
+            text = "Step 3: Expand 1 | Node 3 (f=5+2=7) beats Node 4 (f=9) & 2 (f=12) → Pop Node 3";
+            colorHex = "#7C3AED";
+        } else if (visualStep == 4) {
+            text = "Step 4: Expand 3 | Route 3→4 updates Goal 4 to g=7, h=0 ⇒ f=7 → Pop Goal 4";
+            colorHex = "#D97706";
+        } else {
+            text = "Step 5: Goal Reached! Optimal Path: 0 → 1 → 3 → 4  (Total Cost = 7)";
+            colorHex = "#059669";
+        }
+
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(Color.parseColor(colorHex));
+        fill.setAlpha(220);
+        Paint border = new Paint(Paint.ANTI_ALIAS_FLAG);
+        border.setStyle(Paint.Style.STROKE);
+        border.setStrokeWidth(1.5f);
+        border.setColor(lightenColor(Color.parseColor(colorHex), 0.25f));
+
+        float textW = text.length() * (compact ? 5.0f : 6.0f);
+        float halfW = Math.max(140f, Math.min(width * 0.46f, textW));
+        float halfH = compact ? 15f : 18f;
+
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 14f, 14f, fill);
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 14f, 14f, border);
+
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tp.setTextAlign(Paint.Align.CENTER);
+        tp.setColor(Color.WHITE);
+        tp.setTextSize(compact ? 13f : 15f);
+        tp.setFakeBoldText(true);
+        canvas.drawText(text, centerX, centerY + (compact ? 4.5f : 5.5f), tp);
+    }
+
+    private void drawAStarEdges(Canvas canvas, float[][] points, float nodeRadius, int visualStep, boolean compact) {
+        int[][] edges = {{0, 1}, {0, 2}, {1, 3}, {2, 3}, {3, 4}, {1, 4}};
+        int[] weights = {2, 5, 3, 2, 2, 7};
+
+        Paint edgePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        edgePaint.setStrokeCap(Paint.Cap.ROUND);
+
+        for (int i = 0; i < edges.length; i++) {
+            int u = edges[i][0];
+            int v = edges[i][1];
+            int w = weights[i];
+
+            boolean isPathEdge = (u == 0 && v == 1 && visualStep >= 2)
+                || (u == 1 && v == 3 && visualStep >= 3)
+                || (u == 3 && v == 4 && visualStep >= 4);
+
+            boolean isEvaluating = (u == activeEdgeFrom && v == activeEdgeTo);
+
+            float startX = points[u][0];
+            float startY = points[u][1];
+            float endX = points[v][0];
+            float endY = points[v][1];
+
+            // Outer glow and main line
+            if (isPathEdge) {
+                edgePaint.setStyle(Paint.Style.STROKE);
+                edgePaint.setStrokeWidth(compact ? 14f : 18f);
+                edgePaint.setColor(Color.parseColor("#10B981"));
+                edgePaint.setAlpha(60);
+                canvas.drawLine(startX, startY, endX, endY, edgePaint);
+
+                edgePaint.setStrokeWidth(compact ? 6f : 8f);
+                edgePaint.setColor(Color.parseColor("#10B981"));
+                edgePaint.setAlpha(240);
+                canvas.drawLine(startX, startY, endX, endY, edgePaint);
+                drawAStarArrowHead(canvas, startX, startY, endX, endY, nodeRadius, edgePaint);
+            } else if (isEvaluating) {
+                edgePaint.setStyle(Paint.Style.STROKE);
+                edgePaint.setStrokeWidth(compact ? 12f : 15f);
+                edgePaint.setColor(Color.parseColor("#F59E0B"));
+                edgePaint.setAlpha(65);
+                canvas.drawLine(startX, startY, endX, endY, edgePaint);
+
+                edgePaint.setStrokeWidth(compact ? 5f : 7f);
+                edgePaint.setColor(Color.parseColor("#F59E0B"));
+                edgePaint.setAlpha(235);
+                canvas.drawLine(startX, startY, endX, endY, edgePaint);
+                drawAStarArrowHead(canvas, startX, startY, endX, endY, nodeRadius, edgePaint);
+            } else {
+                edgePaint.setStyle(Paint.Style.STROKE);
+                edgePaint.setStrokeWidth(compact ? 2.5f : 3.5f);
+                edgePaint.setColor(Color.parseColor("#475569"));
+                edgePaint.setAlpha(160);
+                canvas.drawLine(startX, startY, endX, endY, edgePaint);
+                drawAStarArrowHead(canvas, startX, startY, endX, endY, nodeRadius, edgePaint);
+            }
+
+            // Draw Weight badge in middle of edge
+            float midX = (startX + endX) / 2f;
+            float midY = (startY + endY) / 2f;
+            if (u == 1 && v == 4) {
+                midY -= (compact ? 14f : 18f);
+            } else if (u == 0 && v == 2) {
+                midX -= (compact ? 10f : 14f);
+            } else if (u == 0 && v == 1) {
+                midX -= (compact ? 10f : 14f);
+            }
+
+            drawAStarWeightBadge(canvas, midX, midY, w, isPathEdge, isEvaluating, compact);
+        }
+    }
+
+    private void drawAStarArrowHead(Canvas canvas, float startX, float startY, float endX, float endY, float nodeRadius, Paint paint) {
+        float angle = (float) Math.atan2(endY - startY, endX - startX);
+        float tipX = endX - ((float) Math.cos(angle) * (nodeRadius + 4f));
+        float tipY = endY - ((float) Math.sin(angle) * (nodeRadius + 4f));
+        float arrowSize = 14f;
+
+        Paint ap = new Paint(paint);
+        ap.setStyle(Paint.Style.STROKE);
+        ap.setStrokeCap(Paint.Cap.ROUND);
+        float leftX = tipX - ((float) Math.cos(angle - Math.PI / 6f) * arrowSize);
+        float leftY = tipY - ((float) Math.sin(angle - Math.PI / 6f) * arrowSize);
+        float rightX = tipX - ((float) Math.cos(angle + Math.PI / 6f) * arrowSize);
+        float rightY = tipY - ((float) Math.sin(angle + Math.PI / 6f) * arrowSize);
+        canvas.drawLine(tipX, tipY, leftX, leftY, ap);
+        canvas.drawLine(tipX, tipY, rightX, rightY, ap);
+    }
+
+    private void drawAStarWeightBadge(Canvas canvas, float x, float y, int weight, boolean isPath, boolean isEval, boolean compact) {
+        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bg.setColor(isPath ? Color.parseColor("#064E3B") : isEval ? Color.parseColor("#78350F") : Color.parseColor("#0F172A"));
+        bg.setAlpha(235);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(1.5f);
+        stroke.setColor(isPath ? Color.parseColor("#10B981") : isEval ? Color.parseColor("#F59E0B") : Color.parseColor("#64748B"));
+
+        float halfW = compact ? 15f : 18f;
+        float halfH = compact ? 11f : 13f;
+        canvas.drawRoundRect(x - halfW, y - halfH, x + halfW, y + halfH, 8f, 8f, bg);
+        canvas.drawRoundRect(x - halfW, y - halfH, x + halfW, y + halfH, 8f, 8f, stroke);
+
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tp.setTextAlign(Paint.Align.CENTER);
+        tp.setColor(isPath ? Color.parseColor("#A7F3D0") : isEval ? Color.parseColor("#FDE68A") : Color.WHITE);
+        tp.setTextSize(compact ? 13f : 15f);
+        tp.setFakeBoldText(true);
+        canvas.drawText(String.valueOf(weight), x, y + (compact ? 4.5f : 5.5f), tp);
+    }
+
+    private void drawAStarNodes(Canvas canvas, float[][] points, float nodeRadius, int visualStep,
+                                int[] h, int[] gScores, boolean compact) {
+        for (int i = 0; i < points.length; i++) {
+            float cx = points[i][0];
+            float cy = points[i][1];
+
+            boolean isStart = (i == 0);
+            boolean isGoal = (i == 4);
+
+            boolean isSettled = (i == 0 && visualStep >= 2)
+                || (i == 1 && visualStep >= 3)
+                || (i == 3 && visualStep >= 4)
+                || (i == 4 && visualStep >= 5);
+
+            boolean isActive = (visualStep == 1 && i == 0)
+                || (visualStep == 2 && i == 1)
+                || (visualStep == 3 && i == 3)
+                || (visualStep == 4 && i == 4);
+
+            boolean isOpen = !isSettled && (
+                (visualStep >= 1 && i == 0)
+                || (visualStep >= 2 && (i == 1 || i == 2))
+                || (visualStep >= 3 && (i == 2 || i == 3 || i == 4))
+                || (visualStep >= 4 && (i == 2 || i == 4))
+            );
+
+            // Halo effect for active or completed path nodes
+            if (isActive) {
+                Paint haloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                haloPaint.setStyle(Paint.Style.STROKE);
+                haloPaint.setStrokeWidth(isGoal ? 8f : 6f);
+                haloPaint.setColor(isGoal ? Color.parseColor("#10B981") : Color.parseColor("#F59E0B"));
+                haloPaint.setAlpha(150);
+                float haloR = nodeRadius + 5f + (pulseProgress * 6f);
+                canvas.drawCircle(cx, cy, haloR, haloPaint);
+            } else if (visualStep == 5 && (i == 0 || i == 1 || i == 3 || i == 4)) {
+                Paint pathGlow = new Paint(Paint.ANTI_ALIAS_FLAG);
+                pathGlow.setStyle(Paint.Style.STROKE);
+                pathGlow.setStrokeWidth(5f);
+                pathGlow.setColor(Color.parseColor("#34D399"));
+                pathGlow.setAlpha(120);
+                canvas.drawCircle(cx, cy, nodeRadius + 5f, pathGlow);
+            }
+
+            // Fill color
+            int baseColor;
+            int strokeColor;
+            if (isActive) {
+                baseColor = isGoal ? Color.parseColor("#059669") : Color.parseColor("#D97706");
+                strokeColor = isGoal ? Color.parseColor("#6EE7B7") : Color.parseColor("#FDE68A");
+            } else if (isSettled) {
+                baseColor = Color.parseColor("#047857");
+                strokeColor = Color.parseColor("#34D399");
+            } else if (isOpen) {
+                baseColor = Color.parseColor("#3730A3");
+                strokeColor = Color.parseColor("#A5B4FC");
+            } else {
+                baseColor = Color.parseColor("#1E293B");
+                strokeColor = Color.parseColor("#475569");
+            }
+
+            applyNodeShader(cx, cy, baseColor);
+            canvas.drawCircle(cx, cy, nodeRadius, fillPaint);
+
+            strokePaint.setStyle(Paint.Style.STROKE);
+            strokePaint.setColor(strokeColor);
+            strokePaint.setStrokeWidth(isActive ? 3.5f : 2.2f);
+            canvas.drawCircle(cx, cy, nodeRadius, strokePaint);
+
+            // Node ID Number in Center
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setColor(Color.WHITE);
+            textPaint.setTextSize(compact ? 19f : 23f);
+            textPaint.setFakeBoldText(true);
+            canvas.drawText(String.valueOf(i), cx, cy + (compact ? 7f : 8f), textPaint);
+            textPaint.setFakeBoldText(false);
+
+            // Badge above node: Role / State
+            String roleText;
+            String roleColor;
+            if (isStart) {
+                roleText = isSettled ? "START ✓" : "START";
+                roleColor = "#10B981";
+            } else if (isGoal) {
+                roleText = (visualStep >= 4) ? "GOAL ★" : "GOAL";
+                roleColor = (visualStep >= 4) ? "#10B981" : "#F59E0B";
+            } else if (isActive) {
+                roleText = "MIN f";
+                roleColor = "#D97706";
+            } else if (isSettled) {
+                roleText = "CLOSED";
+                roleColor = "#047857";
+            } else if (isOpen) {
+                roleText = "OPEN";
+                roleColor = "#6366F1";
+            } else {
+                roleText = null;
+                roleColor = null;
+            }
+
+            if (roleText != null) {
+                drawAStarRoleBadge(canvas, cx, cy - nodeRadius - (compact ? 12f : 14f), roleText, roleColor, compact);
+            }
+
+            // Metric Pill below node: h(n) and f(n) = g(n) + h(n)
+            int gVal = gScores[i];
+            int hVal = h[i];
+            String metricText;
+            if (gVal >= 9999) {
+                metricText = "h=" + hVal + " • f=∞";
+            } else {
+                metricText = "g=" + gVal + " h=" + hVal + " ⇒ f=" + (gVal + hVal);
+            }
+            drawAStarMetricPill(canvas, cx, cy + nodeRadius + (compact ? 14f : 16f), metricText, isActive || isSettled, compact);
+        }
+    }
+
+    private void drawAStarRoleBadge(Canvas canvas, float centerX, float centerY, String label, String colorHex, boolean compact) {
+        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bg.setColor(Color.parseColor(colorHex));
+        bg.setAlpha(225);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(1.5f);
+        stroke.setColor(lightenColor(Color.parseColor(colorHex), 0.25f));
+
+        float halfW = Math.max(compact ? 22f : 26f, label.length() * (compact ? 4.0f : 4.8f));
+        float halfH = compact ? 9f : 11f;
+
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, bg);
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, stroke);
+
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tp.setTextAlign(Paint.Align.CENTER);
+        tp.setColor(Color.WHITE);
+        tp.setTextSize(compact ? 10f : 12f);
+        tp.setFakeBoldText(true);
+        canvas.drawText(label, centerX, centerY + (compact ? 3.5f : 4f), tp);
+    }
+
+    private void drawAStarMetricPill(Canvas canvas, float centerX, float centerY, String text, boolean isHighlighted, boolean compact) {
+        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bg.setColor(Color.parseColor("#0F172A"));
+        bg.setAlpha(235);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(1.5f);
+        stroke.setColor(isHighlighted ? Color.parseColor("#38BDF8") : Color.parseColor("#334155"));
+
+        float halfW = Math.max(compact ? 36f : 44f, text.length() * (compact ? 3.4f : 4.2f));
+        float halfH = compact ? 10f : 12f;
+
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, bg);
+        canvas.drawRoundRect(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH, 6f, 6f, stroke);
+
+        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tp.setTextAlign(Paint.Align.CENTER);
+        tp.setColor(isHighlighted ? Color.parseColor("#FCD34D") : Color.parseColor("#CBD5E1"));
+        tp.setTextSize(compact ? 10.5f : 12f);
+        tp.setFakeBoldText(isHighlighted);
+        canvas.drawText(text, centerX, centerY + (compact ? 3.5f : 4f), tp);
+    }
+
+    private void drawAStarBottomPanels(Canvas canvas, float width, float panelTop, float panelH, int visualStep, boolean compact) {
+        float padding = compact ? 12f : 18f;
+        float gap = compact ? 8f : 12f;
+        float availableW = width - (padding * 2f);
+        float openW = availableW * 0.62f;
+        float closedW = availableW - openW - gap;
+
+        float openLeft = padding;
+        float openRight = openLeft + openW;
+        float closedLeft = openRight + gap;
+        float closedRight = closedLeft + closedW;
+        float bottomY = panelTop + panelH;
+
+        // Panel 1: Open Set (Priority Queue - Min-Heap by f)
+        Paint panelBg = new Paint(Paint.ANTI_ALIAS_FLAG);
+        panelBg.setColor(Color.parseColor("#0F172A"));
+        panelBg.setAlpha(235);
+        Paint panelBorder = new Paint(Paint.ANTI_ALIAS_FLAG);
+        panelBorder.setStyle(Paint.Style.STROKE);
+        panelBorder.setStrokeWidth(1.5f);
+        panelBorder.setColor(Color.parseColor("#1E293B"));
+
+        canvas.drawRoundRect(openLeft, panelTop, openRight, bottomY, 12f, 12f, panelBg);
+        canvas.drawRoundRect(openLeft, panelTop, openRight, bottomY, 12f, 12f, panelBorder);
+
+        Paint headerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        headerPaint.setTextAlign(Paint.Align.LEFT);
+        headerPaint.setColor(Color.parseColor("#38BDF8"));
+        headerPaint.setTextSize(compact ? 11f : 13f);
+        headerPaint.setFakeBoldText(true);
+        canvas.drawText("OPEN SET (Min-Heap by f = g + h)", openLeft + 10f, panelTop + (compact ? 16f : 18f), headerPaint);
+
+        // Open Set Items
+        String[] openNodeLabels;
+        String[] openNodeMetrics;
+        int minFIndex;
+
+        if (visualStep == 1) {
+            openNodeLabels = new String[]{"Node 0"};
+            openNodeMetrics = new String[]{"g=0, h=10 ⇒ f=10"};
+            minFIndex = 0;
+        } else if (visualStep == 2) {
+            openNodeLabels = new String[]{"Node 1 (POP)", "Node 2"};
+            openNodeMetrics = new String[]{"2+6 = f=8", "5+7 = f=12"};
+            minFIndex = 0;
+        } else if (visualStep == 3) {
+            openNodeLabels = new String[]{"Node 3 (POP)", "Node 4", "Node 2"};
+            openNodeMetrics = new String[]{"5+2 = f=7", "9+0 = f=9", "5+7 = f=12"};
+            minFIndex = 0;
+        } else if (visualStep == 4) {
+            openNodeLabels = new String[]{"Node 4 (GOAL)", "Node 2"};
+            openNodeMetrics = new String[]{"7+0 = f=7", "5+7 = f=12"};
+            minFIndex = 0;
+        } else {
+            openNodeLabels = new String[0];
+            openNodeMetrics = new String[0];
+            minFIndex = -1;
+        }
+
+        if (openNodeLabels.length == 0) {
+            Paint emptyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            emptyPaint.setTextAlign(Paint.Align.CENTER);
+            emptyPaint.setColor(Color.parseColor("#34D399"));
+            emptyPaint.setTextSize(compact ? 12f : 14f);
+            emptyPaint.setFakeBoldText(true);
+            canvas.drawText("✓ Search Complete — Goal Reached!", (openLeft + openRight) / 2f, panelTop + (panelH * 0.62f), emptyPaint);
+        } else {
+            float itemGap = compact ? 6f : 8f;
+            float totalItemGap = (openNodeLabels.length - 1) * itemGap;
+            float itemBoxW = (openW - 20f - totalItemGap) / openNodeLabels.length;
+            float itemBoxH = compact ? 38f : 44f;
+            float itemTop = panelTop + (compact ? 24f : 28f);
+
+            for (int k = 0; k < openNodeLabels.length; k++) {
+                float boxLeft = openLeft + 10f + (k * (itemBoxW + itemGap));
+                float boxRight = boxLeft + itemBoxW;
+                float boxBottom = itemTop + itemBoxH;
+
+                boolean isMin = (k == minFIndex);
+
+                Paint itemBg = new Paint(Paint.ANTI_ALIAS_FLAG);
+                itemBg.setColor(isMin ? Color.parseColor("#78350F") : Color.parseColor("#1E293B"));
+                itemBg.setAlpha(isMin ? 230 : 180);
+
+                Paint itemStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+                itemStroke.setStyle(Paint.Style.STROKE);
+                itemStroke.setStrokeWidth(isMin ? 2f : 1f);
+                itemStroke.setColor(isMin ? Color.parseColor("#F59E0B") : Color.parseColor("#475569"));
+
+                canvas.drawRoundRect(boxLeft, itemTop, boxRight, boxBottom, 8f, 8f, itemBg);
+                canvas.drawRoundRect(boxLeft, itemTop, boxRight, boxBottom, 8f, 8f, itemStroke);
+
+                Paint itemText = new Paint(Paint.ANTI_ALIAS_FLAG);
+                itemText.setTextAlign(Paint.Align.CENTER);
+                itemText.setColor(isMin ? Color.parseColor("#FCD34D") : Color.WHITE);
+                itemText.setTextSize(compact ? 11f : 12.5f);
+                itemText.setFakeBoldText(isMin);
+                canvas.drawText(openNodeLabels[k], (boxLeft + boxRight) / 2f, itemTop + (compact ? 15f : 17f), itemText);
+
+                itemText.setColor(isMin ? Color.parseColor("#FEF08A") : Color.parseColor("#94A3B8"));
+                itemText.setTextSize(compact ? 9.5f : 11f);
+                itemText.setFakeBoldText(false);
+                canvas.drawText(openNodeMetrics[k], (boxLeft + boxRight) / 2f, itemTop + (compact ? 30f : 34f), itemText);
+            }
+        }
+
+        // Panel 2: Closed Set (Visited / Settled Nodes)
+        canvas.drawRoundRect(closedLeft, panelTop, closedRight, bottomY, 12f, 12f, panelBg);
+        canvas.drawRoundRect(closedLeft, panelTop, closedRight, bottomY, 12f, 12f, panelBorder);
+
+        Paint closedHeader = new Paint(Paint.ANTI_ALIAS_FLAG);
+        closedHeader.setTextAlign(Paint.Align.LEFT);
+        closedHeader.setColor(Color.parseColor("#34D399"));
+        closedHeader.setTextSize(compact ? 11f : 13f);
+        closedHeader.setFakeBoldText(true);
+        canvas.drawText("CLOSED SET (Visited)", closedLeft + 10f, panelTop + (compact ? 16f : 18f), closedHeader);
+
+        int[] settledNodes;
+        if (visualStep == 1) settledNodes = new int[0];
+        else if (visualStep == 2) settledNodes = new int[]{0};
+        else if (visualStep == 3) settledNodes = new int[]{0, 1};
+        else if (visualStep == 4) settledNodes = new int[]{0, 1, 3};
+        else settledNodes = new int[]{0, 1, 3, 4};
+
+        if (settledNodes.length == 0) {
+            Paint emptyClosed = new Paint(Paint.ANTI_ALIAS_FLAG);
+            emptyClosed.setTextAlign(Paint.Align.CENTER);
+            emptyClosed.setColor(Color.parseColor("#64748B"));
+            emptyClosed.setTextSize(compact ? 11f : 13f);
+            canvas.drawText("— Empty —", (closedLeft + closedRight) / 2f, panelTop + (panelH * 0.62f), emptyClosed);
+        } else {
+            float chipW = compact ? 26f : 32f;
+            float chipH = compact ? 22f : 26f;
+            float chipY = panelTop + (compact ? 24f : 28f);
+            float chipStartX = closedLeft + 10f;
+            float chipGap = compact ? 6f : 8f;
+
+            for (int m = 0; m < settledNodes.length; m++) {
+                float cL = chipStartX + (m * (chipW + chipGap));
+                float cR = cL + chipW;
+                float cB = chipY + chipH;
+
+                Paint chipBg = new Paint(Paint.ANTI_ALIAS_FLAG);
+                chipBg.setColor(Color.parseColor("#064E3B"));
+                Paint chipBorder = new Paint(Paint.ANTI_ALIAS_FLAG);
+                chipBorder.setStyle(Paint.Style.STROKE);
+                chipBorder.setStrokeWidth(1.5f);
+                chipBorder.setColor(Color.parseColor("#10B981"));
+
+                canvas.drawRoundRect(cL, chipY, cR, cB, 6f, 6f, chipBg);
+                canvas.drawRoundRect(cL, chipY, cR, cB, 6f, 6f, chipBorder);
+
+                Paint chipText = new Paint(Paint.ANTI_ALIAS_FLAG);
+                chipText.setTextAlign(Paint.Align.CENTER);
+                chipText.setColor(Color.WHITE);
+                chipText.setTextSize(compact ? 11f : 12.5f);
+                chipText.setFakeBoldText(true);
+                canvas.drawText("✓" + settledNodes[m], (cL + cR) / 2f, chipY + (compact ? 15f : 17f), chipText);
+            }
+        }
+    }
+
     private void drawGraphOperationStage(Canvas canvas, float[][] points) {
         String lower = inlineTeachingMessage == null ? "" : inlineTeachingMessage.toLowerCase();
         if ("insert_node_graph".equals(techniqueId) && values.length > 0) {
@@ -2172,24 +4009,84 @@ public class TechniqueVisualizerView extends View {
 
     private String resolveInlineWhyBubble() {
         String safe = inlineTeachingMessage.toLowerCase();
+        if (GraphExpandedStepEngine.isExpandedGraphTechnique(techniqueId)) {
+            if ("graph_bellman_ford".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "init: source=0, others INF";
+                if (safe.contains("step 2")) return "relax: 0 + (-1) < INF";
+                if (safe.contains("step 3")) return "dist[1] improves neighbors";
+                if (safe.contains("step 4")) return "negative edge improves dist[3]";
+                if (safe.contains("step 5")) return "no smaller value found";
+                if (safe.contains("step 6")) return "no negative cycle";
+            }
+            if ("graph_floyd_warshall".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "try each k as middle";
+                if (safe.contains("step 2")) return "3-0-1 beats INF";
+                if (safe.contains("step 3")) return "0-1-2 beats INF";
+                if (safe.contains("step 4")) return "0-2-3 improves 7";
+                if (safe.contains("step 5")) return "all k tested";
+            }
+            if ("graph_kruskal".equals(techniqueId) || "graph_kruskals".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "accept: lightest safe edge";
+                if (safe.contains("step 2")) return "accept: different components";
+                if (safe.contains("step 3")) return "reject: cycle";
+                if (safe.contains("step 4")) return "accept: connects vertex 0";
+                if (safe.contains("step 5")) return "accept: connects vertex 4";
+                if (safe.contains("step 6")) return "MST has |V|-1 edges";
+            }
+            if ("graph_tarjan_scc".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "push active DFS node";
+                if (safe.contains("step 2")) return "tree edge continues DFS";
+                if (safe.contains("step 3")) return "back edge lowers low[]";
+                if (safe.contains("step 4")) return "low==tin: pop SCC";
+                if (safe.contains("step 5")) return "3 and 4 reach each other";
+                if (safe.contains("step 6")) return "all SCC roots processed";
+            }
+            if ("graph_kosaraju_scc".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "pass 1 records finish order";
+                if (safe.contains("step 2")) return "cycle finishes together";
+                if (safe.contains("step 3")) return "reverse graph";
+                if (safe.contains("step 4")) return "DFS in transpose gives SCC";
+                if (safe.contains("step 5")) return "next SCC {3,4}";
+                if (safe.contains("step 6")) return "stack empty";
+            }
+            if ("graph_bridges_articulation".equals(techniqueId) || "graph_bridges".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "DFS tin/low starts";
+                if (safe.contains("step 2")) return "no back edge from 2";
+                if (safe.contains("step 3")) return "low[2] > tin[1]";
+                if (safe.contains("step 4")) return "removing 1 disconnects";
+                if (safe.contains("step 5")) return "removing 3 disconnects 4";
+                if (safe.contains("step 6")) return "low-link tests done";
+            }
+            if ("graph_astar".equals(techniqueId) || "graph_a_star".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "f=g+h selects frontier";
+                if (safe.contains("step 2")) return "node 1 has smaller f";
+                if (safe.contains("step 3")) return "node 3 has best f";
+                if (safe.contains("step 4")) return "goal path cost becomes 7";
+                if (safe.contains("step 5")) return "goal popped with min f";
+            }
+            if ("graph_edmonds_karp".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "BFS path bottleneck=10";
+                if (safe.contains("step 2")) return "augment by bottleneck";
+                if (safe.contains("step 3")) return "second BFS bottleneck=8";
+                if (safe.contains("step 4")) return "no residual path to sink";
+            }
+            if ("graph_johnson".equals(techniqueId) || "graph_johnsons".equals(techniqueId)) {
+                if (safe.contains("step 1")) return "negative edges need reweighting";
+                if (safe.contains("step 2")) return "Bellman-Ford finds h(v)";
+                if (safe.contains("step 3")) return "w' is non-negative";
+                if (safe.contains("step 4")) return "Dijkstra is now safe";
+                if (safe.contains("step 5")) return "restore original distances";
+            }
+        }
         if (safe.contains("because")) {
-            return inlineTeachingMessage.substring(safe.indexOf("because"));
+            String because = inlineTeachingMessage.substring(safe.indexOf("because"));
+            return because.length() > 42 ? because.substring(0, 42) + "..." : because;
         }
-        if (safe.contains("settled")) {
-            return "final shortest";
-        }
-        if (safe.contains("cycle-free")) {
-            return "avoid cycle";
-        }
-        if (safe.contains("prerequisite")) {
-            return "incoming done";
-        }
-        if (safe.contains("heap")) {
-            return "restore order";
-        }
-        if (safe.contains("remove")) {
-            return "disconnect links";
-        }
+        if (safe.contains("settled")) return "final shortest";
+        if (safe.contains("cycle-free")) return "avoid cycle";
+        if (safe.contains("prerequisite")) return "incoming done";
+        if (safe.contains("heap")) return "restore order";
+        if (safe.contains("remove")) return "disconnect links";
         return "";
     }
 
@@ -2764,6 +4661,10 @@ public class TechniqueVisualizerView extends View {
     }
 
     private int resolveGraphEdgeWeight(int from, int to) {
+        if (GraphExpandedStepEngine.isExpandedGraphTechnique(techniqueId)) {
+            int expanded = GraphExpandedStepEngine.getWeight(techniqueId, from, to);
+            return expanded == -1 ? Integer.MIN_VALUE : expanded;
+        }
         if ((from == 0 && to == 1) || (from == 1 && to == 0)) return 4;
         if ((from == 1 && to == 2) || (from == 2 && to == 1)) return 3;
         if ((from == 0 && to == 3) || (from == 3 && to == 0)) return 2;
@@ -2771,7 +4672,7 @@ public class TechniqueVisualizerView extends View {
         if ((from == 1 && to == 4) || (from == 4 && to == 1)) return 5;
         if ((from == 2 && to == 4) || (from == 4 && to == 2)) return 2;
         if ((from == 3 && to == 4) || (from == 4 && to == 3)) return 7;
-        return -1;
+        return Integer.MIN_VALUE;
     }
 
     private void drawInlineMathBadge(Canvas canvas, float centerX, float centerY, String label, String colorHex) {
@@ -3051,7 +4952,7 @@ public class TechniqueVisualizerView extends View {
 
         Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
         text.setColor(Color.parseColor("#E2E8F0"));
-        text.setTextSize(16f);
+        text.setTextSize(22f);
         text.setTextAlign(Paint.Align.CENTER);
         canvas.drawText(label, badgeLeft + (badgeWidth / 2f), badgeTop + 17f, text);
     }
@@ -4008,6 +5909,17 @@ public class TechniqueVisualizerView extends View {
     }
 
     private int[][] resolveGraphEdges(int nodeCount) {
+        if (GraphExpandedStepEngine.isExpandedGraphTechnique(techniqueId)) {
+            int[][] expanded = GraphExpandedStepEngine.getEdges(techniqueId);
+            int count = 0;
+            int[][] working = new int[expanded.length][2];
+            for (int[] edge : expanded) {
+                if (edge[0] < nodeCount && edge[1] < nodeCount) {
+                    working[count++] = edge;
+                }
+            }
+            return Arrays.copyOf(working, count);
+        }
         int[][] base = new int[][]{
             {0, 1}, {1, 2}, {0, 3}, {1, 3}, {1, 4}, {2, 4}, {3, 4}
         };

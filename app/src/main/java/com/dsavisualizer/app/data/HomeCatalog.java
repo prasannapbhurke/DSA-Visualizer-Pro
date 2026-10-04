@@ -16,7 +16,6 @@ public final class HomeCatalog {
 
     public static List<CategoryItem> getCategories() {
         List<CategoryItem> categories = new ArrayList<>();
-        categories.add(new CategoryItem("leetcode", "🔥 LeetCode Top Picks", "Top interview problems with animated solutions & code", "#F59E0B"));
         categories.add(new CategoryItem("searching", "Searching", "Find data quickly and clearly", "#4ADE80"));
         categories.add(new CategoryItem("sorting", "Sorting", "Arrange items step by step", "#60A5FA"));
         categories.add(new CategoryItem("stack", "Stack", "Last in, first out structure", "#F59E0B"));
@@ -24,8 +23,13 @@ public final class HomeCatalog {
         categories.add(new CategoryItem("linked_list", "Linked List", "Connected node based storage", "#A78BFA"));
         categories.add(new CategoryItem("trees", "Trees", "Hierarchical node structures", "#FBBF24"));
         categories.add(new CategoryItem("graph", "Graph", "Vertex and edge relationships", "#FB7185"));
-        categories.add(new CategoryItem("foundations", "Foundations", "Core thinking patterns and basics", "#F97316"));
-        categories.add(new CategoryItem("advanced", "Advanced", "More specialized DSA topics", "#14B8A6"));
+        categories.add(new CategoryItem("dynamic_programming", "Dynamic Programming", "Optimal subproblems and memoization", "#6366F1"));
+        categories.add(new CategoryItem("backtracking", "Backtracking", "Constraint satisfaction & state exploration", "#EC4899"));
+        categories.add(new CategoryItem("string_pattern", "String & Pattern Matching", "Fast substring search & text processing", "#06B6D4"));
+        categories.add(new CategoryItem("advanced_ds", "Advanced Data Structures", "Tries, trees, bloom filters and caches", "#8B5CF6"));
+        // Temporarily disabled from UI sections - preserved to add back later:
+        // categories.add(new CategoryItem("specialized", "Specialized & Math Algorithms", "Geometry, number theory, FFT & greedy", "#10B981"));
+        // categories.add(new CategoryItem("leetcode", "🔥 LeetCode Master 2000", "8 Parts • 2,000 Curated Problems with Search", "#F59E0B"));
         return categories;
     }
 }

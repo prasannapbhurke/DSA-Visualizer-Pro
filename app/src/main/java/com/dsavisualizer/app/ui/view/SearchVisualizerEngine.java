@@ -13,7 +13,10 @@ final class SearchVisualizerEngine implements VisualizerEngine {
         return "linear_search".equals(techniqueId)
             || "binary_search".equals(techniqueId)
             || "jump_search".equals(techniqueId)
-            || "pattern_matching".equals(techniqueId);
+            || "pattern_matching".equals(techniqueId)
+            || "leetcode_two_sum".equals(techniqueId)
+            || "leetcode_binary_search".equals(techniqueId)
+            || "leetcode_best_time_stock".equals(techniqueId);
     }
 
     @Override

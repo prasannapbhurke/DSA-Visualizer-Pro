@@ -6,8 +6,6 @@ export const categories = [
   { id: 'linked_list', title: 'Linked List', subtitle: 'Traversal, insertion, deletion, and search steps' },
   { id: 'trees', title: 'Trees', subtitle: 'Traversals, BST, heaps, AVL, trie, and Huffman' },
   { id: 'graph', title: 'Graph', subtitle: 'Traversal, shortest path, closure, and ordering' },
-  { id: 'foundations', title: 'Foundations', subtitle: 'Recursion and dynamic programming basics' },
-  { id: 'advanced', title: 'Advanced', subtitle: 'Union-Find and hash collision handling' },
 ];
 
 /**
@@ -66,10 +64,6 @@ const techniqueItems = [
   ['floyd_algorithm', 'graph', 'Floyd Algorithm', 'Hard', 'Relaxes all-pairs shortest paths.'],
   ['topological_sort', 'graph', 'Topological Sort', 'Hard', 'Orders a DAG so edges go forward.'],
   ['spanning_tree', 'graph', 'Spanning Tree', 'Hard', 'Builds a cycle-free connected structure.'],
-  ['recursion_basics', 'foundations', 'Recursion Basics', 'Easy', 'Shrinks the problem toward a base case.'],
-  ['dynamic_programming_basics', 'foundations', 'Dynamic Programming Basics', 'Medium', 'Reuses solved subproblems.'],
-  ['union_find', 'advanced', 'Union-Find', 'Medium', 'Follows parents to the representative root.'],
-  ['hash_collision_handling', 'advanced', 'Hash Collision Handling', 'Medium', 'Finds the next valid slot or chain node.'],
 ];
 
 export const techniques = techniqueItems.map(([id, categoryId, title, difficulty, description]) => ({
@@ -88,8 +82,6 @@ const sampleValuesByCategory = {
   linked_list: [9, 14, 21, 28, 34],
   trees: [40, 20, 60, 10, 30, 50, 70],
   graph: [0, 1, 2, 3, 4],
-  foundations: [5, 3, 2, 1],
-  advanced: [0, 1, 2, 3, 4],
 };
 
 const sampleTargetByTechnique = {
@@ -541,61 +533,6 @@ function buildGraphSteps(technique) {
   ];
 }
 
-function buildFoundationSteps(technique) {
-  if (technique.id === 'dynamic_programming_basics') {
-    return [
-      createStep('Base Cases', 'Fill the simplest states first so later states can reuse them.', [1, 1, 0, 0], {
-        doneIndices: [0, 1],
-      }),
-      createStep('Reuse Earlier State', 'Compute the next state from already solved results.', [1, 1, 2, 0], {
-        focusIndex: 2,
-      }),
-      createStep('Table Ready', 'The table now stores results for fast lookup.', [1, 1, 2, 3], {
-        doneIndices: [0, 1, 2, 3],
-      }),
-    ];
-  }
-  return [
-    createStep('Call Problem', 'Start with the original problem size.', [4, 3, 2, 1], {
-      focusIndex: 0,
-    }),
-    createStep('Smaller Subproblem', 'Reduce the problem toward the base case.', [3, 2, 1], {
-      focusIndex: 1,
-    }),
-    createStep('Base Case', 'Reach the stopping condition and return upward.', [1], {
-      doneIndices: [0],
-    }),
-  ];
-}
-
-function buildAdvancedSteps(technique) {
-  if (technique.id === 'union_find') {
-    return [
-      createStep('Follow Parent', 'Move from the current node to its parent.', [0, 1, 2, 3, 4], {
-        badges: ['parents: 0,0,1,3,3'],
-        focusIndex: 2,
-      }),
-      createStep('Reach Root', 'Continue until the representative root is found.', [0, 1, 2, 3, 4], {
-        focusIndex: 1,
-      }),
-      createStep('Compress Path', 'Shorten the path so later lookups are faster.', [0, 1, 2, 3, 4], {
-        doneIndices: [2],
-      }),
-    ];
-  }
-  return [
-    createStep('Hash Slot', 'Compute the primary hash slot for the new key.', [12, 19, 0, 0, 0], {
-      focusIndex: 1,
-    }),
-    createStep('Collision', 'The slot is occupied, so follow the collision rule.', [12, 19, 0, 0, 0], {
-      focusIndex: 2,
-    }),
-    createStep('Insert', 'Place the key in the first valid location found.', [12, 19, 26, 0, 0], {
-      doneIndices: [2],
-    }),
-  ];
-}
-
 export function buildTechniqueSteps(techniqueId) {
   const technique = resolveTechnique(techniqueId);
   if (!technique) {
@@ -614,10 +551,6 @@ export function buildTechniqueSteps(techniqueId) {
       return buildTreeSteps(technique);
     case 'graph':
       return buildGraphSteps(technique);
-    case 'foundations':
-      return buildFoundationSteps(technique);
-    case 'advanced':
-      return buildAdvancedSteps(technique);
     default:
       return [];
   }

@@ -75,6 +75,10 @@ create table if not exists feedback_entries (
   technique_id text not null default '',
   screen text not null default '',
   difficulty text not null default '',
+  device_info jsonb default '{}'::jsonb,
+  admin_reply text default '',
+  replied_at timestamptz,
+  replied_by text references app_users(id),
   reviewed_at timestamptz,
   reviewed_by text references app_users(id),
   created_at timestamptz not null default now()

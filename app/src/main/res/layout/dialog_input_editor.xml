@@ -94,4 +94,14 @@
             android:layout_weight="1"
             android:text="@string/vis_apply_input" />
     </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/input_editor_share_button"
+        style="@style/Widget.DSA.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        app:icon="@drawable/ic_share"
+        app:iconGravity="textStart"
+        android:text="@string/vis_share_web_link" />
 </LinearLayout>

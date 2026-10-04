@@ -31,6 +31,14 @@
         android:usesCleartextTraffic="${usesCleartextTraffic}">
 
         <activity
+            android:name=".LeetCodeHubActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".LeetCodeProblemActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".TechniqueDetailActivity"
             android:exported="false" />
 

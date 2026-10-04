@@ -1,0 +1,9 @@
+node_modules
+uploads
+*.test.js
+migrate_*.py
+migrate_*.js
+*.log
+.env
+.git
+.vscode

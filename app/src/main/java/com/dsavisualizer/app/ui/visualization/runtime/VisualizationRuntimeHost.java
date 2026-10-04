@@ -56,9 +56,15 @@ public interface VisualizationRuntimeHost {
     void setActiveEdge(int from, int to);
     void clearActiveEdge();
     void setRadixState(int divisor, int activeBucket);
+    default void setRadixState(int divisor, int activeBucket, int processedCount) {
+        setRadixState(divisor, activeBucket);
+    }
     int[] getTraversalOrder();
     void setTraversalOrder(int[] values);
     int[] buildTraversalOrder();
+    default int getGraphStartNode() {
+        return 0;
+    }
 
     // Dijkstra state
     int[] getDijkstraDistances();
@@ -82,10 +88,21 @@ public interface VisualizationRuntimeHost {
     int getHuffmanMergedWeight();
     void setHuffmanMergedWeight(int weight);
     void setHuffmanState(int[] queueWeights, int mergedWeight);
+    void setHuffmanState(int[] queueWeights, int mergedWeight, int leftWeight, int rightWeight);
     void initializeHuffmanPreview();
 
     // AVL & Trie
     void setActiveNodes(int primary, int secondary);
+
+    // Advanced Data Structures
+    default int getAdvancedDsPreset() {
+        return 1;
+    }
+    default void setAdvancedDsPreset(int preset) {}
+    default String getAdvancedDsCustomInput() {
+        return "";
+    }
+    default void setAdvancedDsCustomInput(String input) {}
 
     // Matrix state
     int[][] getMatrixValues();
@@ -120,6 +137,16 @@ public interface VisualizationRuntimeHost {
 
     // Graph
     int[][] getGraphEdges();
+
+    // String & Pattern Matching state
+    String getPatternText();
+    void setPatternText(String text);
+    String getPatternQuery();
+    void setPatternQuery(String query);
+    int getPatternPreset();
+    void setPatternPreset(int preset);
+    void setPatternState(String text, String query, int windowStart, int matchIndex, boolean found);
+    void setAuxiliaryArray(int[] aux);
 
     void advancePatternMatchingStep();
     void advanceBinarySearchStep();

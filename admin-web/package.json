@@ -1,5 +1,5 @@
 {
-  "name": "admin-web",
+  "name": "dsa-android-admin-desktop",
   "private": true,
   "version": "1.0.0",
   "type": "commonjs",
@@ -7,9 +7,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "oxlint",
     "preview": "vite preview",
-    "electron:dev": "concurrently \"set NODE_ENV=development&& vite\" \"wait-on http://localhost:5173/admin && electron .\"",
+    "desktop": "concurrently \"cross-env NODE_ENV=development vite\" \"wait-on http://localhost:5173/admin && electron .\"",
+    "electron:dev": "concurrently \"cross-env NODE_ENV=development vite\" \"wait-on http://localhost:5173/admin && electron .\"",
     "electron:build": "vite build && electron-builder --windows --publish never"
   },
   "dependencies": {
@@ -36,7 +37,7 @@
   },
   "build": {
     "appId": "com.dsavisualizer.admin",
-    "productName": "DSA Control Center",
+    "productName": "DSA Android Admin Console",
     "directories": {
       "output": "release"
     },

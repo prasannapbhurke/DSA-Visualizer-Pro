@@ -1,16 +1,32 @@
-# React + Vite
+# DSA Android Admin Desktop Console
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Native desktop administration suite for managing and monitoring the DSA Visualizer Android mobile app.
 
-Currently, two official plugins are available:
+## Features
+- **Android Users & Progress Directory:**
+  - View all registered Android app learners.
+  - 1-click Role Management: Promote to Teacher, Demote to Student, or assign Owner permissions.
+  - In-depth Progress Inspection: View individual completed algorithms, quiz scores, and practice records.
+- **Feedback & Bug Report Center:**
+  - Real-time inbox for bug reports, difficulty feedback, and screen issues reported from Android devices.
+  - Filter by category (Bug, Feedback, Difficulty, Feature) and review status.
+  - 1-click "Mark as Reviewed" and deletion.
+- **Remote In-App Controls & Feature Flags:**
+  - Broadcast Announcements directly into the Android app home screen.
+  - Emergency Maintenance Mode toggle (locks student app access during updates).
+  - Enable/disable new user registrations.
+  - Remote algorithm module feature flags.
+- **Classrooms & Student Rosters:**
+  - Inspect created classrooms, join codes, student counts, and CSV export.
+- **Dual API Environment Selector:**
+  - Switch with 1-click in the topbar between Local Server (`http://localhost:5000`) and Cloud API.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Quick Start
+Run from the project root:
+```cmd
+Run_DSA_Desktop.bat
+```
+Or via npm:
+```cmd
+npm run desktop
+```

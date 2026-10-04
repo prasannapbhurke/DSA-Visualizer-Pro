@@ -24,9 +24,11 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.ColorStateList;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -262,6 +264,27 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     private int matrixK = -1;
     private int matrixRow = -1;
     private int matrixCol = -1;
+    private String matrixLabel = "";
+    private int nQueensBoardSize = 4;
+    private int sudokuGridSize = 4;
+    private int sudokuPreset = 1;
+    private int knightsTourBoardSize = 5;
+    private int knightsTourStartPos = 1;
+    private int mazeSize = 5;
+    private int mazePreset = 1;
+    private int hamiltonianNodes = 5;
+    private int hamiltonianType = 1;
+    private int graphColoringColors = 3;
+    private int graphColoringPreset = 1;
+    private int dpPreset = 1;
+    private int stringPatternPreset = 1;
+    private int graphPreset = 1;
+    private int graphStartNode = 0;
+    private int graphNodeCount = 5;
+    private int advancedDsPreset = 1;
+    private String advancedDsCustomInput = "";
+    private int specializedPreset = 1;
+    private String specializedCustomInput = "";
     private int heapSize = 0;
     private int heapModePhase = 0;
     private int heapSortPhase = 0;
@@ -284,6 +307,12 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     private int[][] dijkstraWeights = new int[0][0];
     private int[] huffmanQueueWeights = new int[0];
     private int huffmanMergedWeight = -1;
+    private int huffmanMergedLeft = -1;
+    private int huffmanMergedRight = -1;
+    private int huffmanPreset = 1;
+    private String huffmanCustomInput = "";
+    private int avlTreePreset = 1;
+    private String avlTreeCustomInput = "";
     private boolean focusModeEnabled = false;
     private boolean predictionPending = false;
     private String currentOperationLabel = "Ready";
@@ -349,6 +378,20 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         timeline.setMaxSize(resolveTimelineCapacity());
         TechniqueContent content = AppRepository.getContent(techniqueId);
         techniqueTitle = content == null ? "Technique" : content.title;
+        if ("backtracking_n_queens".equals(techniqueId) || "bt_n_queens".equals(techniqueId)) {
+            nQueensBoardSize = new com.dsavisualizer.app.data.AppPreferences(requireContext()).getNQueensBoardSize();
+            if (nQueensBoardSize < 4) {
+                nQueensBoardSize = 4;
+            }
+        } else if ("backtracking_sudoku".equals(techniqueId) || "bt_sudoku".equals(techniqueId)) {
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            sudokuGridSize = prefs.getSudokuGridSize();
+            sudokuPreset = prefs.getSudokuPreset();
+        } else if ("backtracking_knights_tour".equals(techniqueId) || "bt_knights_tour".equals(techniqueId)) {
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            knightsTourBoardSize = prefs.getKnightsTourBoardSize();
+            knightsTourStartPos = prefs.getKnightsTourStartPos();
+        }
         sessionViewModel = new ViewModelProvider(requireActivity()).get(TechniqueSessionViewModel.class);
         stepEngine = new AlgorithmStepEngine(this);
         playbackController = new PlaybackController(stepEngine);
@@ -503,6 +546,28 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             setupTraversalControls();
             applyDefaultData(content);
             boolean restoredState = restoreVisualizationInstanceState(savedInstanceState);
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            nQueensBoardSize = prefs.getNQueensBoardSize();
+            sudokuGridSize = prefs.getSudokuGridSize();
+            sudokuPreset = prefs.getSudokuPreset();
+            knightsTourBoardSize = prefs.getKnightsTourBoardSize();
+            knightsTourStartPos = prefs.getKnightsTourStartPos();
+            mazeSize = prefs.getMazeSize();
+            mazePreset = prefs.getMazePreset();
+            hamiltonianNodes = prefs.getHamiltonianNodes();
+            hamiltonianType = prefs.getHamiltonianType();
+            graphColoringColors = prefs.getGraphColoringColors();
+            graphColoringPreset = prefs.getGraphColoringPreset();
+            dpPreset = prefs.getDpPreset(techniqueId);
+            graphPreset = prefs.getGraphPreset(techniqueId);
+            graphStartNode = prefs.getGraphStartNode(techniqueId);
+            graphNodeCount = prefs.getGraphNodeCount(techniqueId);
+            advancedDsPreset = prefs.getAdvancedDsPreset(techniqueId);
+            advancedDsCustomInput = prefs.getAdvancedDsCustomInput(techniqueId, com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, advancedDsPreset));
+            specializedPreset = prefs.getSpecializedPreset(techniqueId);
+            specializedCustomInput = prefs.getSpecializedCustomInput(techniqueId, com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getDefaultInput(techniqueId, specializedPreset));
+            huffmanPreset = prefs.getHuffmanPreset();
+            huffmanCustomInput = prefs.getHuffmanCustomInput();
             initializeCustomSortPreview();
             bindCurrentState(restoredState ? getSafeText(statusText, "Press Start to begin") : "Press Start to begin");
             if (restoredState && explanationText != null && savedInstanceState != null) {
@@ -525,11 +590,7 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             });
             stepButton.setOnClickListener(v -> {
                 dismissControlsHint();
-                if (playbackController != null) {
-                    playbackController.nextStep();
-                } else {
-                    runSingleStep();
-                }
+                stepForwardOnce();
             });
             randomButton.setOnClickListener(v -> applyRandomData());
             applyButton.setOnClickListener(v -> applyUserData());
@@ -770,11 +831,10 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             visualizerView.setLayoutParams(params);
         }
         if (visualizerScrollView != null) {
-            visualizerScrollView.setHorizontalScrollBarEnabled(!landscape);
-            visualizerScrollView.setOverScrollMode(landscape ? View.OVER_SCROLL_NEVER : View.OVER_SCROLL_IF_CONTENT_SCROLLS);
-            visualizerScrollView.setOnTouchListener(landscape ? (v, event) -> true : null);
+            visualizerScrollView.setHorizontalScrollBarEnabled(true);
+            visualizerScrollView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+            visualizerScrollView.setOnTouchListener(null);
             if (landscape) {
-                visualizerScrollView.scrollTo(0, 0);
                 visualizerScrollView.post(this::lockLandscapeVisualizerToViewport);
             }
         }
@@ -870,13 +930,17 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             || "max_heap_insertion".equals(techniqueId)
             || "max_heap_deletion".equals(techniqueId)
             || "avl_tree".equals(techniqueId)
-            || "trie".equals(techniqueId);
+            || "trie".equals(techniqueId)
+            || "huffman_algorithm".equals(techniqueId);
         boolean compactLinearVisualization = isSearchingMode()
             || isSortingMode()
             || isStructureMode();
+        if ("radix_sort".equals(techniqueId)) {
+            return visualizerView != null ? visualizerView.resolveRadixDesiredHeight() : (int) dpToPx(210);
+        }
         int minHeight = (int) dpToPx(spatialVisualization ? 232 : (compactLinearVisualization ? 180 : 200));
-        int maxHeight = (int) dpToPx(spatialVisualization ? 292 : (compactLinearVisualization ? 230 : 250));
-        int preferredHeight = Math.round(screenHeight * (spatialVisualization ? 0.29f : (compactLinearVisualization ? 0.21f : 0.25f)));
+        int maxHeight = (int) dpToPx(spatialVisualization ? 340 : (compactLinearVisualization ? 230 : 250));
+        int preferredHeight = Math.round(screenHeight * (spatialVisualization ? 0.35f : (compactLinearVisualization ? 0.21f : 0.25f)));
         return Math.max(minHeight, Math.min(maxHeight, preferredHeight));
     }
 
@@ -896,7 +960,7 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             params.width = viewportWidth;
             changed = true;
         }
-        if (params.height != ViewGroup.LayoutParams.MATCH_PARENT && params.height != viewportHeight) {
+        if (params.height != viewportHeight) {
             params.height = viewportHeight;
             changed = true;
         }
@@ -915,8 +979,1928 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         return getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
     }
 
+    private void openNQueensSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_nqueens_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        MaterialButton btn4 = view.findViewById(R.id.nqueens_size_4);
+        MaterialButton btn5 = view.findViewById(R.id.nqueens_size_5);
+        MaterialButton btn6 = view.findViewById(R.id.nqueens_size_6);
+        MaterialButton btn8 = view.findViewById(R.id.nqueens_size_8);
+        MaterialButton btnClose = view.findViewById(R.id.nqueens_btn_close);
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        MaterialButton[] sizeButtons = new MaterialButton[]{btn4, btn5, btn6, btn8};
+        int[] sizes = new int[]{4, 5, 6, 8};
+
+        Runnable refreshButtonStyles = () -> {
+            for (int i = 0; i < sizeButtons.length; i++) {
+                MaterialButton btn = sizeButtons[i];
+                if (btn == null) continue;
+                boolean isCurrent = (sizes[i] == nQueensBoardSize);
+                if (isCurrent) {
+                    btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(selectedColor));
+                    btn.setTextColor(textWhite);
+                    btn.setStrokeColor(android.content.res.ColorStateList.valueOf(selectedColor));
+                    btn.setStrokeWidth(0);
+                } else {
+                    btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(unselectedBg));
+                    btn.setTextColor(textMuted);
+                    btn.setStrokeColor(android.content.res.ColorStateList.valueOf(unselectedStroke));
+                    btn.setStrokeWidth((int) (1.5f * getResources().getDisplayMetrics().density));
+                }
+            }
+        };
+
+        refreshButtonStyles.run();
+
+        for (int i = 0; i < sizeButtons.length; i++) {
+            final int chosenSize = sizes[i];
+            MaterialButton btn = sizeButtons[i];
+            if (btn != null) {
+                btn.setOnClickListener(v -> {
+                    if (nQueensBoardSize != chosenSize) {
+                        applyNQueensBoardSize(chosenSize);
+                        refreshButtonStyles.run();
+                    }
+                });
+            }
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void applyNQueensBoardSize(int size) {
+        nQueensBoardSize = size;
+        new com.dsavisualizer.app.data.AppPreferences(requireContext()).setNQueensBoardSize(size);
+        resetVisualization();
+        bindCurrentState("N-Queens (" + size + "×" + size + ") Chessboard ready. Tap Play or Step to explore.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+        if (visualizerView != null) {
+            visualizerView.invalidate();
+        }
+    }
+
+    private void openSudokuSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_sudoku_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        MaterialButton btn4 = view.findViewById(R.id.sudoku_size_4);
+        MaterialButton btn9 = view.findViewById(R.id.sudoku_size_9);
+        MaterialButton btnPreset1 = view.findViewById(R.id.sudoku_preset_1);
+        MaterialButton btnPreset2 = view.findViewById(R.id.sudoku_preset_2);
+        MaterialButton btnClose = view.findViewById(R.id.sudoku_btn_close);
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            if (btn4 != null) {
+                boolean is4 = (sudokuGridSize == 4);
+                btn4.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedBg));
+                btn4.setTextColor(is4 ? textWhite : textMuted);
+                btn4.setStrokeColor(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedStroke));
+                btn4.setStrokeWidth(is4 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btn9 != null) {
+                boolean is9 = (sudokuGridSize == 9);
+                btn9.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is9 ? selectedColor : unselectedBg));
+                btn9.setTextColor(is9 ? textWhite : textMuted);
+                btn9.setStrokeColor(android.content.res.ColorStateList.valueOf(is9 ? selectedColor : unselectedStroke));
+                btn9.setStrokeWidth(is9 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPreset1 != null) {
+                boolean isP1 = (sudokuPreset == 1);
+                btnPreset1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isP1 ? selectedColor : unselectedBg));
+                btnPreset1.setTextColor(isP1 ? textWhite : textMuted);
+                btnPreset1.setStrokeColor(android.content.res.ColorStateList.valueOf(isP1 ? selectedColor : unselectedStroke));
+                btnPreset1.setStrokeWidth(isP1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPreset2 != null) {
+                boolean isP2 = (sudokuPreset == 2);
+                btnPreset2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isP2 ? selectedColor : unselectedBg));
+                btnPreset2.setTextColor(isP2 ? textWhite : textMuted);
+                btnPreset2.setStrokeColor(android.content.res.ColorStateList.valueOf(isP2 ? selectedColor : unselectedStroke));
+                btnPreset2.setStrokeWidth(isP2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btn4 != null) {
+            btn4.setOnClickListener(v -> {
+                if (sudokuGridSize != 4) {
+                    applySudokuSettings(4, sudokuPreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btn9 != null) {
+            btn9.setOnClickListener(v -> {
+                if (sudokuGridSize != 9) {
+                    applySudokuSettings(9, sudokuPreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPreset1 != null) {
+            btnPreset1.setOnClickListener(v -> {
+                if (sudokuPreset != 1) {
+                    applySudokuSettings(sudokuGridSize, 1);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPreset2 != null) {
+            btnPreset2.setOnClickListener(v -> {
+                if (sudokuPreset != 2) {
+                    applySudokuSettings(sudokuGridSize, 2);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void applySudokuSettings(int size, int preset) {
+        sudokuGridSize = size;
+        sudokuPreset = preset;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setSudokuGridSize(size);
+        prefs.setSudokuPreset(preset);
+        resetVisualization();
+        bindCurrentState("Sudoku (" + size + "×" + size + ", Preset " + preset + ") ready. Tap Play or Step to explore.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+        if (visualizerView != null) {
+            visualizerView.invalidate();
+        }
+    }
+
+    private void openKnightsTourSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_knights_tour_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        MaterialButton btn5 = view.findViewById(R.id.knights_size_5);
+        MaterialButton btn6 = view.findViewById(R.id.knights_size_6);
+        MaterialButton btn8 = view.findViewById(R.id.knights_size_8);
+        MaterialButton btnCorner = view.findViewById(R.id.knights_start_corner);
+        MaterialButton btnCenter = view.findViewById(R.id.knights_start_center);
+        MaterialButton btnClose = view.findViewById(R.id.knights_btn_close);
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            if (btn5 != null) {
+                boolean is5 = (knightsTourBoardSize == 5);
+                btn5.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedBg));
+                btn5.setTextColor(is5 ? textWhite : textMuted);
+                btn5.setStrokeColor(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedStroke));
+                btn5.setStrokeWidth(is5 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btn6 != null) {
+                boolean is6 = (knightsTourBoardSize == 6);
+                btn6.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedBg));
+                btn6.setTextColor(is6 ? textWhite : textMuted);
+                btn6.setStrokeColor(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedStroke));
+                btn6.setStrokeWidth(is6 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btn8 != null) {
+                boolean is8 = (knightsTourBoardSize == 8);
+                btn8.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is8 ? selectedColor : unselectedBg));
+                btn8.setTextColor(is8 ? textWhite : textMuted);
+                btn8.setStrokeColor(android.content.res.ColorStateList.valueOf(is8 ? selectedColor : unselectedStroke));
+                btn8.setStrokeWidth(is8 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnCorner != null) {
+                boolean isCorner = (knightsTourStartPos == 1);
+                btnCorner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isCorner ? selectedColor : unselectedBg));
+                btnCorner.setTextColor(isCorner ? textWhite : textMuted);
+                btnCorner.setStrokeColor(android.content.res.ColorStateList.valueOf(isCorner ? selectedColor : unselectedStroke));
+                btnCorner.setStrokeWidth(isCorner ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnCenter != null) {
+                boolean isCenter = (knightsTourStartPos == 2);
+                btnCenter.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isCenter ? selectedColor : unselectedBg));
+                btnCenter.setTextColor(isCenter ? textWhite : textMuted);
+                btnCenter.setStrokeColor(android.content.res.ColorStateList.valueOf(isCenter ? selectedColor : unselectedStroke));
+                btnCenter.setStrokeWidth(isCenter ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btn5 != null) {
+            btn5.setOnClickListener(v -> {
+                if (knightsTourBoardSize != 5) {
+                    applyKnightsTourSettings(5, knightsTourStartPos);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btn6 != null) {
+            btn6.setOnClickListener(v -> {
+                if (knightsTourBoardSize != 6) {
+                    applyKnightsTourSettings(6, knightsTourStartPos);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btn8 != null) {
+            btn8.setOnClickListener(v -> {
+                if (knightsTourBoardSize != 8) {
+                    applyKnightsTourSettings(8, knightsTourStartPos);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnCorner != null) {
+            btnCorner.setOnClickListener(v -> {
+                if (knightsTourStartPos != 1) {
+                    applyKnightsTourSettings(knightsTourBoardSize, 1);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnCenter != null) {
+            btnCenter.setOnClickListener(v -> {
+                if (knightsTourStartPos != 2) {
+                    applyKnightsTourSettings(knightsTourBoardSize, 2);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void applyKnightsTourSettings(int size, int startPos) {
+        knightsTourBoardSize = size;
+        knightsTourStartPos = startPos;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setKnightsTourBoardSize(size);
+        prefs.setKnightsTourStartPos(startPos);
+        resetVisualization();
+        bindCurrentState("Knight's Tour (" + size + "×" + size + ", " + (startPos == 2 ? "Center" : "Corner") + ") ready. Tap Play or Step to explore.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+        if (visualizerView != null) {
+            visualizerView.invalidate();
+        }
+    }
+
+    private void openMazeSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_maze_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        MaterialButton btn4 = view.findViewById(R.id.maze_size_4);
+        MaterialButton btn5 = view.findViewById(R.id.maze_size_5);
+        MaterialButton btn6 = view.findViewById(R.id.maze_size_6);
+        MaterialButton btnPreset1 = view.findViewById(R.id.maze_preset_1);
+        MaterialButton btnPreset2 = view.findViewById(R.id.maze_preset_2);
+        MaterialButton btnClose = view.findViewById(R.id.maze_btn_close);
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            if (btn4 != null) {
+                boolean is4 = (mazeSize == 4);
+                btn4.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedBg));
+                btn4.setTextColor(is4 ? textWhite : textMuted);
+                btn4.setStrokeColor(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedStroke));
+                btn4.setStrokeWidth(is4 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btn5 != null) {
+                boolean is5 = (mazeSize == 5);
+                btn5.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedBg));
+                btn5.setTextColor(is5 ? textWhite : textMuted);
+                btn5.setStrokeColor(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedStroke));
+                btn5.setStrokeWidth(is5 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btn6 != null) {
+                boolean is6 = (mazeSize == 6);
+                btn6.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedBg));
+                btn6.setTextColor(is6 ? textWhite : textMuted);
+                btn6.setStrokeColor(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedStroke));
+                btn6.setStrokeWidth(is6 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPreset1 != null) {
+                boolean isP1 = (mazePreset == 1);
+                btnPreset1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isP1 ? selectedColor : unselectedBg));
+                btnPreset1.setTextColor(isP1 ? textWhite : textMuted);
+                btnPreset1.setStrokeColor(android.content.res.ColorStateList.valueOf(isP1 ? selectedColor : unselectedStroke));
+                btnPreset1.setStrokeWidth(isP1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPreset2 != null) {
+                boolean isP2 = (mazePreset == 2);
+                btnPreset2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isP2 ? selectedColor : unselectedBg));
+                btnPreset2.setTextColor(isP2 ? textWhite : textMuted);
+                btnPreset2.setStrokeColor(android.content.res.ColorStateList.valueOf(isP2 ? selectedColor : unselectedStroke));
+                btnPreset2.setStrokeWidth(isP2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btn4 != null) {
+            btn4.setOnClickListener(v -> {
+                if (mazeSize != 4) {
+                    applyMazeSettings(4, mazePreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btn5 != null) {
+            btn5.setOnClickListener(v -> {
+                if (mazeSize != 5) {
+                    applyMazeSettings(5, mazePreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btn6 != null) {
+            btn6.setOnClickListener(v -> {
+                if (mazeSize != 6) {
+                    applyMazeSettings(6, mazePreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPreset1 != null) {
+            btnPreset1.setOnClickListener(v -> {
+                if (mazePreset != 1) {
+                    applyMazeSettings(mazeSize, 1);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPreset2 != null) {
+            btnPreset2.setOnClickListener(v -> {
+                if (mazePreset != 2) {
+                    applyMazeSettings(mazeSize, 2);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void applyMazeSettings(int size, int preset) {
+        mazeSize = size;
+        mazePreset = preset;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setMazeSize(size);
+        prefs.setMazePreset(preset);
+        resetVisualization();
+        matrixValues = com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getInitialMaze(size, preset);
+        matrixK = -1;
+        matrixRow = 0;
+        matrixCol = 0;
+        matrixLabel = "Rat in a Maze " + size + "x" + size + " (Preset " + preset + ")";
+        if (visualizerView != null) {
+            visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, matrixLabel);
+            visualizerView.invalidate();
+        }
+        bindCurrentState("Rat in a Maze (" + size + "×" + size + ", Preset " + preset + ") ready. Tap Play or Step to explore.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openHamiltonianSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_hamiltonian_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        MaterialButton btn4 = view.findViewById(R.id.hamiltonian_nodes_4);
+        MaterialButton btn5 = view.findViewById(R.id.hamiltonian_nodes_5);
+        MaterialButton btn6 = view.findViewById(R.id.hamiltonian_nodes_6);
+        MaterialButton btnCycle = view.findViewById(R.id.hamiltonian_type_cycle);
+        MaterialButton btnPath = view.findViewById(R.id.hamiltonian_type_path);
+        MaterialButton btnClose = view.findViewById(R.id.hamiltonian_btn_close);
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            if (btn4 != null) {
+                boolean is4 = (hamiltonianNodes == 4);
+                btn4.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedBg));
+                btn4.setTextColor(is4 ? textWhite : textMuted);
+                btn4.setStrokeColor(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedStroke));
+                btn4.setStrokeWidth(is4 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btn5 != null) {
+                boolean is5 = (hamiltonianNodes == 5);
+                btn5.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedBg));
+                btn5.setTextColor(is5 ? textWhite : textMuted);
+                btn5.setStrokeColor(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedStroke));
+                btn5.setStrokeWidth(is5 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btn6 != null) {
+                boolean is6 = (hamiltonianNodes == 6);
+                btn6.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedBg));
+                btn6.setTextColor(is6 ? textWhite : textMuted);
+                btn6.setStrokeColor(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedStroke));
+                btn6.setStrokeWidth(is6 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnCycle != null) {
+                boolean isCycle = (hamiltonianType == 1);
+                btnCycle.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isCycle ? selectedColor : unselectedBg));
+                btnCycle.setTextColor(isCycle ? textWhite : textMuted);
+                btnCycle.setStrokeColor(android.content.res.ColorStateList.valueOf(isCycle ? selectedColor : unselectedStroke));
+                btnCycle.setStrokeWidth(isCycle ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPath != null) {
+                boolean isPath = (hamiltonianType == 2);
+                btnPath.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isPath ? selectedColor : unselectedBg));
+                btnPath.setTextColor(isPath ? textWhite : textMuted);
+                btnPath.setStrokeColor(android.content.res.ColorStateList.valueOf(isPath ? selectedColor : unselectedStroke));
+                btnPath.setStrokeWidth(isPath ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btn4 != null) {
+            btn4.setOnClickListener(v -> {
+                if (hamiltonianNodes != 4) {
+                    applyHamiltonianSettings(4, hamiltonianType);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btn5 != null) {
+            btn5.setOnClickListener(v -> {
+                if (hamiltonianNodes != 5) {
+                    applyHamiltonianSettings(5, hamiltonianType);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btn6 != null) {
+            btn6.setOnClickListener(v -> {
+                if (hamiltonianNodes != 6) {
+                    applyHamiltonianSettings(6, hamiltonianType);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnCycle != null) {
+            btnCycle.setOnClickListener(v -> {
+                if (hamiltonianType != 1) {
+                    applyHamiltonianSettings(hamiltonianNodes, 1);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPath != null) {
+            btnPath.setOnClickListener(v -> {
+                if (hamiltonianType != 2) {
+                    applyHamiltonianSettings(hamiltonianNodes, 2);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void applyHamiltonianSettings(int nodes, int type) {
+        hamiltonianNodes = nodes;
+        hamiltonianType = type;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setHamiltonianNodes(nodes);
+        prefs.setHamiltonianType(type);
+        resetVisualization();
+        workingValues = new int[nodes];
+        for (int i = 0; i < nodes; i++) workingValues[i] = i;
+        matrixLabel = "Hamiltonian " + (type == 1 ? "Cycle" : "Path") + " (" + nodes + " Vertices)";
+        if (visualizerView != null) {
+            visualizerView.setTraversalState(workingValues, new int[0], -1);
+            visualizerView.clearActiveEdge();
+            visualizerView.invalidate();
+        }
+        bindCurrentState("Hamiltonian " + (type == 1 ? "Cycle" : "Path") + " (" + nodes + " Vertices) ready. Tap Play or Step to explore.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openGraphColoringSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_graph_coloring_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        MaterialButton btnM2 = view.findViewById(R.id.coloring_m_2);
+        MaterialButton btnM3 = view.findViewById(R.id.coloring_m_3);
+        MaterialButton btnM4 = view.findViewById(R.id.coloring_m_4);
+        MaterialButton btnPreset1 = view.findViewById(R.id.coloring_preset_1);
+        MaterialButton btnPreset2 = view.findViewById(R.id.coloring_preset_2);
+        MaterialButton btnPreset3 = view.findViewById(R.id.coloring_preset_3);
+        MaterialButton btnClose = view.findViewById(R.id.coloring_btn_close);
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            if (btnM2 != null) {
+                boolean is2 = (graphColoringColors == 2);
+                btnM2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedBg));
+                btnM2.setTextColor(is2 ? textWhite : textMuted);
+                btnM2.setStrokeColor(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedStroke));
+                btnM2.setStrokeWidth(is2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnM3 != null) {
+                boolean is3 = (graphColoringColors == 3);
+                btnM3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedBg));
+                btnM3.setTextColor(is3 ? textWhite : textMuted);
+                btnM3.setStrokeColor(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedStroke));
+                btnM3.setStrokeWidth(is3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnM4 != null) {
+                boolean is4 = (graphColoringColors == 4);
+                btnM4.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedBg));
+                btnM4.setTextColor(is4 ? textWhite : textMuted);
+                btnM4.setStrokeColor(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedStroke));
+                btnM4.setStrokeWidth(is4 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPreset1 != null) {
+                boolean isP1 = (graphColoringPreset == 1);
+                btnPreset1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isP1 ? selectedColor : unselectedBg));
+                btnPreset1.setTextColor(isP1 ? textWhite : textMuted);
+                btnPreset1.setStrokeColor(android.content.res.ColorStateList.valueOf(isP1 ? selectedColor : unselectedStroke));
+                btnPreset1.setStrokeWidth(isP1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPreset2 != null) {
+                boolean isP2 = (graphColoringPreset == 2);
+                btnPreset2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isP2 ? selectedColor : unselectedBg));
+                btnPreset2.setTextColor(isP2 ? textWhite : textMuted);
+                btnPreset2.setStrokeColor(android.content.res.ColorStateList.valueOf(isP2 ? selectedColor : unselectedStroke));
+                btnPreset2.setStrokeWidth(isP2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnPreset3 != null) {
+                boolean isP3 = (graphColoringPreset == 3);
+                btnPreset3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isP3 ? selectedColor : unselectedBg));
+                btnPreset3.setTextColor(isP3 ? textWhite : textMuted);
+                btnPreset3.setStrokeColor(android.content.res.ColorStateList.valueOf(isP3 ? selectedColor : unselectedStroke));
+                btnPreset3.setStrokeWidth(isP3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnM2 != null) {
+            btnM2.setOnClickListener(v -> {
+                if (graphColoringColors != 2) {
+                    applyGraphColoringSettings(2, graphColoringPreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnM3 != null) {
+            btnM3.setOnClickListener(v -> {
+                if (graphColoringColors != 3) {
+                    applyGraphColoringSettings(3, graphColoringPreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnM4 != null) {
+            btnM4.setOnClickListener(v -> {
+                if (graphColoringColors != 4) {
+                    applyGraphColoringSettings(4, graphColoringPreset);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPreset1 != null) {
+            btnPreset1.setOnClickListener(v -> {
+                if (graphColoringPreset != 1) {
+                    applyGraphColoringSettings(graphColoringColors, 1);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPreset2 != null) {
+            btnPreset2.setOnClickListener(v -> {
+                if (graphColoringPreset != 2) {
+                    applyGraphColoringSettings(graphColoringColors, 2);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnPreset3 != null) {
+            btnPreset3.setOnClickListener(v -> {
+                if (graphColoringPreset != 3) {
+                    applyGraphColoringSettings(graphColoringColors, 3);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void applyGraphColoringSettings(int colors, int preset) {
+        graphColoringColors = colors;
+        graphColoringPreset = preset;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setGraphColoringColors(colors);
+        prefs.setGraphColoringPreset(preset);
+        resetVisualization();
+        int n = com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getColoringGraphNodeCount(preset);
+        workingValues = new int[n];
+        matrixLabel = "Graph m-Coloring (m=" + colors + ", Preset " + preset + ")";
+        if (visualizerView != null) {
+            visualizerView.setArrayState(workingValues, -1, -1, -1);
+            visualizerView.clearActiveEdge();
+            visualizerView.invalidate();
+        }
+        bindCurrentState("Graph " + colors + "-Coloring (Preset " + preset + ") ready. Tap Play or Step to explore.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openDpSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_dp_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView titleView = view.findViewById(R.id.dp_settings_title);
+        TextView descDetail = view.findViewById(R.id.dp_preset_desc_detail);
+        MaterialButton btnP1 = view.findViewById(R.id.dp_preset_1);
+        MaterialButton btnP2 = view.findViewById(R.id.dp_preset_2);
+        MaterialButton btnP3 = view.findViewById(R.id.dp_preset_3);
+        MaterialButton btnClose = view.findViewById(R.id.dp_btn_close);
+
+        if (titleView != null && techniqueTitle != null) {
+            titleView.setText(techniqueTitle + " Setup");
+        }
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            if (descDetail != null) {
+                descDetail.setText(com.dsavisualizer.app.ui.visualization.runtime.DpStepEngine.getPresetDescription(techniqueId, dpPreset));
+            }
+            if (btnP1 != null) {
+                boolean is1 = (dpPreset == 1);
+                btnP1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedBg));
+                btnP1.setTextColor(is1 ? textWhite : textMuted);
+                btnP1.setStrokeColor(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedStroke));
+                btnP1.setStrokeWidth(is1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP2 != null) {
+                boolean is2 = (dpPreset == 2);
+                btnP2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedBg));
+                btnP2.setTextColor(is2 ? textWhite : textMuted);
+                btnP2.setStrokeColor(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedStroke));
+                btnP2.setStrokeWidth(is2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP3 != null) {
+                boolean is3 = (dpPreset == 3);
+                btnP3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedBg));
+                btnP3.setTextColor(is3 ? textWhite : textMuted);
+                btnP3.setStrokeColor(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedStroke));
+                btnP3.setStrokeWidth(is3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnP1 != null) {
+            btnP1.setOnClickListener(v -> {
+                if (dpPreset != 1) {
+                    applyDpSettings(1);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnP2 != null) {
+            btnP2.setOnClickListener(v -> {
+                if (dpPreset != 2) {
+                    applyDpSettings(2);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnP3 != null) {
+            btnP3.setOnClickListener(v -> {
+                if (dpPreset != 3) {
+                    applyDpSettings(3);
+                    refreshStyles.run();
+                }
+            });
+        }
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void applyDpSettings(int preset) {
+        dpPreset = preset;
+        target = preset;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setDpPreset(techniqueId, preset);
+        resetVisualization();
+        initializeCustomSortPreview();
+        bindCurrentState("DP Configuration (Preset " + preset + ") applied. Tap Play or Step to visualize.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openStringPatternSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_string_pattern_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView titleView = view.findViewById(R.id.strpat_settings_title);
+        TextView descDetail = view.findViewById(R.id.strpat_preset_desc_detail);
+        MaterialButton btnP1 = view.findViewById(R.id.strpat_preset_1);
+        MaterialButton btnP2 = view.findViewById(R.id.strpat_preset_2);
+        MaterialButton btnP3 = view.findViewById(R.id.strpat_preset_3);
+        com.google.android.material.textfield.TextInputEditText textInput = view.findViewById(R.id.strpat_text_input);
+        com.google.android.material.textfield.TextInputEditText queryInput = view.findViewById(R.id.strpat_query_input);
+        MaterialButton btnClose = view.findViewById(R.id.strpat_btn_close);
+
+        if (titleView != null && techniqueTitle != null) {
+            titleView.setText(techniqueTitle + " Setup");
+        }
+
+        if (textInput != null) {
+            textInput.setText(patternText != null ? patternText : "");
+        }
+        if (queryInput != null) {
+            queryInput.setText(patternQuery != null ? patternQuery : "");
+        }
+
+        int selectedColor = android.graphics.Color.parseColor("#0891B2");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            if (descDetail != null) {
+                descDetail.setText(com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetDescription(techniqueId, stringPatternPreset));
+            }
+            if (btnP1 != null) {
+                boolean is1 = (stringPatternPreset == 1);
+                btnP1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedBg));
+                btnP1.setTextColor(is1 ? textWhite : textMuted);
+                btnP1.setStrokeColor(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedStroke));
+                btnP1.setStrokeWidth(is1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP2 != null) {
+                boolean is2 = (stringPatternPreset == 2);
+                btnP2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedBg));
+                btnP2.setTextColor(is2 ? textWhite : textMuted);
+                btnP2.setStrokeColor(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedStroke));
+                btnP2.setStrokeWidth(is2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP3 != null) {
+                boolean is3 = (stringPatternPreset == 3);
+                btnP3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedBg));
+                btnP3.setTextColor(is3 ? textWhite : textMuted);
+                btnP3.setStrokeColor(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedStroke));
+                btnP3.setStrokeWidth(is3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnP1 != null) {
+            btnP1.setOnClickListener(v -> {
+                stringPatternPreset = 1;
+                if (textInput != null) {
+                    textInput.setText(com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetText(techniqueId, 1));
+                }
+                if (queryInput != null) {
+                    queryInput.setText(com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetQuery(techniqueId, 1));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP2 != null) {
+            btnP2.setOnClickListener(v -> {
+                stringPatternPreset = 2;
+                if (textInput != null) {
+                    textInput.setText(com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetText(techniqueId, 2));
+                }
+                if (queryInput != null) {
+                    queryInput.setText(com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetQuery(techniqueId, 2));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP3 != null) {
+            btnP3.setOnClickListener(v -> {
+                stringPatternPreset = 3;
+                if (textInput != null) {
+                    textInput.setText(com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetText(techniqueId, 3));
+                }
+                if (queryInput != null) {
+                    queryInput.setText(com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetQuery(techniqueId, 3));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> {
+                String customText = (textInput != null && textInput.getText() != null)
+                        ? textInput.getText().toString().trim() : "";
+                String customQuery = (queryInput != null && queryInput.getText() != null)
+                        ? queryInput.getText().toString().trim() : "";
+                if (customText.isEmpty()) {
+                    customText = com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetText(techniqueId, stringPatternPreset);
+                }
+                if (customQuery.isEmpty() && !"string_manacher".equals(techniqueId) && !"string_suffix_array".equals(techniqueId)) {
+                    customQuery = com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetQuery(techniqueId, stringPatternPreset);
+                }
+                applyStringPatternSettings(stringPatternPreset, customText, customQuery);
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void applyStringPatternSettings(int preset, String customText, String customQuery) {
+        stringPatternPreset = preset;
+        patternText = customText;
+        patternQuery = customQuery;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setStringPatternPreset(techniqueId, preset);
+        prefs.setStringPatternText(techniqueId, patternText);
+        prefs.setStringPatternQuery(techniqueId, patternQuery);
+
+        if (valuesInput != null) {
+            valuesInput.setText(patternText);
+        }
+        if (targetInput != null) {
+            targetInput.setText(patternQuery);
+        }
+
+        resetVisualization();
+        if (visualizerView != null) {
+            visualizerView.setPatternState(patternText, patternQuery, 0, 0, false);
+            visualizerView.invalidate();
+        }
+        bindCurrentState("String Pattern Setup applied. Tap Play or Step to visualize.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openGraphSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_graph_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView titleView = view.findViewById(R.id.graph_settings_title);
+        TextView descDetail = view.findViewById(R.id.graph_preset_desc_detail);
+        MaterialButton btnP1 = view.findViewById(R.id.graph_preset_1);
+        MaterialButton btnP2 = view.findViewById(R.id.graph_preset_2);
+        MaterialButton btnP3 = view.findViewById(R.id.graph_preset_3);
+
+        MaterialButton btnN0 = view.findViewById(R.id.graph_node_0);
+        MaterialButton btnN1 = view.findViewById(R.id.graph_node_1);
+        MaterialButton btnN2 = view.findViewById(R.id.graph_node_2);
+        MaterialButton btnN3 = view.findViewById(R.id.graph_node_3);
+        MaterialButton btnN4 = view.findViewById(R.id.graph_node_4);
+        MaterialButton btnN5 = view.findViewById(R.id.graph_node_5);
+        MaterialButton[] nodeButtons = {btnN0, btnN1, btnN2, btnN3, btnN4, btnN5};
+
+        MaterialButton btnC4 = view.findViewById(R.id.graph_count_4);
+        MaterialButton btnC5 = view.findViewById(R.id.graph_count_5);
+        MaterialButton btnC6 = view.findViewById(R.id.graph_count_6);
+        MaterialButton btnClose = view.findViewById(R.id.graph_btn_close);
+
+        if (titleView != null && techniqueTitle != null) {
+            titleView.setText(techniqueTitle + " Setup");
+        }
+
+        final int[] tempPreset = {graphPreset};
+        final int[] tempStart = {graphStartNode};
+        final int[] tempCount = {graphNodeCount};
+
+        int selectedColor = android.graphics.Color.parseColor("#DC2626");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            int p = tempPreset[0];
+            int s = tempStart[0];
+            int c = tempCount[0];
+
+            if (descDetail != null) {
+                descDetail.setText(com.dsavisualizer.app.ui.visualization.runtime.GraphStepEngine.getPresetDescription(techniqueId, p, s, c));
+            }
+
+            // Presets
+            if (btnP1 != null) {
+                boolean is1 = (p == 1);
+                btnP1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedBg));
+                btnP1.setTextColor(is1 ? textWhite : textMuted);
+                btnP1.setStrokeColor(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedStroke));
+                btnP1.setStrokeWidth(is1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP2 != null) {
+                boolean is2 = (p == 2);
+                btnP2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedBg));
+                btnP2.setTextColor(is2 ? textWhite : textMuted);
+                btnP2.setStrokeColor(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedStroke));
+                btnP2.setStrokeWidth(is2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP3 != null) {
+                boolean is3 = (p == 3);
+                btnP3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedBg));
+                btnP3.setTextColor(is3 ? textWhite : textMuted);
+                btnP3.setStrokeColor(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedStroke));
+                btnP3.setStrokeWidth(is3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+
+            // Start Nodes
+            for (int i = 0; i < nodeButtons.length; i++) {
+                MaterialButton btn = nodeButtons[i];
+                if (btn != null) {
+                    if (i >= c) {
+                        btn.setVisibility(View.GONE);
+                    } else {
+                        btn.setVisibility(View.VISIBLE);
+                        boolean isSelected = (i == s);
+                        btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isSelected ? selectedColor : unselectedBg));
+                        btn.setTextColor(isSelected ? textWhite : textMuted);
+                        btn.setStrokeColor(android.content.res.ColorStateList.valueOf(isSelected ? selectedColor : unselectedStroke));
+                        btn.setStrokeWidth(isSelected ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+                    }
+                }
+            }
+
+            // Node count buttons
+            if (btnC4 != null) {
+                boolean is4 = (c == 4);
+                btnC4.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedBg));
+                btnC4.setTextColor(is4 ? textWhite : textMuted);
+                btnC4.setStrokeColor(android.content.res.ColorStateList.valueOf(is4 ? selectedColor : unselectedStroke));
+                btnC4.setStrokeWidth(is4 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnC5 != null) {
+                boolean is5 = (c == 5);
+                btnC5.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedBg));
+                btnC5.setTextColor(is5 ? textWhite : textMuted);
+                btnC5.setStrokeColor(android.content.res.ColorStateList.valueOf(is5 ? selectedColor : unselectedStroke));
+                btnC5.setStrokeWidth(is5 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnC6 != null) {
+                boolean is6 = (c == 6);
+                btnC6.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedBg));
+                btnC6.setTextColor(is6 ? textWhite : textMuted);
+                btnC6.setStrokeColor(android.content.res.ColorStateList.valueOf(is6 ? selectedColor : unselectedStroke));
+                btnC6.setStrokeWidth(is6 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnP1 != null) {
+            btnP1.setOnClickListener(v -> {
+                tempPreset[0] = 1;
+                tempCount[0] = 5;
+                if (tempStart[0] >= 5) tempStart[0] = 0;
+                refreshStyles.run();
+            });
+        }
+        if (btnP2 != null) {
+            btnP2.setOnClickListener(v -> {
+                tempPreset[0] = 2;
+                tempCount[0] = 6;
+                refreshStyles.run();
+            });
+        }
+        if (btnP3 != null) {
+            btnP3.setOnClickListener(v -> {
+                tempPreset[0] = 3;
+                tempCount[0] = 5;
+                if (tempStart[0] >= 5) tempStart[0] = 0;
+                refreshStyles.run();
+            });
+        }
+
+        for (int i = 0; i < nodeButtons.length; i++) {
+            final int nodeIdx = i;
+            if (nodeButtons[i] != null) {
+                nodeButtons[i].setOnClickListener(v -> {
+                    tempStart[0] = nodeIdx;
+                    refreshStyles.run();
+                });
+            }
+        }
+
+        if (btnC4 != null) {
+            btnC4.setOnClickListener(v -> {
+                tempCount[0] = 4;
+                if (tempStart[0] >= 4) tempStart[0] = 0;
+                refreshStyles.run();
+            });
+        }
+        if (btnC5 != null) {
+            btnC5.setOnClickListener(v -> {
+                tempCount[0] = 5;
+                if (tempStart[0] >= 5) tempStart[0] = 0;
+                refreshStyles.run();
+            });
+        }
+        if (btnC6 != null) {
+            btnC6.setOnClickListener(v -> {
+                tempCount[0] = 6;
+                refreshStyles.run();
+            });
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> {
+                applyGraphSettings(tempPreset[0], tempStart[0], tempCount[0]);
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void applyGraphSettings(int preset, int startNode, int count) {
+        graphPreset = preset;
+        graphNodeCount = Math.max(4, Math.min(count, 6));
+        graphStartNode = Math.max(0, Math.min(startNode, graphNodeCount - 1));
+
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setGraphPreset(techniqueId, graphPreset);
+        prefs.setGraphStartNode(techniqueId, graphStartNode);
+        prefs.setGraphNodeCount(techniqueId, graphNodeCount);
+
+        workingValues = new int[graphNodeCount];
+        for (int i = 0; i < graphNodeCount; i++) {
+            workingValues[i] = i;
+        }
+        target = graphStartNode;
+
+        resetVisualization();
+        if (visualizerView != null) {
+            visualizerView.setGraphPreset(graphPreset);
+            traversalOrder = buildDynamicGraphTraversal();
+            visualizerView.setTraversalState(workingValues, traversalOrder, -1);
+            visualizerView.clearActiveEdge();
+            visualizerView.invalidate();
+        }
+        if ("dijkstra_algorithm".equals(techniqueId)) {
+            com.dsavisualizer.app.ui.visualization.runtime.DijkstraStepEngine.initializePreview(this);
+        } else if ("warshall_algorithm".equals(techniqueId)
+            || "floyd_algorithm".equals(techniqueId)
+            || "shortest_paths".equals(techniqueId)) {
+            initializeCustomSortPreview();
+        }
+        bindCurrentState("Graph Setup (Preset " + graphPreset + ", Start: Node " + graphStartNode + ") applied. Tap Play or Step to visualize.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openAdvancedDsSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_advanced_ds_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView titleView = view.findViewById(R.id.advds_settings_title);
+        TextView descDetail = view.findViewById(R.id.advds_preset_desc_detail);
+        MaterialButton btnP1 = view.findViewById(R.id.advds_preset_1);
+        MaterialButton btnP2 = view.findViewById(R.id.advds_preset_2);
+        MaterialButton btnP3 = view.findViewById(R.id.advds_preset_3);
+        com.google.android.material.textfield.TextInputEditText customInputView = view.findViewById(R.id.advds_custom_input);
+        MaterialButton btnClose = view.findViewById(R.id.advds_btn_close);
+
+        if (titleView != null && techniqueTitle != null) {
+            titleView.setText(techniqueTitle + " Setup");
+        }
+
+        if (customInputView != null) {
+            if (advancedDsCustomInput == null || advancedDsCustomInput.trim().isEmpty()) {
+                advancedDsCustomInput = com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, advancedDsPreset);
+            }
+            customInputView.setText(advancedDsCustomInput);
+        }
+
+        final int[] tempPreset = {advancedDsPreset};
+
+        int selectedColor = android.graphics.Color.parseColor("#7C3AED");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            int p = tempPreset[0];
+            if (descDetail != null) {
+                descDetail.setText(com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getPresetDescription(techniqueId, p));
+            }
+            if (btnP1 != null) {
+                boolean is1 = (p == 1);
+                btnP1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedBg));
+                btnP1.setTextColor(is1 ? textWhite : textMuted);
+                btnP1.setStrokeColor(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedStroke));
+                btnP1.setStrokeWidth(is1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP2 != null) {
+                boolean is2 = (p == 2);
+                btnP2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedBg));
+                btnP2.setTextColor(is2 ? textWhite : textMuted);
+                btnP2.setStrokeColor(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedStroke));
+                btnP2.setStrokeWidth(is2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP3 != null) {
+                boolean is3 = (p == 3);
+                btnP3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedBg));
+                btnP3.setTextColor(is3 ? textWhite : textMuted);
+                btnP3.setStrokeColor(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedStroke));
+                btnP3.setStrokeWidth(is3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnP1 != null) {
+            btnP1.setOnClickListener(v -> {
+                tempPreset[0] = 1;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, 1));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP2 != null) {
+            btnP2.setOnClickListener(v -> {
+                tempPreset[0] = 2;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, 2));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP3 != null) {
+            btnP3.setOnClickListener(v -> {
+                tempPreset[0] = 3;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, 3));
+                }
+                refreshStyles.run();
+            });
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> {
+                String input = customInputView != null && customInputView.getText() != null
+                        ? customInputView.getText().toString().trim() : "";
+                if (input.isEmpty()) {
+                    input = com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, tempPreset[0]);
+                }
+                applyAdvancedDsSettings(tempPreset[0], input);
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void applyAdvancedDsSettings(int preset, String customInput) {
+        advancedDsPreset = preset;
+        advancedDsCustomInput = customInput;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setAdvancedDsPreset(techniqueId, preset);
+        prefs.setAdvancedDsCustomInput(techniqueId, customInput);
+
+        setExpressionInput(customInput);
+        if (visualizerView != null) {
+            visualizerView.setExpressionInput(customInput);
+        }
+        if (valuesInput != null) {
+            valuesInput.setText(customInput);
+        }
+
+        resetVisualization();
+        initializeCustomSortPreview();
+        if (visualizerView != null) {
+            visualizerView.clearPointerState();
+            visualizerView.clearActiveEdge();
+            visualizerView.invalidate();
+        }
+
+        bindCurrentState("Advanced DS Setup (Preset " + preset + ": " + customInput + ") applied. Tap Play or Step to visualize.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openSpecializedSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_specialized_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView titleView = view.findViewById(R.id.spec_settings_title);
+        TextView descDetail = view.findViewById(R.id.spec_preset_desc_detail);
+        MaterialButton btnP1 = view.findViewById(R.id.spec_preset_1);
+        MaterialButton btnP2 = view.findViewById(R.id.spec_preset_2);
+        MaterialButton btnP3 = view.findViewById(R.id.spec_preset_3);
+        com.google.android.material.textfield.TextInputEditText customInputView = view.findViewById(R.id.spec_custom_input);
+        MaterialButton btnClose = view.findViewById(R.id.spec_btn_close);
+
+        if (titleView != null && techniqueTitle != null) {
+            titleView.setText(techniqueTitle + " Setup");
+        }
+
+        if (customInputView != null) {
+            if (specializedCustomInput == null || specializedCustomInput.trim().isEmpty()) {
+                specializedCustomInput = com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getDefaultInput(techniqueId, specializedPreset);
+            }
+            customInputView.setText(specializedCustomInput);
+        }
+
+        final int[] tempPreset = {specializedPreset};
+
+        int selectedColor = android.graphics.Color.parseColor("#10B981");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            int p = tempPreset[0];
+            if (descDetail != null) {
+                descDetail.setText(com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getPresetDescription(techniqueId, p));
+            }
+            if (btnP1 != null) {
+                boolean is1 = (p == 1);
+                btnP1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedBg));
+                btnP1.setTextColor(is1 ? textWhite : textMuted);
+                btnP1.setStrokeColor(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedStroke));
+                btnP1.setStrokeWidth(is1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP2 != null) {
+                boolean is2 = (p == 2);
+                btnP2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedBg));
+                btnP2.setTextColor(is2 ? textWhite : textMuted);
+                btnP2.setStrokeColor(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedStroke));
+                btnP2.setStrokeWidth(is2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP3 != null) {
+                boolean is3 = (p == 3);
+                btnP3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedBg));
+                btnP3.setTextColor(is3 ? textWhite : textMuted);
+                btnP3.setStrokeColor(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedStroke));
+                btnP3.setStrokeWidth(is3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnP1 != null) {
+            btnP1.setOnClickListener(v -> {
+                tempPreset[0] = 1;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getDefaultInput(techniqueId, 1));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP2 != null) {
+            btnP2.setOnClickListener(v -> {
+                tempPreset[0] = 2;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getDefaultInput(techniqueId, 2));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP3 != null) {
+            btnP3.setOnClickListener(v -> {
+                tempPreset[0] = 3;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getDefaultInput(techniqueId, 3));
+                }
+                refreshStyles.run();
+            });
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> {
+                String input = customInputView != null && customInputView.getText() != null
+                        ? customInputView.getText().toString().trim() : "";
+                if (input.isEmpty()) {
+                    input = com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getDefaultInput(techniqueId, tempPreset[0]);
+                }
+                applySpecializedSettings(tempPreset[0], input);
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void applySpecializedSettings(int preset, String customInput) {
+        specializedPreset = preset;
+        specializedCustomInput = customInput;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setSpecializedPreset(techniqueId, preset);
+        prefs.setSpecializedCustomInput(techniqueId, customInput);
+
+        try {
+            String[] parts = customInput.split("[,;\\s]+");
+            List<Integer> list = new ArrayList<>();
+            for (String p : parts) {
+                p = p.trim();
+                if (!p.isEmpty()) {
+                    try {
+                        list.add(Integer.parseInt(p));
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+            if (!list.isEmpty()) {
+                workingValues = new int[list.size()];
+                for (int i = 0; i < list.size(); i++) {
+                    workingValues[i] = list.get(i);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        resetVisualization();
+        if (visualizerView != null) {
+            if (workingValues != null && workingValues.length > 0) {
+                visualizerView.setArrayState(workingValues, -1, -1, -1);
+            }
+            visualizerView.clearPointerState();
+            visualizerView.clearActiveEdge();
+            visualizerView.invalidate();
+        }
+
+        bindCurrentState("Specialized Setup (Preset " + preset + ": " + customInput + ") applied. Tap Play or Step to visualize.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openHuffmanSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_huffman_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView titleView = view.findViewById(R.id.huffman_settings_title);
+        TextView descDetail = view.findViewById(R.id.huffman_preset_desc_detail);
+        MaterialButton btnP1 = view.findViewById(R.id.huffman_preset_1);
+        MaterialButton btnP2 = view.findViewById(R.id.huffman_preset_2);
+        MaterialButton btnP3 = view.findViewById(R.id.huffman_preset_3);
+        com.google.android.material.textfield.TextInputEditText customInputView = view.findViewById(R.id.huffman_custom_input);
+        MaterialButton btnClose = view.findViewById(R.id.huffman_btn_close);
+
+        if (titleView != null && techniqueTitle != null) {
+            titleView.setText(techniqueTitle + " Setup");
+        }
+
+        if (customInputView != null) {
+            if (huffmanCustomInput == null || huffmanCustomInput.trim().isEmpty()) {
+                huffmanCustomInput = com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultInput(huffmanPreset);
+            }
+            customInputView.setText(huffmanCustomInput);
+        }
+
+        final int[] tempPreset = {huffmanPreset};
+
+        int selectedColor = android.graphics.Color.parseColor("#F59E0B");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            int p = tempPreset[0];
+            if (descDetail != null) {
+                descDetail.setText(com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getPresetDescription(p));
+            }
+            if (btnP1 != null) {
+                boolean is1 = (p == 1);
+                btnP1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedBg));
+                btnP1.setTextColor(is1 ? textWhite : textMuted);
+                btnP1.setStrokeColor(android.content.res.ColorStateList.valueOf(is1 ? selectedColor : unselectedStroke));
+                btnP1.setStrokeWidth(is1 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP2 != null) {
+                boolean is2 = (p == 2);
+                btnP2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedBg));
+                btnP2.setTextColor(is2 ? textWhite : textMuted);
+                btnP2.setStrokeColor(android.content.res.ColorStateList.valueOf(is2 ? selectedColor : unselectedStroke));
+                btnP2.setStrokeWidth(is2 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+            if (btnP3 != null) {
+                boolean is3 = (p == 3);
+                btnP3.setBackgroundTintList(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedBg));
+                btnP3.setTextColor(is3 ? textWhite : textMuted);
+                btnP3.setStrokeColor(android.content.res.ColorStateList.valueOf(is3 ? selectedColor : unselectedStroke));
+                btnP3.setStrokeWidth(is3 ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnP1 != null) {
+            btnP1.setOnClickListener(v -> {
+                tempPreset[0] = 1;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultInput(1));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP2 != null) {
+            btnP2.setOnClickListener(v -> {
+                tempPreset[0] = 2;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultInput(2));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP3 != null) {
+            btnP3.setOnClickListener(v -> {
+                tempPreset[0] = 3;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultInput(3));
+                }
+                refreshStyles.run();
+            });
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> {
+                String input = customInputView != null && customInputView.getText() != null
+                        ? customInputView.getText().toString().trim() : "";
+                if (input.isEmpty()) {
+                    input = com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultInput(tempPreset[0]);
+                }
+                applyHuffmanSettings(tempPreset[0], input);
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void applyHuffmanSettings(int preset, String customInput) {
+        huffmanPreset = preset;
+        huffmanCustomInput = customInput;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setHuffmanPreset(preset);
+        prefs.setHuffmanCustomInput(customInput);
+
+        try {
+            String[] parts = customInput.split("[,\\s]+");
+            List<Integer> list = new ArrayList<>();
+            for (String p : parts) {
+                p = p.trim();
+                if (!p.isEmpty()) {
+                    try {
+                        int val = Integer.parseInt(p);
+                        if (val > 0) {
+                            list.add(val);
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+            if (list.size() >= 2) {
+                workingValues = new int[list.size()];
+                for (int i = 0; i < list.size(); i++) {
+                    workingValues[i] = list.get(i);
+                }
+            } else {
+                workingValues = com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultWeights(preset);
+            }
+        } catch (Exception ignored) {
+            workingValues = com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultWeights(preset);
+        }
+
+        resetVisualization();
+        initializeHuffmanPreview();
+
+        bindCurrentState("Huffman Coding (" + com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getPresetDescription(preset) + ") ready. Tap Play or Step to visualize.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
+    private void openAvlTreeSettingsDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        android.app.Dialog dialog = new android.app.Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_avl_tree_settings, null, false);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView titleView = view.findViewById(R.id.avl_settings_title);
+        TextView descDetail = view.findViewById(R.id.avl_preset_desc_detail);
+        MaterialButton btnP1 = view.findViewById(R.id.avl_preset_1);
+        MaterialButton btnP2 = view.findViewById(R.id.avl_preset_2);
+        MaterialButton btnP3 = view.findViewById(R.id.avl_preset_3);
+        MaterialButton btnP4 = view.findViewById(R.id.avl_preset_4);
+        MaterialButton btnP5 = view.findViewById(R.id.avl_preset_5);
+        com.google.android.material.textfield.TextInputEditText customInputView = view.findViewById(R.id.avl_custom_input);
+        MaterialButton btnRandom = view.findViewById(R.id.avl_btn_random);
+        MaterialButton btnApply = view.findViewById(R.id.avl_btn_apply);
+
+        if (titleView != null && techniqueTitle != null) {
+            titleView.setText(techniqueTitle + " Setup");
+        }
+
+        if (customInputView != null) {
+            if (avlTreeCustomInput == null || avlTreeCustomInput.trim().isEmpty()) {
+                avlTreeCustomInput = com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(avlTreePreset);
+            }
+            customInputView.setText(avlTreeCustomInput);
+        }
+
+        final int[] tempPreset = {avlTreePreset};
+
+        int selectedColor = android.graphics.Color.parseColor("#0284C7");
+        int unselectedBg = android.graphics.Color.parseColor("#131B2E");
+        int unselectedStroke = android.graphics.Color.parseColor("#27354E");
+        int textWhite = android.graphics.Color.parseColor("#FFFFFF");
+        int textMuted = android.graphics.Color.parseColor("#E2E8F0");
+
+        Runnable refreshStyles = () -> {
+            int p = tempPreset[0];
+            if (descDetail != null) {
+                descDetail.setText(com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getPresetDescription(p));
+            }
+            MaterialButton[] buttons = {btnP1, btnP2, btnP3, btnP4, btnP5};
+            for (int i = 0; i < buttons.length; i++) {
+                MaterialButton b = buttons[i];
+                if (b != null) {
+                    boolean isSel = (p == (i + 1));
+                    b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(isSel ? selectedColor : unselectedBg));
+                    b.setTextColor(isSel ? textWhite : textMuted);
+                    b.setStrokeColor(android.content.res.ColorStateList.valueOf(isSel ? selectedColor : unselectedStroke));
+                    b.setStrokeWidth(isSel ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+                }
+            }
+        };
+
+        refreshStyles.run();
+
+        if (btnP1 != null) {
+            btnP1.setOnClickListener(v -> {
+                tempPreset[0] = 1;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(1));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP2 != null) {
+            btnP2.setOnClickListener(v -> {
+                tempPreset[0] = 2;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(2));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP3 != null) {
+            btnP3.setOnClickListener(v -> {
+                tempPreset[0] = 3;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(3));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP4 != null) {
+            btnP4.setOnClickListener(v -> {
+                tempPreset[0] = 4;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(4));
+                }
+                refreshStyles.run();
+            });
+        }
+        if (btnP5 != null) {
+            btnP5.setOnClickListener(v -> {
+                tempPreset[0] = 5;
+                if (customInputView != null) {
+                    customInputView.setText(com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(5));
+                }
+                refreshStyles.run();
+            });
+        }
+
+        if (btnRandom != null) {
+            btnRandom.setOnClickListener(v -> {
+                java.util.Random rnd = new java.util.Random();
+                int type = rnd.nextInt(4) + 1;
+                tempPreset[0] = type;
+                String rndInput;
+                if (type == 1) {
+                    int base = 10 + rnd.nextInt(30);
+                    int d1 = 5 + rnd.nextInt(15);
+                    int d2 = 5 + rnd.nextInt(15);
+                    rndInput = base + ", " + (base + d1) + ", " + (base + d1 + d2);
+                } else if (type == 2) {
+                    int base = 50 + rnd.nextInt(30);
+                    int d1 = 5 + rnd.nextInt(15);
+                    int d2 = 5 + rnd.nextInt(15);
+                    rndInput = base + ", " + (base - d1) + ", " + (base - d1 - d2);
+                } else if (type == 3) {
+                    int rootVal = 40 + rnd.nextInt(20);
+                    int leftVal = rootVal - 15 - rnd.nextInt(10);
+                    int rightOfLeft = leftVal + 5 + rnd.nextInt(8);
+                    rndInput = rootVal + ", " + leftVal + ", " + rightOfLeft;
+                } else {
+                    int rootVal = 20 + rnd.nextInt(20);
+                    int rightVal = rootVal + 15 + rnd.nextInt(10);
+                    int leftOfRight = rightVal - 5 - rnd.nextInt(8);
+                    rndInput = rootVal + ", " + rightVal + ", " + leftOfRight;
+                }
+                if (customInputView != null) {
+                    customInputView.setText(rndInput);
+                }
+                refreshStyles.run();
+            });
+        }
+
+        if (btnApply != null) {
+            btnApply.setOnClickListener(v -> {
+                String input = customInputView != null && customInputView.getText() != null
+                        ? customInputView.getText().toString().trim() : "";
+                if (input.isEmpty()) {
+                    input = com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(tempPreset[0]);
+                }
+                applyAvlTreeSettings(tempPreset[0], input);
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void applyAvlTreeSettings(int preset, String customInput) {
+        avlTreePreset = preset;
+        avlTreeCustomInput = customInput;
+        com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+        prefs.setAvlTreePreset(preset);
+        prefs.setAvlTreeCustomInput(customInput);
+
+        workingValues = com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.parseInput(customInput, preset);
+        if (valuesInput != null) {
+            valuesInput.setText(customInput);
+        }
+
+        resetVisualization();
+        if (visualizerView != null) {
+            visualizerView.setTraversalState(workingValues, new int[0], -1);
+            visualizerView.setActiveNodes(-1, -1);
+            visualizerView.setStepIndex(-1);
+        }
+        bindCurrentState("AVL Tree ready (" + com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getPresetDescription(preset) + "). Tap Play or Step to visualize.");
+        updateProgressHandle(0, estimatePlaybackTotalSteps());
+        updatePlayerProgress(PlaybackState.initial());
+    }
+
     private void openInputEditorSheet() {
         if (!isAdded()) {
+            return;
+        }
+        try {
+            if ("avl_tree".equals(techniqueId)) {
+                openAvlTreeSettingsDialog();
+                return;
+            }
+        if ("huffman_algorithm".equals(techniqueId)) {
+            openHuffmanSettingsDialog();
+            return;
+        }
+        if ("backtracking_n_queens".equals(techniqueId) || "bt_n_queens".equals(techniqueId)) {
+            openNQueensSettingsDialog();
+            return;
+        }
+        if ("backtracking_sudoku".equals(techniqueId) || "bt_sudoku".equals(techniqueId)) {
+            openSudokuSettingsDialog();
+            return;
+        }
+        if ("backtracking_knights_tour".equals(techniqueId) || "bt_knights_tour".equals(techniqueId)) {
+            openKnightsTourSettingsDialog();
+            return;
+        }
+        if ("backtracking_maze_solver".equals(techniqueId) || "bt_maze".equals(techniqueId) || "bt_rat_in_a_maze".equals(techniqueId)) {
+            openMazeSettingsDialog();
+            return;
+        }
+        if ("backtracking_hamiltonian".equals(techniqueId) || "bt_hamiltonian".equals(techniqueId)) {
+            openHamiltonianSettingsDialog();
+            return;
+        }
+        if ("backtracking_graph_coloring".equals(techniqueId) || "bt_graph_coloring".equals(techniqueId)) {
+            openGraphColoringSettingsDialog();
+            return;
+        }
+        if (VisualizationTechniqueRegistry.isDynamicProgramming(techniqueId) || (techniqueId != null && techniqueId.startsWith("dp_"))) {
+            openDpSettingsDialog();
+            return;
+        }
+        if (VisualizationTechniqueRegistry.isStringPattern(techniqueId) || "pattern_matching".equals(techniqueId)) {
+            openStringPatternSettingsDialog();
+            return;
+        }
+        if (VisualizationTechniqueRegistry.isGraph(techniqueId)) {
+            openGraphSettingsDialog();
+            return;
+        }
+        if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+            openAdvancedDsSettingsDialog();
+            return;
+        }
+        if (VisualizationTechniqueRegistry.isSpecialized(techniqueId)) {
+            openSpecializedSettingsDialog();
             return;
         }
         BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
@@ -1060,7 +3044,71 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             });
         }
 
+        MaterialButton shareButton = sheet.findViewById(R.id.input_editor_share_button);
+        if (shareButton != null) {
+            shareButton.setOnClickListener(v -> {
+                dialog.dismiss();
+                shareInteractiveWebLink();
+            });
+        }
+
         dialog.show();
+        } catch (Throwable t) {
+            Log.e(TAG, "Error in openInputEditorSheet", t);
+        }
+    }
+
+    private void shareInteractiveWebLink() {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        try {
+            StringBuilder sb = new StringBuilder();
+            if (workingValues != null && workingValues.length > 0) {
+                for (int i = 0; i < workingValues.length; i++) {
+                    if (i > 0) sb.append(",");
+                    sb.append(workingValues[i]);
+                }
+            } else if (valuesInput != null && valuesInput.getText() != null) {
+                sb.append(valuesInput.getText().toString().replaceAll("\\s+", ""));
+            }
+            int step = Math.max(0, stepIndex);
+            String tech = techniqueId != null ? techniqueId : "bubble_sort";
+
+            String baseUrl = null;
+            try {
+                baseUrl = com.dsavisualizer.app.data.ApiConfig.getBaseUrl();
+            } catch (Throwable ignored) {
+            }
+
+            if (baseUrl == null || baseUrl.trim().isEmpty()
+                || baseUrl.contains("localhost")
+                || baseUrl.contains("127.0.0.1")
+                || baseUrl.contains("172.27.")
+                || baseUrl.contains("192.168.")
+                || baseUrl.contains("10.")) {
+                baseUrl = "https://dsa-visualizer-api-nu.vercel.app";
+            }
+            while (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+
+            String webUrl = baseUrl + "/visualize?tech=" + tech
+                + "&data=" + sb.toString()
+                + "&step=" + step;
+
+            String shareSubject = "DSA Visualization: " + (techniqueTitle != null ? techniqueTitle : tech);
+            String shareBody = "Open this interactive visualization in your browser (Play, Step, Replay, and Edit):\n"
+                + webUrl;
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSubject);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.vis_share_web_link)));
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to share visualization web link", t);
+        }
     }
 
     private void keepStepChipInHeader() {
@@ -1197,7 +3245,9 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         valuesInput.setInputType(InputType.TYPE_CLASS_TEXT);
         targetInput.setInputType(InputType.TYPE_CLASS_TEXT);
 
-        if (SearchVisualizationController.configureInputs(
+        if (techniqueId != null && techniqueId.startsWith("leetcode_")) {
+            configureLeetCodeInputs();
+        } else if (SearchVisualizationController.configureInputs(
             techniqueId,
             valuesInputLayout,
             targetInputLayout,
@@ -1211,6 +3261,17 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             || GraphVisualizationController.configureInputs(techniqueId, valuesInputLayout, targetInputLayout)
             || StructureVisualizationController.configureInputs(techniqueId, valuesInputLayout, targetInputLayout)) {
             // Family-specific input configuration handled by extracted controller.
+        } else if (VisualizationTechniqueRegistry.isBacktracking(techniqueId)
+            || VisualizationTechniqueRegistry.isDynamicProgramming(techniqueId)
+            || VisualizationTechniqueRegistry.isStringPattern(techniqueId)
+            || VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)
+            || VisualizationTechniqueRegistry.isSpecialized(techniqueId)
+            || "huffman_algorithm".equals(techniqueId)) {
+            targetInputLayout.setVisibility(View.GONE);
+            valuesInputLayout.setVisibility(View.GONE);
+            if (inputActionsRow != null) {
+                inputActionsRow.setVisibility(View.GONE);
+            }
         } else if (isSortingMode()) {
             targetInputLayout.setVisibility(View.GONE);
             valuesInputLayout.setHint("Array values");
@@ -1268,6 +3329,27 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         }
     }
 
+    private void configureLeetCodeInputs() {
+        TechniqueContent content = AppRepository.getContent(techniqueId);
+        String title = content != null ? content.title : "LeetCode Problem";
+        valuesInputLayout.setHint(title + " values");
+
+        if (content != null && content.sampleTarget != 0) {
+            targetInputLayout.setVisibility(View.VISIBLE);
+            targetInputLayout.setHint("Target (e.g. " + content.sampleTarget + ")");
+        } else if ("leetcode_two_sum".equals(techniqueId) || "leetcode_1".equals(techniqueId)) {
+            valuesInputLayout.setHint("Array nums (e.g. 2, 7, 11, 15)");
+            targetInputLayout.setVisibility(View.VISIBLE);
+            targetInputLayout.setHint("Target sum (e.g. 9)");
+        } else if ("leetcode_binary_search".equals(techniqueId) || "leetcode_704".equals(techniqueId)) {
+            valuesInputLayout.setHint("Sorted nums (-1, 0, 3, 5, 9, 12)");
+            targetInputLayout.setVisibility(View.VISIBLE);
+            targetInputLayout.setHint("Target value (e.g. 9)");
+        } else {
+            targetInputLayout.setVisibility(View.GONE);
+        }
+    }
+
     private void setupTraversalControls() {
         if (VisualizationTechniqueRegistry.isGraph(techniqueId)) {
             String mode = GraphVisualizationController.configureTraversalControls(
@@ -1322,12 +3404,55 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             return;
         }
         if (VisualizationTechniqueRegistry.isPatternMatching(techniqueId)) {
-            patternText = "ABACABADABAC";
-            patternQuery = "ABAC";
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            stringPatternPreset = prefs.getStringPatternPreset(techniqueId);
+            patternText = prefs.getStringPatternText(techniqueId, com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetText(techniqueId, stringPatternPreset));
+            patternQuery = prefs.getStringPatternQuery(techniqueId, com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getPresetQuery(techniqueId, stringPatternPreset));
             workingValues = new int[patternText.length()];
             valuesInput.setText(patternText);
             targetInput.setText(patternQuery);
             visualizerView.setPatternState(patternText, patternQuery, 0, 0, false);
+            return;
+        }
+        if ("huffman_algorithm".equals(techniqueId)) {
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            huffmanPreset = prefs.getHuffmanPreset();
+            huffmanCustomInput = prefs.getHuffmanCustomInput();
+            if (huffmanCustomInput != null && !huffmanCustomInput.trim().isEmpty()) {
+                try {
+                    String[] parts = huffmanCustomInput.trim().split("[,\\s]+");
+                    List<Integer> list = new ArrayList<>();
+                    for (String p : parts) {
+                        p = p.trim();
+                        if (!p.isEmpty()) {
+                            int val = Integer.parseInt(p);
+                            if (val > 0) list.add(val);
+                        }
+                    }
+                    if (list.size() >= 2) {
+                        workingValues = new int[list.size()];
+                        for (int i = 0; i < list.size(); i++) {
+                            workingValues[i] = list.get(i);
+                        }
+                    } else {
+                        workingValues = com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultWeights(huffmanPreset);
+                    }
+                } catch (Exception e) {
+                    workingValues = com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultWeights(huffmanPreset);
+                }
+            } else {
+                workingValues = com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultWeights(huffmanPreset);
+            }
+            return;
+        }
+        if ("avl_tree".equals(techniqueId)) {
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            avlTreePreset = prefs.getAvlTreePreset();
+            avlTreeCustomInput = prefs.getAvlTreeCustomInput(com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getDefaultInput(avlTreePreset));
+            workingValues = com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.parseInput(avlTreeCustomInput, avlTreePreset);
+            if (valuesInput != null) {
+                valuesInput.setText(avlTreeCustomInput);
+            }
             return;
         }
         if (VisualizationTechniqueRegistry.isTree(techniqueId)
@@ -1338,33 +3463,56 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             workingValues = ensureLength(content.sampleInput, 7);
         }
         if (VisualizationTechniqueRegistry.isGraph(techniqueId)) {
-            workingValues = new int[] {0, 1, 2, 3, 4};
-            target = 0;
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            graphPreset = prefs.getGraphPreset(techniqueId);
+            graphStartNode = prefs.getGraphStartNode(techniqueId);
+            graphNodeCount = prefs.getGraphNodeCount(techniqueId);
+            workingValues = new int[graphNodeCount];
+            for (int i = 0; i < graphNodeCount; i++) {
+                workingValues[i] = i;
+            }
+            target = graphStartNode;
+            if (visualizerView != null) {
+                visualizerView.setGraphPreset(graphPreset);
+            }
+        }
+        if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+            com.dsavisualizer.app.data.AppPreferences prefs = new com.dsavisualizer.app.data.AppPreferences(requireContext());
+            advancedDsPreset = prefs.getAdvancedDsPreset(techniqueId);
+            advancedDsCustomInput = prefs.getAdvancedDsCustomInput(techniqueId, com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, advancedDsPreset));
+            setExpressionInput(advancedDsCustomInput);
+            if (visualizerView != null) {
+                visualizerView.setExpressionInput(advancedDsCustomInput);
+            }
         }
     }
 
     private void handlePlayPause() {
-        if (playbackController == null) {
-            if (!running) {
-                startVisualization();
-            } else {
-                paused = !paused;
-                syncPlayButtonVisual(!paused);
-                if (!paused) {
-                    scheduleNextStep();
+        try {
+            if (playbackController == null) {
+                if (!running) {
+                    startVisualization();
+                } else {
+                    paused = !paused;
+                    syncPlayButtonVisual(!paused);
+                    if (!paused) {
+                        scheduleNextStep();
+                    }
                 }
+                return;
             }
-            return;
-        }
 
-        PlaybackState state = playbackController.getPlaybackState().getValue();
-        if (state != null && state.isPlaying) {
-            playbackController.pause();
-        } else {
-            if (playbackComplete || state == null || state.isAtEnd || timeline.size() <= 1) {
-                playbackController.reset();
+            PlaybackState state = playbackController.getPlaybackState().getValue();
+            if (state != null && state.isPlaying) {
+                playbackController.pause();
+            } else {
+                if (playbackComplete || (state != null && state.isAtEnd)) {
+                    playbackController.reset();
+                }
+                playbackController.play();
             }
-            playbackController.play();
+        } catch (Throwable t) {
+            Log.e(TAG, "Error in handlePlayPause", t);
         }
     }
 
@@ -1631,12 +3779,22 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             stepIndex = 0;
             auxIndex = 0;
             foundIndex = -1;
+            visualizerView.setRadixOriginalValues(workingValues);
+            visualizerView.setRadixMaxValue(radixMaxValue);
+            syncRadixVisualizerHeight();
         }
 
         if (radixDivisor > radixMaxValue) {
-            finish("Radix Sort completed");
+            playbackComplete = true;
+            visualizerView.setRadixComplete(true, workingValues);
+            visualizerView.clearPointerState();
+            updateArrayVisualization(0, -1, -1);
+            updateStatusText("Radix Sort Completed ✓ | Final Array: " + java.util.Arrays.toString(workingValues));
+            finish("Radix Sort Completed ✓");
             return;
         }
+
+        String digitName = resolveRadixPlaceName(radixDivisor);
 
         if (auxIndex < workingValues.length) {
             int currentIndex = auxIndex;
@@ -1644,17 +3802,29 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             int activeBucket = Math.abs(currentValue / radixDivisor) % 10;
             stepIndex = currentIndex;
             foundIndex = activeBucket;
-            visualizerView.setRadixState(radixDivisor, activeBucket);
-            visualizerView.setPointerState("i", currentIndex, "", -1);
+            visualizerView.setRadixState(radixDivisor, activeBucket, currentIndex + 1);
+            syncRadixVisualizerHeight();
+            visualizerView.setPointerState(digitName + " = " + activeBucket, currentIndex, "", -1);
             updateArrayVisualization(currentIndex, -1, -1);
             setHighlightedLines(2, 1);
+
+            int prevCount = 0;
+            for (int k = 0; k < currentIndex; k++) {
+                if (Math.abs(workingValues[k] / radixDivisor) % 10 == activeBucket) {
+                    prevCount++;
+                }
+            }
+            String stabilityNote = prevCount > 0 ? " (FIFO: queued after " + prevCount + " item" + (prevCount > 1 ? "s" : "") + ")" : "";
             updateStatusText(
-                "Reading the "
-                    + describeDigit(radixDivisor)
-                    + " digit of "
+                "Current Pass: " + digitName + " Digit | "
                     + currentValue
-                    + " -> bucket "
+                    + " → "
+                    + digitName.toLowerCase(Locale.US)
+                    + " = "
                     + activeBucket
+                    + " ➔ Bucket "
+                    + activeBucket
+                    + stabilityNote
             );
             syncScrollToFocus(currentIndex);
             auxIndex = currentIndex + 1;
@@ -1662,17 +3832,40 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         }
 
         int completedDivisor = radixDivisor;
+        String completedPlace = resolveRadixPlaceName(completedDivisor);
         workingValues = countingSortByDigit(workingValues, completedDivisor);
         foundIndex = -1;
         auxIndex = 0;
         stepIndex = 0;
-        visualizerView.setRadixState(completedDivisor, -1);
+        visualizerView.setRadixState(completedDivisor, -1, workingValues.length);
+        syncRadixVisualizerHeight();
         visualizerView.clearPointerState();
         updateArrayVisualization(0, -1, -1);
         setHighlightedLines(3, 2);
-        updateStatusText("Finished the " + describeDigit(completedDivisor) + " digit bucket pass.");
+        updateStatusText(completedPlace + " Digit Completed | Buckets collected stably 0 → 9 | Result: " + java.util.Arrays.toString(workingValues));
         syncScrollToFocus(0);
         radixDivisor *= 10;
+    }
+
+    private String resolveRadixPlaceName(int divisor) {
+        if (divisor == 1) return "Units";
+        if (divisor == 10) return "Tens";
+        if (divisor == 100) return "Hundreds";
+        if (divisor == 1000) return "Thousands";
+        if (divisor == 10000) return "Ten Thousands";
+        if (divisor == 100000) return "Hundred Thousands";
+        return "10^" + (int) Math.round(Math.log10(divisor));
+    }
+
+    private void syncRadixVisualizerHeight() {
+        if ("radix_sort".equals(techniqueId) && !isLandscapeLayout() && visualizerView != null) {
+            int desiredH = visualizerView.resolveRadixDesiredHeight();
+            ViewGroup.LayoutParams lp = visualizerView.getLayoutParams();
+            if (lp != null && lp.height != desiredH) {
+                lp.height = desiredH;
+                visualizerView.setLayoutParams(lp);
+            }
+        }
     }
 
     private int[] buildTraversalOrderInternal() {
@@ -1701,10 +3894,13 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     }
 
     @Override
+    public int getGraphStartNode() {
+        return graphStartNode;
+    }
+
+    @Override
     public int[][] getGraphEdges() {
-        return new int[][]{
-            {0, 1}, {1, 2}, {0, 3}, {1, 3}, {1, 4}, {2, 4}, {3, 4}
-        };
+        return com.dsavisualizer.app.ui.visualization.runtime.GraphStepEngine.getGraphEdges(graphPreset, graphNodeCount);
     }
 
     private int[] buildDynamicGraphTraversal() {
@@ -1725,10 +3921,37 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         for (java.util.List<Integer> list : adj) {
             java.util.Collections.sort(list);
         }
-        
-        if ("depth_first_search".equals(techniqueId) || "DFS".equals(currentTraversalMode)) {
+
+        int start = Math.max(0, Math.min(graphStartNode, nodeCount - 1));
+
+        if ("topological_sort".equals(techniqueId)) {
+            int[] inDegree = new int[nodeCount];
+            java.util.List<java.util.List<Integer>> dirAdj = new java.util.ArrayList<>();
+            for (int i = 0; i < nodeCount; i++) dirAdj.add(new java.util.ArrayList<>());
+            for (int[] e : edges) {
+                if (e[0] < nodeCount && e[1] < nodeCount) {
+                    dirAdj.get(e[0]).add(e[1]);
+                    inDegree[e[1]]++;
+                }
+            }
+            java.util.Queue<Integer> q = new java.util.LinkedList<>();
+            for (int i = 0; i < nodeCount; i++) {
+                if (inDegree[i] == 0) q.add(i);
+            }
+            while (!q.isEmpty()) {
+                int curr = q.poll();
+                order.add(curr);
+                for (int nxt : dirAdj.get(curr)) {
+                    inDegree[nxt]--;
+                    if (inDegree[nxt] == 0) q.add(nxt);
+                }
+            }
+            for (int i = 0; i < nodeCount; i++) {
+                if (!order.contains(i)) order.add(i);
+            }
+        } else if ("depth_first_search".equals(techniqueId) || "DFS".equals(currentTraversalMode)) {
             java.util.Stack<Integer> stack = new java.util.Stack<>();
-            stack.push(0);
+            stack.push(start);
             while (!stack.isEmpty()) {
                 int curr = stack.pop();
                 if (!visited[curr]) {
@@ -1742,10 +3965,28 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
                     }
                 }
             }
+            for (int i = 0; i < nodeCount; i++) {
+                if (!visited[i]) {
+                    stack.push(i);
+                    while (!stack.isEmpty()) {
+                        int curr = stack.pop();
+                        if (!visited[curr]) {
+                            visited[curr] = true;
+                            order.add(curr);
+                            for (int k = adj.get(curr).size() - 1; k >= 0; k--) {
+                                int neighbor = adj.get(curr).get(k);
+                                if (!visited[neighbor]) {
+                                    stack.push(neighbor);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         } else {
             java.util.Queue<Integer> queue = new java.util.LinkedList<>();
-            queue.add(0);
-            visited[0] = true;
+            queue.add(start);
+            visited[start] = true;
             while (!queue.isEmpty()) {
                 int curr = queue.poll();
                 order.add(curr);
@@ -1753,6 +3994,22 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
                     if (!visited[neighbor]) {
                         visited[neighbor] = true;
                         queue.add(neighbor);
+                    }
+                }
+            }
+            for (int i = 0; i < nodeCount; i++) {
+                if (!visited[i]) {
+                    queue.add(i);
+                    visited[i] = true;
+                    while (!queue.isEmpty()) {
+                        int curr = queue.poll();
+                        order.add(curr);
+                        for (int neighbor : adj.get(curr)) {
+                            if (!visited[neighbor]) {
+                                visited[neighbor] = true;
+                                queue.add(neighbor);
+                            }
+                        }
                     }
                 }
             }
@@ -2040,6 +4297,13 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     @Override
     public void setWorkingValues(int[] values) {
         workingValues = values;
+        if (visualizerView != null) {
+            if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+                visualizerView.setArrayState(values, visualizerView.getHighlightIndex(), visualizerView.getSecondaryHighlightIndex(), -1);
+            } else if (isTreeOrGraph()) {
+                visualizerView.setTraversalState(values, traversalOrder, stepIndex);
+            }
+        }
     }
 
     @Override
@@ -2055,6 +4319,9 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     @Override
     public void setStepIndex(int value) {
         stepIndex = value;
+        if (visualizerView != null) {
+            visualizerView.setStepIndex(value);
+        }
     }
 
     @Override
@@ -2145,6 +4412,9 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     @Override
     public void setRadixMaxValue(int value) {
         radixMaxValue = value;
+        if (visualizerView != null) {
+            visualizerView.setRadixMaxValue(value);
+        }
     }
 
     @Override
@@ -2193,6 +4463,11 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     }
 
     @Override
+    public void setRadixState(int divisor, int activeBucket, int processedCount) {
+        visualizerView.setRadixState(divisor, activeBucket, processedCount);
+    }
+
+    @Override
     public int[] getTraversalOrder() {
         return traversalOrder;
     }
@@ -2205,6 +4480,75 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     @Override
     public int[] buildTraversalOrder() {
         return buildTraversalOrderInternal();
+    }
+
+    @Override
+    public String getPatternText() {
+        return patternText != null ? patternText : "";
+    }
+
+    @Override
+    public void setPatternText(String text) {
+        this.patternText = text != null ? text : "";
+    }
+
+    @Override
+    public String getPatternQuery() {
+        return patternQuery != null ? patternQuery : "";
+    }
+
+    @Override
+    public void setPatternQuery(String query) {
+        this.patternQuery = query != null ? query : "";
+    }
+
+    @Override
+    public int getPatternPreset() {
+        return stringPatternPreset;
+    }
+
+    @Override
+    public void setPatternPreset(int preset) {
+        this.stringPatternPreset = preset;
+    }
+
+    @Override
+    public void setPatternState(String text, String query, int windowStart, int matchIndex, boolean found) {
+        this.patternText = text != null ? text : "";
+        this.patternQuery = query != null ? query : "";
+        this.patternWindowStart = windowStart;
+        this.patternMatchIndex = matchIndex;
+        this.patternFound = found;
+        if (visualizerView != null) {
+            visualizerView.setPatternState(this.patternText, this.patternQuery, windowStart, matchIndex, found);
+        }
+    }
+
+    @Override
+    public void setAuxiliaryArray(int[] aux) {
+        if (visualizerView != null) {
+            visualizerView.setAuxiliaryArray(aux);
+        }
+    }
+
+    @Override
+    public int getAdvancedDsPreset() {
+        return advancedDsPreset;
+    }
+
+    @Override
+    public void setAdvancedDsPreset(int preset) {
+        this.advancedDsPreset = preset;
+    }
+
+    @Override
+    public String getAdvancedDsCustomInput() {
+        return advancedDsCustomInput != null ? advancedDsCustomInput : "";
+    }
+
+    @Override
+    public void setAdvancedDsCustomInput(String input) {
+        this.advancedDsCustomInput = input;
     }
 
     private void applyRandomData() {
@@ -2287,8 +4631,14 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
                 return;
             }
             String rawValues = valuesInput.getText() == null ? "" : valuesInput.getText().toString().trim();
-            if (!rawValues.isEmpty()) {
-                workingValues = parseArray(rawValues);
+            if (rawValues.isEmpty()) {
+                statusText.setText("Please enter valid numbers like 5, 8, 12");
+                return;
+            }
+            workingValues = parseArray(rawValues);
+            if (workingValues.length == 0) {
+                statusText.setText("Please enter at least one number.");
+                return;
             }
             if ("radix_sort".equals(techniqueId) && containsNegativeValues(workingValues)) {
                 statusText.setText("Radix Sort visualization currently supports only non-negative integers.");
@@ -2337,14 +4687,25 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         }
     }
 
+    private boolean isResettingVisualization = false;
+
     private void resetVisualization() {
-        if (playbackController != null) {
-            playbackController.stop();
+        if (isResettingVisualization) {
+            return;
         }
-        handler.removeCallbacksAndMessages(null);
-        resetRuntimeOnly();
-        bindCurrentState("Press Start to begin");
-        captureSnapshot();
+        isResettingVisualization = true;
+        try {
+            if (playbackController != null) {
+                playbackController.stop();
+                playbackController.restoreState(PlaybackState.initial());
+            }
+            handler.removeCallbacksAndMessages(null);
+            resetRuntimeOnly();
+            bindCurrentState("Press Start to begin");
+            captureSnapshot();
+        } finally {
+            isResettingVisualization = false;
+        }
     }
 
     private void resetRuntimeOnly() {
@@ -2403,27 +4764,31 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         visualizerView.setExpressionInput(expressionInput);
         visualizerView.setUnionFindState(new int[0], -1, -1);
         visualizerView.setDijkstraState(new int[0], new boolean[0], -1);
-        visualizerView.setHuffmanState(new int[0], -1);
+        visualizerView.setHuffmanState(workingValues, new int[0], -1, -1, -1, -1);
         visualizerView.setActiveNodes(-1, -1);
+        visualizerView.setStepIndex(-1);
         setHighlightedLines(-1, -1);
 
         if ("warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
-            || "shortest_paths".equals(techniqueId)) {
+            || "shortest_paths".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId)
+            || VisualizationTechniqueRegistry.isDynamicProgramming(techniqueId)
+            || VisualizationTechniqueRegistry.isBacktracking(techniqueId)) {
             initializeCustomSortPreview();
             visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, resolveMatrixLabel());
-        } else if ("pattern_matching".equals(techniqueId)) {
+        } else if ("pattern_matching".equals(techniqueId) || VisualizationTechniqueRegistry.isStringPattern(techniqueId)) {
             patternWindowStart = 0;
             patternMatchIndex = 0;
             visualizerView.setPatternState(patternText, patternQuery, patternWindowStart, patternMatchIndex, false);
-        } else if ("union_find".equals(techniqueId)) {
-            initializeUnionFindPreview();
         } else if ("dijkstra_algorithm".equals(techniqueId)) {
             initializeDijkstraPreview();
         } else if ("huffman_algorithm".equals(techniqueId)) {
             initializeHuffmanPreview();
         } else if (isTreeOrGraph()) {
             visualizerView.setTraversalState(workingValues, traversalOrder, -1);
+        } else if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+            initializeCustomSortPreview();
         } else {
             updateArrayVisualization(-1, -1, -1);
             initializeCustomSortPreview();
@@ -2436,24 +4801,31 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     public void bindCurrentState(String message) {
         if ("warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
-            || "shortest_paths".equals(techniqueId)) {
+            || "shortest_paths".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId)
+            || VisualizationTechniqueRegistry.isDynamicProgramming(techniqueId)
+            || VisualizationTechniqueRegistry.isBacktracking(techniqueId)) {
             visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, resolveMatrixLabel());
-        } else if ("pattern_matching".equals(techniqueId)) {
+        } else if ("pattern_matching".equals(techniqueId) || VisualizationTechniqueRegistry.isStringPattern(techniqueId)) {
             visualizerView.setPatternState(patternText, patternQuery, patternWindowStart, patternMatchIndex, patternFound);
-        } else if ("union_find".equals(techniqueId)) {
-            visualizerView.setUnionFindState(unionParents, unionFocusNode, unionRootNode);
         } else if ("dijkstra_algorithm".equals(techniqueId)) {
             visualizerView.setDijkstraState(dijkstraDistances, dijkstraSettled, dijkstraCurrentNode);
         } else if ("huffman_algorithm".equals(techniqueId)) {
-            visualizerView.setHuffmanState(huffmanQueueWeights, huffmanMergedWeight);
+            visualizerView.setHuffmanState(workingValues, huffmanQueueWeights, huffmanMergedWeight, huffmanMergedLeft, huffmanMergedRight, stepIndex);
         } else if (isTreeOrGraph()) {
             visualizerView.setTraversalState(workingValues, traversalOrder, stepIndex);
+        } else if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+            visualizerView.invalidate();
         } else {
             updateArrayVisualization(stepIndex, auxIndex, foundIndex);
             refreshCustomSortScene();
         }
 
-        updateStatusText(message);
+        if ("radix_sort".equals(techniqueId) && stepIndex == -1) {
+            updateStatusText("Current Pass: Units Digit");
+        } else {
+            updateStatusText(message);
+        }
     }
 
     @Override
@@ -2469,6 +4841,9 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     }
 
     private int resolveCompletedStart() {
+        if ("radix_sort".equals(techniqueId) && (playbackComplete || (radixMaxValue > 0 && radixDivisor > radixMaxValue))) {
+            return 0;
+        }
         if ("heapsort".equals(techniqueId) && heapSize >= 0 && heapSize < workingValues.length) {
             return heapSize;
         }
@@ -2491,6 +4866,9 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     }
 
     private int resolveCompletedEnd() {
+        if ("radix_sort".equals(techniqueId) && (playbackComplete || (radixMaxValue > 0 && radixDivisor > radixMaxValue))) {
+            return workingValues.length - 1;
+        }
         if ("heapsort".equals(techniqueId) && heapSize >= 0 && heapSize < workingValues.length) {
             return workingValues.length - 1;
         }
@@ -3346,6 +5724,7 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         snapshot.mergePassStart = mergePassStart;
         snapshot.radixDivisor = radixDivisor;
         snapshot.radixMaxValue = radixMaxValue;
+        snapshot.radixCompleted = playbackComplete && "radix_sort".equals(techniqueId);
         snapshot.quickLow = quickLow;
         snapshot.quickHigh = quickHigh;
         snapshot.quickStackLow = quickStackLow.clone();
@@ -3355,6 +5734,7 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         snapshot.matrixK = matrixK;
         snapshot.matrixRow = matrixRow;
         snapshot.matrixCol = matrixCol;
+        snapshot.matrixLabel = matrixLabel;
         snapshot.heapSize = heapSize;
         snapshot.heapModePhase = heapModePhase;
         snapshot.heapSortPhase = heapSortPhase;
@@ -3377,6 +5757,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         snapshot.dijkstraWeights = copyMatrix(dijkstraWeights);
         snapshot.huffmanQueueWeights = huffmanQueueWeights.clone();
         snapshot.huffmanMergedWeight = huffmanMergedWeight;
+        snapshot.huffmanMergedLeft = huffmanMergedLeft;
+        snapshot.huffmanMergedRight = huffmanMergedRight;
         snapshot.running = running;
         snapshot.paused = paused;
         snapshot.statusText = statusText.getText() == null ? "" : statusText.getText().toString();
@@ -3399,10 +5781,13 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         return previous.stepIndex == current.stepIndex
             && previous.auxIndex == current.auxIndex
             && previous.foundIndex == current.foundIndex
+            && previous.radixDivisor == current.radixDivisor
+            && previous.radixCompleted == current.radixCompleted
             && previous.binaryMidIndex == current.binaryMidIndex
             && previous.matrixK == current.matrixK
             && previous.matrixRow == current.matrixRow
             && previous.matrixCol == current.matrixCol
+            && safeEquals(previous.matrixLabel, current.matrixLabel)
             && previous.unionFocusNode == current.unionFocusNode
             && previous.unionRootNode == current.unionRootNode
             && previous.dijkstraCurrentNode == current.dijkstraCurrentNode
@@ -3439,6 +5824,11 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         mergePassStart = snapshot.mergePassStart;
         radixDivisor = snapshot.radixDivisor;
         radixMaxValue = snapshot.radixMaxValue;
+        if (snapshot.radixCompleted) {
+            visualizerView.setRadixComplete(true, snapshot.workingValues);
+        } else {
+            visualizerView.clearRadixComplete();
+        }
         quickLow = snapshot.quickLow;
         quickHigh = snapshot.quickHigh;
         quickStackLow = snapshot.quickStackLow.clone();
@@ -3448,6 +5838,7 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         matrixK = snapshot.matrixK;
         matrixRow = snapshot.matrixRow;
         matrixCol = snapshot.matrixCol;
+        matrixLabel = snapshot.matrixLabel == null ? "" : snapshot.matrixLabel;
         heapSize = snapshot.heapSize;
         heapModePhase = snapshot.heapModePhase;
         heapSortPhase = snapshot.heapSortPhase;
@@ -3470,6 +5861,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         dijkstraWeights = copyMatrix(snapshot.dijkstraWeights);
         huffmanQueueWeights = snapshot.huffmanQueueWeights.clone();
         huffmanMergedWeight = snapshot.huffmanMergedWeight;
+        huffmanMergedLeft = snapshot.huffmanMergedLeft;
+        huffmanMergedRight = snapshot.huffmanMergedRight;
         running = snapshot.running;
         paused = snapshot.paused;
 
@@ -3479,14 +5872,15 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             visualizerView.setPatternState(patternText, patternQuery, patternWindowStart, patternMatchIndex, patternFound);
         } else if ("warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
-            || "shortest_paths".equals(techniqueId)) {
+            || "shortest_paths".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId)
+            || VisualizationTechniqueRegistry.isDynamicProgramming(techniqueId)
+            || VisualizationTechniqueRegistry.isBacktracking(techniqueId)) {
             visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, resolveMatrixLabel());
-        } else if ("union_find".equals(techniqueId)) {
-            visualizerView.setUnionFindState(unionParents, unionFocusNode, unionRootNode);
         } else if ("dijkstra_algorithm".equals(techniqueId)) {
             visualizerView.setDijkstraState(dijkstraDistances, dijkstraSettled, dijkstraCurrentNode);
         } else if ("huffman_algorithm".equals(techniqueId)) {
-            visualizerView.setHuffmanState(huffmanQueueWeights, huffmanMergedWeight);
+            visualizerView.setHuffmanState(workingValues, huffmanQueueWeights, huffmanMergedWeight, huffmanMergedLeft, huffmanMergedRight, stepIndex);
         } else if (isTreeOrGraph()) {
             visualizerView.setTraversalState(workingValues, traversalOrder, stepIndex);
         } else {
@@ -3618,18 +6012,6 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             }
             if (techniqueId.contains("linked_list") || techniqueId.contains("circular_header_list")) {
                 return buildLinkedListExplanation(message);
-            }
-            if ("union_find".equals(techniqueId)) {
-                return "Union-Find follows parent links until it reaches the representative root of the set.";
-            }
-            if ("hash_collision_handling".equals(techniqueId)) {
-                return "This hashing step checks the current slot and follows the collision rule until a usable location is found.";
-            }
-            if ("recursion_basics".equals(techniqueId)) {
-                return "This recursion step reduces the problem to a smaller version and moves closer to the base case.";
-            }
-            if ("dynamic_programming_basics".equals(techniqueId)) {
-                return "This dynamic-programming step fills one more state using values that were already solved earlier.";
             }
         }
         if (isTreeOrGraph()) {
@@ -3975,8 +6357,23 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
 
     @Override
     public void setHuffmanState(int[] queueWeights, int mergedWeight) {
+        this.huffmanQueueWeights = queueWeights;
+        this.huffmanMergedWeight = mergedWeight;
+        this.huffmanMergedLeft = -1;
+        this.huffmanMergedRight = -1;
         if (visualizerView != null) {
-            visualizerView.setHuffmanState(queueWeights, mergedWeight);
+            visualizerView.setHuffmanState(workingValues, queueWeights, mergedWeight, -1, -1, stepIndex);
+        }
+    }
+
+    @Override
+    public void setHuffmanState(int[] queueWeights, int mergedWeight, int leftWeight, int rightWeight) {
+        this.huffmanQueueWeights = queueWeights;
+        this.huffmanMergedWeight = mergedWeight;
+        this.huffmanMergedLeft = leftWeight;
+        this.huffmanMergedRight = rightWeight;
+        if (visualizerView != null) {
+            visualizerView.setHuffmanState(workingValues, queueWeights, mergedWeight, leftWeight, rightWeight, stepIndex);
         }
     }
 
@@ -4029,6 +6426,11 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
 
     @Override
     public void setMatrixState(int[][] values, int k, int row, int col, String label) {
+        this.matrixValues = copyMatrix(values);
+        this.matrixK = k;
+        this.matrixRow = row;
+        this.matrixCol = col;
+        this.matrixLabel = label == null ? "" : label;
         if (visualizerView != null) {
             visualizerView.setMatrixState(values, k, row, col, label);
         }
@@ -4201,7 +6603,10 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
 
     @Override
     public void initializeHuffmanPreview() {
-        HuffmanStepEngine.initializePreview(this);
+        int[] weights = (workingValues != null && workingValues.length >= 2)
+                ? workingValues
+                : com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultWeights(huffmanPreset);
+        com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.initializePreview(this, weights);
     }
 
     private int[] parseArray(String raw) {
@@ -4558,6 +6963,45 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     }
 
     private int estimatePlaybackTotalSteps() {
+        if ("bt_n_queens".equals(techniqueId) || "backtracking_n_queens".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getNQueensSteps(nQueensBoardSize).length;
+        }
+        if ("bt_sudoku".equals(techniqueId) || "backtracking_sudoku".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getSudokuSteps(sudokuGridSize, sudokuPreset).length;
+        }
+        if ("bt_knights_tour".equals(techniqueId) || "backtracking_knights_tour".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getKnightsTourMoves(knightsTourBoardSize, knightsTourStartPos).length;
+        }
+        if ("bt_maze".equals(techniqueId) || "bt_rat_in_a_maze".equals(techniqueId) || "backtracking_maze_solver".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getMazeSteps(mazeSize, mazePreset).length;
+        }
+        if ("bt_hamiltonian".equals(techniqueId) || "backtracking_hamiltonian".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getHamiltonianSteps(hamiltonianNodes, hamiltonianType).length;
+        }
+        if ("bt_graph_coloring".equals(techniqueId) || "backtracking_graph_coloring".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getGraphColoringSteps(graphColoringColors, graphColoringPreset).length;
+        }
+        if (VisualizationTechniqueRegistry.isDynamicProgramming(techniqueId) || (techniqueId != null && techniqueId.startsWith("dp_"))) {
+            return com.dsavisualizer.app.ui.visualization.runtime.DpStepEngine.getDpTotalSteps(techniqueId, dpPreset);
+        }
+        if (VisualizationTechniqueRegistry.isStringPattern(techniqueId) || "pattern_matching".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.StringPatternStepEngine.getStringPatternTotalSteps(techniqueId, patternText, patternQuery, stringPatternPreset);
+        }
+        if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getTotalSteps(techniqueId, advancedDsPreset);
+        }
+        if (VisualizationTechniqueRegistry.isSpecialized(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.SpecializedStepEngine.getTotalSteps(techniqueId, specializedPreset);
+        }
+        if ("avl_tree".equals(techniqueId)) {
+            return com.dsavisualizer.app.ui.visualization.runtime.AvlTreeStepEngine.getTotalSteps(workingValues);
+        }
+        if ("huffman_algorithm".equals(techniqueId)) {
+            int[] weights = (workingValues != null && workingValues.length >= 2)
+                    ? workingValues
+                    : com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getDefaultWeights(huffmanPreset);
+            return com.dsavisualizer.app.ui.visualization.runtime.HuffmanStepEngine.getTotalSteps(weights);
+        }
         if (isSearchingMode()) {
             return Math.max(workingValues.length, timeline.size() - 1);
         }
@@ -4565,12 +7009,21 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             return Math.max(workingValues.length * Math.max(1, workingValues.length - 1), timeline.size() - 1);
         }
         if (isGraphTechnique() || isTreeOrGraph()) {
+            if (techniqueId != null && techniqueId.startsWith("graph_")) {
+                return com.dsavisualizer.app.ui.visualization.runtime.GraphExpandedStepEngine.getTotalSteps(techniqueId);
+            }
             return Math.max(Math.max(traversalOrder.length, workingValues.length), timeline.size() - 1);
         }
         return Math.max(Math.max(workingValues.length, 1), timeline.size() - 1);
     }
 
     private int resolveAccentColor() {
+        if (VisualizationTechniqueRegistry.isSpecialized(techniqueId)) {
+            return android.graphics.Color.parseColor("#10B981");
+        }
+        if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+            return android.graphics.Color.parseColor("#8B5CF6");
+        }
         if (isSearchingMode()) {
             return android.graphics.Color.parseColor("#2563EB");
         }
@@ -5110,14 +7563,9 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     }
 
     private int resolveGraphEdgeWeight(int from, int to) {
-        if ((from == 0 && to == 1) || (from == 1 && to == 0)) return 4;
-        if ((from == 1 && to == 2) || (from == 2 && to == 1)) return 3;
-        if ((from == 0 && to == 3) || (from == 3 && to == 0)) return 2;
-        if ((from == 1 && to == 3) || (from == 3 && to == 1)) return 1;
-        if ((from == 1 && to == 4) || (from == 4 && to == 1)) return 5;
-        if ((from == 2 && to == 4) || (from == 4 && to == 2)) return 2;
-        if ((from == 3 && to == 4) || (from == 4 && to == 3)) return 7;
-        if (from >= 0 && to >= 0) return Math.abs(from - to) + 2;
+        int w = com.dsavisualizer.app.ui.visualization.runtime.GraphStepEngine.getGraphEdgeWeight(graphPreset, from, to);
+        if (w > 0) return w;
+        if (from >= 0 && to >= 0 && from != to) return Math.abs(from - to) + 2;
         return -1;
     }
 
@@ -5535,16 +7983,21 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
     }
 
     private void stepForwardOnce() {
-        PlaybackState state = playbackController == null ? null : playbackController.getPlaybackState().getValue();
-        if (state != null && state.isAtEnd) {
-            shakeStepBoundary(true);
-            return;
-        }
-        pulseStepButtons(true);
-        if (playbackController != null) {
-            playbackController.nextStep();
-        } else {
-            runSingleStep();
+        try {
+            PlaybackState state = playbackController == null ? null : playbackController.getPlaybackState().getValue();
+            if (state != null && state.isAtEnd) {
+                if (playbackController != null) {
+                    playbackController.reset();
+                }
+            }
+            pulseStepButtons(true);
+            if (playbackController != null) {
+                playbackController.nextStep();
+            } else {
+                runSingleStep();
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error in stepForwardOnce", t);
         }
     }
 
@@ -5886,7 +8339,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             return;
         }
 
-        if ("floyd_algorithm".equals(techniqueId) || "shortest_paths".equals(techniqueId)) {
+        if ("floyd_algorithm".equals(techniqueId) || "shortest_paths".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId) || "graph_johnson".equals(techniqueId)) {
             matrixValues = new int[][] {
                 {0, 5, 9999, 10},
                 {9999, 0, 3, 9999},
@@ -5897,6 +8351,144 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
             matrixRow = -1;
             matrixCol = -1;
             visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, resolveMatrixLabel());
+            return;
+        }
+
+        if ("bt_n_queens".equals(techniqueId) || "backtracking_n_queens".equals(techniqueId)) {
+            int n = nQueensBoardSize >= 4 ? nQueensBoardSize : 4;
+            matrixValues = new int[n][n];
+            matrixK = -1;
+            matrixRow = -1;
+            matrixCol = -1;
+            matrixLabel = "N-Queens " + n + "x" + n + " Chessboard";
+            visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, matrixLabel);
+            return;
+        }
+
+        if ("bt_sudoku".equals(techniqueId) || "backtracking_sudoku".equals(techniqueId)) {
+            matrixValues = com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getInitialSudokuBoard(sudokuGridSize, sudokuPreset);
+            matrixK = -1;
+            matrixRow = -1;
+            matrixCol = -1;
+            matrixLabel = "Sudoku " + sudokuGridSize + "x" + sudokuGridSize + " Grid (Preset " + sudokuPreset + ")";
+            visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, matrixLabel);
+            return;
+        }
+
+        if ("bt_knights_tour".equals(techniqueId) || "backtracking_knights_tour".equals(techniqueId)) {
+            int n = (knightsTourBoardSize == 8 || knightsTourBoardSize == 6) ? knightsTourBoardSize : 5;
+            matrixValues = com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getInitialKnightsTourBoard(n, knightsTourStartPos);
+            int startR = (knightsTourStartPos == 2) ? n / 2 : 0;
+            int startC = (knightsTourStartPos == 2) ? n / 2 : 0;
+            matrixK = 1;
+            matrixRow = startR;
+            matrixCol = startC;
+            matrixLabel = "Knight's Tour " + n + "x" + n + " (" + (knightsTourStartPos == 2 ? "Center" : "Corner") + ")";
+            visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, matrixLabel);
+            return;
+        }
+
+        if ("bt_rat_in_a_maze".equals(techniqueId) || "bt_maze".equals(techniqueId) || "backtracking_maze_solver".equals(techniqueId)) {
+            matrixValues = com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getInitialMaze(mazeSize, mazePreset);
+            matrixK = -1;
+            matrixRow = 0;
+            matrixCol = 0;
+            matrixLabel = "Rat in a Maze " + mazeSize + "x" + mazeSize + " (Preset " + mazePreset + ")";
+            visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, matrixLabel);
+            return;
+        }
+
+        if ("bt_hamiltonian".equals(techniqueId) || "backtracking_hamiltonian".equals(techniqueId)) {
+            workingValues = new int[hamiltonianNodes];
+            for (int i = 0; i < hamiltonianNodes; i++) workingValues[i] = i;
+            matrixLabel = "Hamiltonian " + (hamiltonianType == 1 ? "Cycle" : "Path") + " (" + hamiltonianNodes + " Vertices)";
+            visualizerView.setTraversalState(workingValues, new int[0], -1);
+            visualizerView.clearActiveEdge();
+            return;
+        }
+
+        if ("bt_graph_coloring".equals(techniqueId) || "backtracking_graph_coloring".equals(techniqueId)) {
+            int n = com.dsavisualizer.app.ui.visualization.runtime.BacktrackingStepEngine.getColoringGraphNodeCount(graphColoringPreset);
+            workingValues = new int[n];
+            matrixLabel = "Graph m-Coloring (m=" + graphColoringColors + ", Preset " + graphColoringPreset + ")";
+            visualizerView.setArrayState(workingValues, -1, -1, -1);
+            visualizerView.clearActiveEdge();
+            return;
+        }
+
+        if (techniqueId != null && techniqueId.startsWith("dp_")) {
+            matrixValues = com.dsavisualizer.app.ui.visualization.runtime.DpStepEngine.getInitialDpMatrix(techniqueId, dpPreset);
+            matrixK = -1;
+            matrixRow = 0;
+            matrixCol = 0;
+            matrixLabel = "DP State Table (" + com.dsavisualizer.app.ui.visualization.runtime.DpStepEngine.getPresetDescription(techniqueId, dpPreset) + ")";
+            visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, matrixLabel);
+            target = dpPreset;
+            return;
+        }
+
+        if (techniqueId != null && techniqueId.startsWith("string_")) {
+            String sample = "ABABDABACDABABCABAB";
+            workingValues = new int[sample.length()];
+            for (int k = 0; k < sample.length(); k++) workingValues[k] = sample.charAt(k);
+            int[] auxValues = new int[] {0, 0, 1, 2, 0, 1, 2, 3, 0};
+            visualizerView.setArrayState(workingValues, -1, 0, -1);
+            visualizerView.setAuxiliaryArray(auxValues);
+            return;
+        }
+
+        if (VisualizationTechniqueRegistry.isAdvancedDs(techniqueId)) {
+            String input = (advancedDsCustomInput != null && !advancedDsCustomInput.trim().isEmpty())
+                    ? advancedDsCustomInput
+                    : com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.getDefaultInput(techniqueId, advancedDsPreset);
+            if (visualizerView != null) {
+                visualizerView.setExpressionInput(input);
+            }
+            setExpressionInput(input);
+
+            if ("ds_bloom_filter".equals(techniqueId) || "adv_bloom_filter".equals(techniqueId)) {
+                // Initialize all 16 bits to 0 in initial preview state
+                workingValues = new int[16];
+            } else if ("ds_disjoint_set".equals(techniqueId) || "adv_dsu".equals(techniqueId)) {
+                workingValues = new int[]{0, 1, 2, 3, 4, 5};
+            } else if ("ds_fenwick_tree".equals(techniqueId) || "adv_fenwick_tree".equals(techniqueId)) {
+                // Initialize all BIT indices to 0 before steps build the tree
+                workingValues = new int[7];
+            } else if ("ds_segment_tree".equals(techniqueId) || "adv_segment_tree".equals(techniqueId)
+                    || "ds_persistent_segment_tree".equals(techniqueId) || "adv_persistent_st".equals(techniqueId)) {
+                int[] parsed = com.dsavisualizer.app.ui.visualization.runtime.AdvancedDsStepEngine.parseBaseArray(input, 4, new int[]{1, 3, 5, 7});
+                int a0 = parsed[0];
+                int a1 = parsed.length > 1 ? parsed[1] : 3;
+                int a2 = parsed.length > 2 ? parsed[2] : 5;
+                int a3 = parsed.length > 3 ? parsed[3] : 7;
+                // Internal nodes start uncomputed (0), only raw leaf values are set
+                workingValues = new int[]{0, 0, 0, a0, a1, a2, a3};
+            } else if ("ds_lru_cache".equals(techniqueId) || "adv_lru_cache".equals(techniqueId)) {
+                // Cache starts empty before initial put operations
+                workingValues = new int[0];
+            } else {
+                List<Integer> list = new ArrayList<>();
+                for (String p : input.split("[,\\s]+")) {
+                    try {
+                        list.add(Integer.parseInt(p.trim()));
+                    } catch (Exception ignored) {}
+                }
+                if (!list.isEmpty()) {
+                    workingValues = new int[list.size()];
+                    for (int k = 0; k < list.size(); k++) workingValues[k] = list.get(k);
+                } else {
+                    workingValues = new int[]{10, 20, 30};
+                }
+            }
+            if (visualizerView != null) {
+                visualizerView.setArrayState(workingValues, -1, -1, -1);
+            }
+            return;
+        }
+
+        if (techniqueId != null && techniqueId.startsWith("spec_")) {
+            workingValues = new int[] {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
+            visualizerView.setArrayState(workingValues, -1, -1, -1);
             return;
         }
 
@@ -5924,7 +8516,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
 
         if ("radix_sort".equals(techniqueId)) {
             radixDivisor = 1;
-            visualizerView.setRadixState(radixDivisor, -1);
+            visualizerView.clearRadixComplete();
+            visualizerView.setRadixState(radixDivisor, -1, 0);
             return;
         }
 
@@ -5945,13 +8538,23 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
 
         if ("radix_sort".equals(techniqueId)) {
             int activeBucket = foundIndex >= 0 && foundIndex <= 9 ? foundIndex : -1;
-            visualizerView.setRadixState(radixDivisor, activeBucket);
+            int count = auxIndex > 0 ? auxIndex : (stepIndex >= 0 ? stepIndex + 1 : -1);
+            if (playbackComplete || radixDivisor > radixMaxValue) {
+                visualizerView.setRadixComplete(true, workingValues);
+            } else {
+                visualizerView.clearRadixComplete();
+                visualizerView.setRadixState(radixDivisor, activeBucket, count);
+            }
             return;
         }
 
         if ("warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
-            || "shortest_paths".equals(techniqueId)) {
+            || "shortest_paths".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId)
+            || "graph_johnson".equals(techniqueId)
+            || VisualizationTechniqueRegistry.isDynamicProgramming(techniqueId)
+            || VisualizationTechniqueRegistry.isBacktracking(techniqueId)) {
             visualizerView.setMatrixState(matrixValues, matrixK, matrixRow, matrixCol, resolveMatrixLabel());
         }
     }
@@ -6081,6 +8684,9 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
 
     @Override
     public String resolveMatrixLabel() {
+        if (matrixLabel != null && !matrixLabel.trim().isEmpty()) {
+            return matrixLabel;
+        }
         return GraphVisualizationController.resolveMatrixLabel(techniqueId);
     }
 
@@ -6658,6 +9264,7 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         int mergePassStart;
         int radixDivisor;
         int radixMaxValue;
+        boolean radixCompleted;
         int quickLow;
         int quickHigh;
         int[] quickStackLow = new int[0];
@@ -6667,6 +9274,7 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         int matrixK;
         int matrixRow;
         int matrixCol;
+        String matrixLabel = "";
         int heapSize;
         int heapModePhase;
         int heapSortPhase;
@@ -6689,6 +9297,8 @@ public class VisualizationFragment extends Fragment implements VisualizationRunt
         int[][] dijkstraWeights = new int[0][0];
         int[] huffmanQueueWeights = new int[0];
         int huffmanMergedWeight;
+        int huffmanMergedLeft;
+        int huffmanMergedRight;
         boolean running;
         boolean paused;
         String statusText = "";

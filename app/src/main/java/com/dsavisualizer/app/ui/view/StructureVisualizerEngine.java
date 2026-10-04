@@ -37,18 +37,14 @@ final class StructureVisualizerEngine implements VisualizerEngine {
             || "traverse_circular_header_list".equals(techniqueId)
             || "search_circular_header_list".equals(techniqueId)
             || "delete_circular_header_list".equals(techniqueId)
-            || "union_find".equals(techniqueId)
-            || "hash_collision_handling".equals(techniqueId)
-            || "recursion_basics".equals(techniqueId)
-            || "dynamic_programming_basics".equals(techniqueId);
+            || "leetcode_valid_parentheses".equals(techniqueId)
+            || "leetcode_reverse_linked_list".equals(techniqueId)
+            || "leetcode_merge_two_sorted_lists".equals(techniqueId)
+            || "leetcode_linked_list_cycle".equals(techniqueId);
     }
 
     @Override
     public void draw(Canvas canvas, TechniqueVisualizerView view, String techniqueId) {
-        if ("union_find".equals(techniqueId)) {
-            view.drawUnionFindScene(canvas);
-            return;
-        }
         if ("postfix_evaluation".equals(techniqueId)
             || "infix_to_postfix".equals(techniqueId)
             || "infix_to_prefix".equals(techniqueId)) {
@@ -95,6 +91,9 @@ final class StructureVisualizerEngine implements VisualizerEngine {
                 || "traverse_circular_header_list".equals(techniqueId)
                 || "search_circular_header_list".equals(techniqueId)
                 || "delete_circular_header_list".equals(techniqueId)
+                || "leetcode_reverse_linked_list".equals(techniqueId)
+                || "leetcode_merge_two_sorted_lists".equals(techniqueId)
+                || "leetcode_linked_list_cycle".equals(techniqueId)
         );
     }
 

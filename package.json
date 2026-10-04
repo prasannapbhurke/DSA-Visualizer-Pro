@@ -1,11 +1,13 @@
 {
   "name": "dsa-visualizer",
   "version": "1.0.0",
-  "description": "Full-stack DSA Visualizer",
+  "description": "Full-stack DSA Visualizer and Android Admin Suite",
   "scripts": {
-    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install && cd ../admin-web && npm install",
     "client": "cd client && npm start",
     "server": "cd server && npm start",
+    "desktop": "cd admin-web && npm run desktop",
+    "desktop:build": "cd admin-web && npm run desktop:build",
     "security:supabase": "cd server && npm run security:supabase",
     "start": "concurrently \"npm run server\" \"npm run client\""
   },

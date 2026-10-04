@@ -13,11 +13,18 @@ import com.google.android.material.color.DynamicColors;
  */
 public class DsaApplication extends Application {
 
+    private static DsaApplication sInstance;
+
     @Override
     public void onCreate() {
         super.onCreate();
+        sInstance = this;
         ThemeHelper.applyThemeMode(new AppPreferences(this).getThemeMode());
         DynamicColors.applyToActivitiesIfAvailable(this);
         RemoteSyncManager.getInstance(this).ensureGuestSession();
+    }
+
+    public static DsaApplication getInstance() {
+        return sInstance;
     }
 }

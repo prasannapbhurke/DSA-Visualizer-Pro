@@ -20,6 +20,7 @@ import com.dsavisualizer.app.ui.fragment.AlgorithmFragment;
 import com.dsavisualizer.app.ui.fragment.CodeFragment;
 import com.dsavisualizer.app.ui.fragment.PracticeFragment;
 import com.dsavisualizer.app.ui.fragment.VisualizationFragment;
+import com.dsavisualizer.app.ui.fragment.LogicBlockFragment;
 import com.dsavisualizer.app.ui.SafeInsetHelper;
 import com.dsavisualizer.app.ui.HapticFeedbackHelper;
 import com.dsavisualizer.app.data.RemoteSyncManager;
@@ -35,6 +36,9 @@ import com.google.android.material.snackbar.Snackbar;
 public class TechniqueDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_TECHNIQUE_ID = "technique_id";
+    public static final String EXTRA_HIDE_DESCRIPTION = "hide_description";
+    public static final String EXTRA_INITIAL_PAGE = "initial_page";
+    public static final String EXTRA_LOGIC_ORDER = "logic_order";
     private static final String STATE_CURRENT_PAGE = "current_page";
     private static final String[] DETAIL_PAGE_TAGS = new String[] {
         "detail_page_0",
@@ -46,8 +50,10 @@ public class TechniqueDetailActivity extends AppCompatActivity {
     private View detailFragmentContainer;
     private MaterialButtonToggleGroup flowToggle;
     private boolean studyModeEnabled = false;
+    private boolean hideDescription = false;
     private int currentPage = 0;
     private String techniqueId = "linear_search";
+    private int logicOrder = 0;  // roadmap order for LeetCode logic block lookup (1-250)
     private AppPreferences appPreferences;
     private WalkthroughOverlayView walkthroughOverlay;
     private final Handler walkthroughHandler = new Handler(Looper.getMainLooper());
@@ -65,6 +71,7 @@ public class TechniqueDetailActivity extends AppCompatActivity {
         String requestedTechniqueId = getIntent().getStringExtra(EXTRA_TECHNIQUE_ID);
         String resolvedTechniqueId = requestedTechniqueId == null ? "linear_search" : requestedTechniqueId;
         techniqueId = resolvedTechniqueId;
+        logicOrder = getIntent().getIntExtra(EXTRA_LOGIC_ORDER, 0);
         appPreferences = new AppPreferences(this);
         appPreferences.markVisited(resolvedTechniqueId);
         appPreferences.addRecent(resolvedTechniqueId);
@@ -127,11 +134,29 @@ public class TechniqueDetailActivity extends AppCompatActivity {
             }
         });
         boolean isLeetCode = resolvedTechniqueId.startsWith("leetcode_");
+        hideDescription = getIntent().getBooleanExtra(EXTRA_HIDE_DESCRIPTION, false) || isLeetCode;
         View practiceBtn = findViewById(R.id.detail_flow_practice);
         if (practiceBtn != null && isLeetCode) {
             practiceBtn.setVisibility(View.GONE);
         }
-        if (isLeetCode && flowLabelView != null) {
+        if (hideDescription) {
+            if (flowLabelView != null) {
+                flowLabelView.setVisibility(View.GONE);
+            }
+            MaterialButton understandBtn = findViewById(R.id.detail_flow_understand);
+            if (understandBtn != null) {
+                understandBtn.setText("Algorithm");
+            }
+            MaterialButton visualizeBtn = findViewById(R.id.detail_flow_visualize);
+            if (visualizeBtn != null) {
+                // For LeetCode Master 2000 problems, rename the Visualization tab to "Logic"
+                visualizeBtn.setText(isLeetCode ? "Logic" : "Visualization");
+            }
+            MaterialButton codeBtn = findViewById(R.id.detail_flow_code);
+            if (codeBtn != null) {
+                codeBtn.setText("Code");
+            }
+        } else if (isLeetCode && flowLabelView != null) {
             flowLabelView.setText("Interview Solution Flow");
         }
 
@@ -169,15 +194,9 @@ public class TechniqueDetailActivity extends AppCompatActivity {
     }
 
     private void applyHeaderVisibility() {
-        boolean showHeader = currentPage == 0 && !studyModeEnabled;
+        boolean showHeader = currentPage == 0 && !studyModeEnabled && !hideDescription;
         if (detailHeaderSection != null) {
             detailHeaderSection.setVisibility(showHeader ? View.VISIBLE : View.GONE);
-        }
-        if (detailFragmentContainer != null) {
-            android.view.ViewGroup.MarginLayoutParams params =
-                (android.view.ViewGroup.MarginLayoutParams) detailFragmentContainer.getLayoutParams();
-            params.topMargin = showHeader ? dpToPx(12) : 0;
-            detailFragmentContainer.setLayoutParams(params);
         }
     }
 
@@ -238,6 +257,7 @@ public class TechniqueDetailActivity extends AppCompatActivity {
             )
             .replace(R.id.detail_fragment_container, fragment, DETAIL_PAGE_TAGS[position])
             .commitAllowingStateLoss();
+        checkFlowToggle(flowToggle, position);
         applyHeaderVisibility();
         updateFlowToggleVisuals();
         maybeShowMiniTip();
@@ -245,6 +265,11 @@ public class TechniqueDetailActivity extends AppCompatActivity {
 
     private Fragment createFragmentForPage(int position) {
         if (position == 1) {
+            // LeetCode Master 2000 problems show Logic Block instead of Visualization
+            boolean isLeetCode = techniqueId != null && techniqueId.startsWith("leetcode_");
+            if (isLeetCode) {
+                return LogicBlockFragment.newInstance(techniqueId, logicOrder);
+            }
             return VisualizationFragment.newInstance(techniqueId);
         }
         if (position == 2) {
@@ -269,6 +294,12 @@ public class TechniqueDetailActivity extends AppCompatActivity {
     }
 
     private int resolveInitialPage(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            return savedInstanceState.getInt(STATE_CURRENT_PAGE, 0);
+        }
+        if (getIntent().hasExtra(EXTRA_INITIAL_PAGE)) {
+            return getIntent().getIntExtra(EXTRA_INITIAL_PAGE, 0);
+        }
         Fragment restoredFragment = getSupportFragmentManager().findFragmentById(R.id.detail_fragment_container);
         int restoredPage = resolvePageForFragment(restoredFragment);
         if (restoredPage >= 0) {
@@ -281,9 +312,6 @@ public class TechniqueDetailActivity extends AppCompatActivity {
                 return taggedPage;
             }
         }
-        if (savedInstanceState != null) {
-            return savedInstanceState.getInt(STATE_CURRENT_PAGE, 0);
-        }
         return 0;
     }
 
@@ -293,6 +321,9 @@ public class TechniqueDetailActivity extends AppCompatActivity {
 
     private int resolvePageForFragment(Fragment fragment) {
         if (fragment instanceof VisualizationFragment) {
+            return 1;
+        }
+        if (fragment instanceof LogicBlockFragment) {
             return 1;
         }
         if (fragment instanceof PracticeFragment) {

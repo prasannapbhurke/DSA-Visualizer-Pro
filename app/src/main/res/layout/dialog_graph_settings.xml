@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_nqueens_dialog"
+        android:paddingStart="24dp"
+        android:paddingTop="26dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="26dp">
+
+        <!-- Title: Graph Algorithm Setup -->
+        <TextView
+            android:id="@+id/graph_settings_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Graph Algorithm Setup"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:id="@+id/graph_settings_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Select a topology preset, start vertex, and vertex count."
+            android:textColor="#94A3B8"
+            android:textSize="13sp" />
+
+        <!-- Section 1 Header: Choose Preset -->
+        <TextView
+            android:id="@+id/graph_preset_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Curated Graph Topologies"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <!-- Preset Selection Buttons (Preset 1, Preset 2, Preset 3) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_preset_1"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="Classic DAG"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_preset_2"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:text="Dense Mesh"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_preset_3"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="Star Hub"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+        </LinearLayout>
+
+        <!-- Preset Description Card -->
+        <LinearLayout
+            android:id="@+id/graph_desc_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_nqueens_dialog"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:id="@+id/graph_preset_desc_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Topology Details:"
+                android:textColor="#F87171"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/graph_preset_desc_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="5 Vertices | Edges: (0-1, 4), (0-3, 2), (1-2, 3), (1-3, 1), (1-4, 5), (2-4, 2), (3-4, 7)"
+                android:textColor="#E2E8F0"
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp" />
+        </LinearLayout>
+
+        <!-- Section 2 Header: Start / Source Vertex -->
+        <TextView
+            android:id="@+id/graph_start_node_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Start / Source Vertex"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Select the root vertex from which traversal or pathfinding starts:"
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:weightSum="6">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_node_0"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="3dp"
+                android:text="0"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_node_1"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:text="1"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_node_2"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:text="2"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_node_3"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:text="3"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_node_4"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:text="4"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_node_5"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginStart="3dp"
+                android:text="5"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+        </LinearLayout>
+
+        <!-- Section 3 Header: Active Vertices Count -->
+        <TextView
+            android:id="@+id/graph_node_count_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Active Vertices Count"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_count_4"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="4 Nodes"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_count_5"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:text="5 Nodes"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/graph_count_6"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="6 Nodes"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+        </LinearLayout>
+
+        <!-- Close / Apply Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/graph_btn_close"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:text="Apply &amp; Visualize"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="#DC2626"
+            app:cornerRadius="16dp" />
+
+    </LinearLayout>
+</ScrollView>

@@ -51,3 +51,6 @@ replay_pid*
 .vscode/
 .kotlin/
 .idea/
+
+.vercel
+.env*

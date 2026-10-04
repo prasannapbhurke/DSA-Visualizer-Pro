@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_nqueens_dialog"
+    android:paddingStart="24dp"
+    android:paddingTop="28dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="28dp">
+
+    <!-- Title: Sudoku Settings -->
+    <TextView
+        android:id="@+id/sudoku_settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Sudoku Settings"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/sudoku_settings_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Choose grid size and puzzle difficulty for the Sudoku Solver."
+        android:textColor="#94A3B8"
+        android:textSize="13sp" />
+
+    <!-- Section 1 Header: Grid Size -->
+    <TextView
+        android:id="@+id/sudoku_grid_size_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:text="Grid Size"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- Grid size options: 4x4 Mini vs 9x9 Classic -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sudoku_size_4"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="4 x 4 (Mini)"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sudoku_size_9"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="9 x 9 (Classic)"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+    </LinearLayout>
+
+    <!-- Section 2 Header: Puzzle Preset -->
+    <TextView
+        android:id="@+id/sudoku_preset_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Puzzle Difficulty"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- Preset options: Preset 1 (Easy) vs Preset 2 (Medium) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sudoku_preset_1"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="Preset 1 (Easy)"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sudoku_preset_2"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="Preset 2 (Medium)"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+    </LinearLayout>
+
+    <!-- Close button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/sudoku_btn_close"
+        android:layout_width="128dp"
+        android:layout_height="46dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="26dp"
+        android:text="Close"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        app:backgroundTint="#7C3AED"
+        app:cornerRadius="16dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp" />
+
+</LinearLayout>

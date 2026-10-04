@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeetCode 1929: Concatenation of Array - Educational Video</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top App Navigation / Header -->
+  <header class="app-header">
+    <div class="brand-badge">
+      <div class="brand-icon">&lt;/&gt;</div>
+      <div class="brand-title">
+        <h1>LeetCode 1929: Concatenation of Array</h1>
+        <p>Complete Beginner Educational Video • 15 Synchronized Scenes</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-voice" class="voice-btn" title="Toggle Natural Voice Narration">🎙️ Voice: ON</button>
+      <button id="btn-speed" class="speed-btn" title="Adjust Teaching Speed">⚡ 1x</button>
+      <button id="btn-record" class="rec-btn" title="Export as Video File">🎬 Record &amp; Download Video</button>
+    </div>
+  </header>
+
+  <!-- Main 16:9 Video Player Viewport -->
+  <main class="video-container">
+    <div id="video-stage" class="video-stage">
+      
+      <!-- Top Stage Floating Meta Badges -->
+      <div class="stage-top-meta">
+        <span id="chapter-badge" class="chapter-badge">Scene 1: Introduction</span>
+        <span id="time-readout" class="duration-badge">Scene 1 / 15</span>
+      </div>
+
+      <!-- Animated Stage Content Area -->
+      <div id="stage-content" class="stage-content">
+        <!-- Rendered dynamically by script.js -->
+      </div>
+
+      <!-- Synced Subtitles & Captions Bar -->
+      <div class="subtitles-overlay">
+        <p id="subtitles-text" class="subtitles-text">
+          Today we're solving a very easy but important LeetCode problem. The goal is to understand how to duplicate an array...
+        </p>
+      </div>
+
+      <!-- SVG Layer for animated arrows -->
+      <svg id="svg-arrows" class="svg-arrow-layer"></svg>
+    </div>
+
+    <!-- Video Scrubber & Playback Controls Bar -->
+    <div class="video-controls">
+      <div id="progress-bar" class="progress-bar-container" title="Click to jump">
+        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+        <div class="chapter-ticks">
+          <div class="chapter-tick"></div><div class="chapter-tick"></div>
+          <div class="chapter-tick"></div><div class="chapter-tick"></div>
+          <div class="chapter-tick"></div><div class="chapter-tick"></div>
+          <div class="chapter-tick"></div><div class="chapter-tick"></div>
+          <div class="chapter-tick"></div><div class="chapter-tick"></div>
+          <div class="chapter-tick"></div><div class="chapter-tick"></div>
+          <div class="chapter-tick"></div><div class="chapter-tick"></div>
+          <div class="chapter-tick"></div>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <div class="control-buttons-left">
+          <button id="btn-prev" class="btn-icon" title="Previous Scene (←)">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button id="btn-play-pause" class="btn-icon btn-play" title="Play / Pause Video (Spacebar)">
+            <svg id="icon-play" width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="icon-pause" width="22" height="22" fill="currentColor" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <button id="btn-next" class="btn-icon" title="Next Scene (→)">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <span style="font-size: 13px; color: var(--text-muted); margin-left: 8px;">Auto-advancing with voice narration</span>
+        </div>
+
+        <div style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+          <span>LeetCode Master 2000 • Python 3</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Interactive 15-Scene Chapter Browser -->
+  <section class="chapters-drawer">
+    <h3>Video Chapter Navigation (15 Sections)</h3>
+    <div id="chapters-grid" class="chapters-grid">
+      <!-- Generated dynamically by script.js -->
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

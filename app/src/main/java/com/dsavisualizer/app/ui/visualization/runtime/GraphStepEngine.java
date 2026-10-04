@@ -272,4 +272,86 @@ public final class GraphStepEngine extends BaseStepEngine {
         }
         return -1;
     }
+
+    public static final int[][] PRESET_1_EDGES = {
+        {0, 1}, {0, 3}, {1, 2}, {1, 3}, {1, 4}, {2, 4}, {3, 4}
+    };
+    public static final int[] PRESET_1_WEIGHTS = {4, 2, 3, 1, 5, 2, 7};
+
+    public static final int[][] PRESET_2_EDGES = {
+        {0, 1}, {0, 2}, {1, 2}, {1, 3}, {2, 3}, {2, 4}, {3, 4}, {3, 5}, {4, 5}
+    };
+    public static final int[] PRESET_2_WEIGHTS = {3, 1, 1, 4, 2, 6, 3, 5, 2};
+
+    public static final int[][] PRESET_3_EDGES = {
+        {0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 2}, {3, 4}
+    };
+    public static final int[] PRESET_3_WEIGHTS = {5, 2, 8, 4, 3, 1};
+
+    public static int[][] getGraphEdges(int preset, int nodeCount) {
+        int[][] source;
+        if (preset == 2) {
+            source = PRESET_2_EDGES;
+        } else if (preset == 3) {
+            source = PRESET_3_EDGES;
+        } else {
+            source = PRESET_1_EDGES;
+        }
+        java.util.List<int[]> valid = new java.util.ArrayList<>();
+        for (int[] e : source) {
+            if (e[0] < nodeCount && e[1] < nodeCount) {
+                valid.add(new int[]{e[0], e[1]});
+            }
+        }
+        return valid.toArray(new int[0][]);
+    }
+
+    public static int getGraphEdgeWeight(int preset, int from, int to) {
+        int[][] edges;
+        int[] weights;
+        if (preset == 2) {
+            edges = PRESET_2_EDGES;
+            weights = PRESET_2_WEIGHTS;
+        } else if (preset == 3) {
+            edges = PRESET_3_EDGES;
+            weights = PRESET_3_WEIGHTS;
+        } else {
+            edges = PRESET_1_EDGES;
+            weights = PRESET_1_WEIGHTS;
+        }
+        for (int i = 0; i < edges.length; i++) {
+            if ((edges[i][0] == from && edges[i][1] == to) || (edges[i][0] == to && edges[i][1] == from)) {
+                return weights[i];
+            }
+        }
+        if (from >= 0 && to >= 0 && from != to) {
+            return Math.abs(from - to) + 2;
+        }
+        return -1;
+    }
+
+    public static int getNodeCountForPreset(int preset) {
+        if (preset == 2) return 6;
+        return 5;
+    }
+
+    public static int getDefaultStartNode(int preset) {
+        return 0;
+    }
+
+    public static String getPresetDescription(String techniqueId, int preset, int startNode, int nodeCount) {
+        if (preset == 2) {
+            return "Preset 2: Dense Mesh (" + nodeCount + " Vertices, Start: Node " + startNode + ")\n"
+                + "• Edges: (0-1: 3), (0-2: 1), (1-2: 1), (1-3: 4), (2-3: 2), (2-4: 6), (3-4: 3), (3-5: 5), (4-5: 2)\n"
+                + "• Multi-path cyclic topology ideal for all-pairs shortest paths, cycle detection, and alternative routing.";
+        }
+        if (preset == 3) {
+            return "Preset 3: Star Hub & Clusters (" + nodeCount + " Vertices, Start: Node " + startNode + ")\n"
+                + "• Edges: (0-1: 5), (0-2: 2), (0-3: 8), (0-4: 4), (1-2: 3), (3-4: 1)\n"
+                + "• Node 0 acts as a central hub connecting clusters {1, 2} and {3, 4}. Highlights bridges, cut vertices, and tree branching.";
+        }
+        return "Preset 1: Classic DAG / Balanced (" + nodeCount + " Vertices, Start: Node " + startNode + ")\n"
+            + "• Edges: (0-1: 4), (0-3: 2), (1-2: 3), (1-3: 1), (1-4: 5), (2-4: 2), (3-4: 7)\n"
+            + "• Textbook diamond graph with multiple paths, bottleneck edges, and clear BFS/DFS discovery ordering.";
+    }
 }

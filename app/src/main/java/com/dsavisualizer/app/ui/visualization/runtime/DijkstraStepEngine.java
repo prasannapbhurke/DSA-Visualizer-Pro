@@ -87,19 +87,21 @@ public final class DijkstraStepEngine extends BaseStepEngine {
             dijkstraWeights[i][i] = 0;
         }
         int[][] edges = host.getGraphEdges();
-        int[] edgeWeights = {2, 1, 4, 7, 3, 5, 2};
-        for (int i = 0; i < Math.min(edges.length, edgeWeights.length); i++) {
-            if (edges[i][0] < nodeCount && edges[i][1] < nodeCount) {
-                dijkstraWeights[edges[i][0]][edges[i][1]] = edgeWeights[i];
-                dijkstraWeights[edges[i][1]][edges[i][0]] = edgeWeights[i];
+        for (int[] edge : edges) {
+            if (edge[0] < nodeCount && edge[1] < nodeCount) {
+                int w = GraphStepEngine.getGraphEdgeWeight(1, edge[0], edge[1]);
+                if (w <= 0) w = Math.abs(edge[0] - edge[1]) + 2;
+                dijkstraWeights[edge[0]][edge[1]] = w;
+                dijkstraWeights[edge[1]][edge[0]] = w;
             }
         }
 
+        int startNode = Math.max(0, Math.min(host.getGraphStartNode(), nodeCount - 1));
         int[] dijkstraDistances = new int[nodeCount];
         for (int i = 0; i < nodeCount; i++) dijkstraDistances[i] = 9999;
-        dijkstraDistances[0] = 0;
+        dijkstraDistances[startNode] = 0;
         boolean[] dijkstraSettled = new boolean[nodeCount];
-        int dijkstraCurrentNode = 0;
+        int dijkstraCurrentNode = startNode;
         int dijkstraPhase = 0;
         int dijkstraNeighborIndex = 0;
 

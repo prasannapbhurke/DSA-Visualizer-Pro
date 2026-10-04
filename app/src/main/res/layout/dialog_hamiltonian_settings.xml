@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_nqueens_dialog"
+    android:paddingStart="24dp"
+    android:paddingTop="28dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="28dp">
+
+    <!-- Title: Hamiltonian Path & Cycle Settings -->
+    <TextView
+        android:id="@+id/hamiltonian_settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Hamiltonian Settings"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/hamiltonian_settings_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Choose graph topology and target traversal type."
+        android:textColor="#94A3B8"
+        android:textSize="13sp" />
+
+    <!-- Section 1 Header: Graph Size / Topology -->
+    <TextView
+        android:id="@+id/hamiltonian_nodes_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:text="Graph Topology"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- Node options: 4 Vertices, 5 Vertices, 6 Vertices -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/hamiltonian_nodes_4"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:text="4 Nodes (K4)"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/hamiltonian_nodes_5"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="5 Nodes"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/hamiltonian_nodes_6"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="6 Nodes"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+    </LinearLayout>
+
+    <!-- Section 2 Header: Traversal Goal -->
+    <TextView
+        android:id="@+id/hamiltonian_type_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Traversal Goal"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- Mode options: Cycle vs Path -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/hamiltonian_type_cycle"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="Hamiltonian Cycle"
+            android:textAllCaps="false"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/hamiltonian_type_path"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="Hamiltonian Path"
+            android:textAllCaps="false"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+    </LinearLayout>
+
+    <!-- Close button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/hamiltonian_btn_close"
+        android:layout_width="128dp"
+        android:layout_height="46dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="26dp"
+        android:text="Close"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        app:backgroundTint="#7C3AED"
+        app:cornerRadius="16dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp" />
+
+</LinearLayout>

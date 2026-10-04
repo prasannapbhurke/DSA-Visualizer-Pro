@@ -171,7 +171,24 @@ const parseFeedbackRequest = (body) => {
         techniqueId: typeof feedback.techniqueId === 'string' ? feedback.techniqueId.trim() : '',
         screen: typeof feedback.screen === 'string' ? feedback.screen.trim() : '',
         difficulty: typeof feedback.difficulty === 'string' ? feedback.difficulty.trim() : '',
+        deviceInfo: isPlainObject(feedback.deviceInfo) ? feedback.deviceInfo : {},
       },
+    },
+  };
+};
+
+const parseFeedbackReplyRequest = (body) => {
+  if (!isPlainObject(body)) {
+    return createValidationError('A valid request body is required');
+  }
+  const reply = typeof body.reply === 'string' ? body.reply.trim() : '';
+  if (!reply) {
+    return createValidationError('reply text is required');
+  }
+  return {
+    ok: true,
+    value: {
+      reply,
     },
   };
 };
@@ -733,6 +750,7 @@ module.exports = {
   mistakesResponseDto,
   parseCreateClassRequest,
   parseFeedbackRequest,
+  parseFeedbackReplyRequest,
   parseGoogleAuthRequest,
   parseGuestAuthRequest,
   parseJoinClassRequest,

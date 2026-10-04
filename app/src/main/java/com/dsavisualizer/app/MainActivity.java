@@ -250,6 +250,35 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.home_root).post(this::maybeStartHomeWalkthrough);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkForAdminReplies();
+    }
+
+    private void checkForAdminReplies() {
+        if (!appPreferences.hasGoogleSession() || remoteSyncManager == null) {
+            return;
+        }
+        remoteSyncManager.fetchStudentFeedback(items -> {
+            if (isFinishing() || isDestroyed()) return;
+            for (com.dsavisualizer.app.model.FeedbackInboxItem item : items) {
+                if (item.adminReply != null && !item.adminReply.trim().isEmpty()) {
+                    String lastSeenReply = appPreferences.getLastSeenReply(item.id);
+                    if (!item.adminReply.equals(lastSeenReply)) {
+                        appPreferences.setLastSeenReply(item.id, item.adminReply);
+                        new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("💬 Support Response from DSA Team")
+                            .setMessage("In response to your " + (item.type != null && !item.type.isEmpty() ? item.type : "feedback") + ":\n\n\"" + item.adminReply + "\"")
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show();
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     private void initializeGoogleSignIn() {
         GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail();
@@ -577,6 +606,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         navigationInProgress = true;
+        if (categoryItem != null && "leetcode".equalsIgnoreCase(categoryItem.id)) {
+            Intent intent = new Intent(this, LeetCodeHubActivity.class);
+            startActivity(intent);
+            return;
+        }
         Intent intent = new Intent(this, CategoryActivity.class);
         intent.putExtra(CategoryActivity.EXTRA_CATEGORY_ID, categoryItem.id);
         intent.putExtra(CategoryActivity.EXTRA_CATEGORY_TITLE, categoryItem.title);
@@ -856,6 +890,12 @@ public class MainActivity extends AppCompatActivity {
         }
         navigationInProgress = true;
         drawerLayout.closeDrawer(GravityCompat.START);
+        if (technique.id != null && technique.id.startsWith("leetcode_")) {
+            Intent intent = new Intent(this, LeetCodeProblemActivity.class);
+            intent.putExtra(LeetCodeProblemActivity.EXTRA_TECHNIQUE_ID, technique.id);
+            startActivity(intent);
+            return;
+        }
         Intent intent = new Intent(this, TechniqueDetailActivity.class);
         intent.putExtra(TechniqueDetailActivity.EXTRA_TECHNIQUE_ID, technique.id);
         startActivity(intent);

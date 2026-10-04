@@ -41,6 +41,17 @@
       "createdAt": "2026-04-26T14:25:16.833Z",
       "lastSeenAt": "2026-04-26T14:33:18.272Z",
       "token": "b9252b5cef86225151f8f9034e6d25ea331471d7580c4d83669d50b93b5f62da"
+    },
+    {
+      "id": "user_teacher_demo_001",
+      "googleId": "google_teacher_demo_id",
+      "email": "teacher@dsavisualizer.com",
+      "name": "Instructor Demo",
+      "role": "teacher",
+      "provider": "google",
+      "createdAt": "2026-04-26T10:18:13.059Z",
+      "lastSeenAt": "2026-05-02T06:51:59.715Z",
+      "token": "teacher_session_token_dsa_2026_demo"
     }
   ],
   "preferences": {

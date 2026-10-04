@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_nqueens_dialog"
+    android:paddingStart="24dp"
+    android:paddingTop="28dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="28dp">
+
+    <!-- Title: Dynamic Programming Settings -->
+    <TextView
+        android:id="@+id/dp_settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Dynamic Programming Setup"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/dp_settings_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Select problem instance or preset parameters."
+        android:textColor="#94A3B8"
+        android:textSize="13sp" />
+
+    <!-- Section 1 Header: Choose Preset -->
+    <TextView
+        android:id="@+id/dp_preset_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:text="Problem Configuration Preset"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- Preset Selection Buttons (Preset 1, Preset 2, Preset 3) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dp_preset_1"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:text="Preset 1"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dp_preset_2"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="Preset 2"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dp_preset_3"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="Preset 3"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+    </LinearLayout>
+
+    <!-- Preset Description Card -->
+    <LinearLayout
+        android:id="@+id/dp_desc_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_nqueens_dialog"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/dp_preset_desc_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Parameters:"
+            android:textColor="#38BDF8"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/dp_preset_desc_detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="W=6, Weights=[2, 3, 4, 5], Values=[3, 4, 5, 8]"
+            android:textColor="#E2E8F0"
+            android:textSize="13sp"
+            android:lineSpacingExtra="3dp" />
+    </LinearLayout>
+
+    <!-- Close button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/dp_btn_close"
+        android:layout_width="132dp"
+        android:layout_height="46dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="24dp"
+        android:text="Apply &amp; Close"
+        android:textAllCaps="false"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        app:backgroundTint="#7C3AED"
+        app:cornerRadius="16dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp" />
+
+</LinearLayout>

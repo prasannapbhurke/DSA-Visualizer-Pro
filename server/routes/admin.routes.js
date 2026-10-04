@@ -31,11 +31,37 @@ const createAdminRouter = ({ store, logger = console, requireAuth }) => {
       return res.status(403).json(errorResponseDto('Only owners can list users', 'FORBIDDEN'));
     }
     try {
-      const result = await store.query('SELECT * FROM app_users ORDER BY created_at ASC');
-      res.json(usersResponseDto(rowsToCamel(result.rows).map((row) => sanitizeGoogleUser({ ...row, provider: 'google' }))));
+      if (store.query) {
+        const result = await store.query('SELECT * FROM app_users ORDER BY created_at ASC');
+        if (result && result.rows && result.rows.length > 0) {
+          return res.json(usersResponseDto(rowsToCamel(result.rows).map((row) => sanitizeGoogleUser({ ...row, provider: 'google' }))));
+        }
+      }
     } catch (error) {
-      res.status(500).json(errorResponseDto('Failed to list users'));
+      if (logger && logger.warn) logger.warn('admin.users_db_query_fallback', { error: error.message });
     }
+
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const dataFilePath = path.join(__dirname, '../data.json');
+      if (fs.existsSync(dataFilePath)) {
+        const data = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
+        const users = (data.googleUsers || []).map((u) => ({
+          id: u.id,
+          email: u.email,
+          displayName: u.name || u.displayName || u.email,
+          role: u.role || 'student',
+          createdAt: u.createdAt || new Date().toISOString(),
+          lastSeenAt: u.lastSeenAt || new Date().toISOString(),
+        }));
+        return res.json(usersResponseDto(users));
+      }
+    } catch (e) {
+      if (logger && logger.error) logger.error('admin.users_fallback_failed', { error: e.message });
+    }
+
+    return res.status(500).json(errorResponseDto('Failed to list users'));
   });
 
   router.put('/users/:userId/role', requireAuth, async (req, res) => {
@@ -50,14 +76,36 @@ const createAdminRouter = ({ store, logger = console, requireAuth }) => {
       if (targetUserId === req.authUser.id) {
         return res.status(400).json(errorResponseDto('Cannot change own role', 'VALIDATION_ERROR'));
       }
-      const userRes = await store.query('SELECT * FROM app_users WHERE id = $1', [targetUserId]);
-      if (userRes.rowCount === 0) {
-        return res.status(404).json(errorResponseDto('User not found', 'NOT_FOUND'));
+
+      let updatedInDb = false;
+      try {
+        if (store.query) {
+          const userRes = await store.query('SELECT * FROM app_users WHERE id = $1', [targetUserId]);
+          if (userRes.rowCount > 0) {
+            await store.query('UPDATE app_users SET role = $1 WHERE id = $2', [newRole, targetUserId]);
+            updatedInDb = true;
+          }
+        }
+      } catch (dbErr) {
+        if (logger && logger.warn) logger.warn('admin.update_role_db_failed', { error: dbErr.message });
       }
-      await store.query('UPDATE app_users SET role = $1 WHERE id = $2', [newRole, targetUserId]);
-      res.json(successMessageResponseDto('User role updated'));
+
+      // Sync data.json as well
+      const fs = require('fs');
+      const path = require('path');
+      const dataFilePath = path.join(__dirname, '../data.json');
+      if (fs.existsSync(dataFilePath)) {
+        const data = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
+        const u = (data.googleUsers || []).find((x) => x.id === targetUserId || x.email === targetUserId);
+        if (u) {
+          u.role = newRole;
+          fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+        }
+      }
+
+      return res.json(successMessageResponseDto(`User role updated to ${newRole}`));
     } catch (error) {
-      res.status(500).json(errorResponseDto('Failed to update role'));
+      return res.status(500).json(errorResponseDto('Failed to update role'));
     }
   });
 

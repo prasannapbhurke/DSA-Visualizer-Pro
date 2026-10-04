@@ -15,6 +15,8 @@ public class FeedbackInboxItem {
     public final String className;
     public final String reviewedAt;
     public final String reviewedBy;
+    public final String adminReply;
+    public final String repliedAt;
 
     public FeedbackInboxItem(
         String id,
@@ -32,6 +34,27 @@ public class FeedbackInboxItem {
         String reviewedAt,
         String reviewedBy
     ) {
+        this(id, type, message, techniqueId, screen, difficulty, createdAt, userDisplayName, userEmail, userRole, classId, className, reviewedAt, reviewedBy, "", "");
+    }
+
+    public FeedbackInboxItem(
+        String id,
+        String type,
+        String message,
+        String techniqueId,
+        String screen,
+        String difficulty,
+        String createdAt,
+        String userDisplayName,
+        String userEmail,
+        String userRole,
+        String classId,
+        String className,
+        String reviewedAt,
+        String reviewedBy,
+        String adminReply,
+        String repliedAt
+    ) {
         this.id = id == null ? "" : id;
         this.type = type == null ? "" : type;
         this.message = message == null ? "" : message;
@@ -46,5 +69,7 @@ public class FeedbackInboxItem {
         this.className = className == null ? "" : className;
         this.reviewedAt = reviewedAt == null ? "" : reviewedAt;
         this.reviewedBy = reviewedBy == null ? "" : reviewedBy;
+        this.adminReply = adminReply == null ? "" : adminReply;
+        this.repliedAt = repliedAt == null ? "" : repliedAt;
     }
 }

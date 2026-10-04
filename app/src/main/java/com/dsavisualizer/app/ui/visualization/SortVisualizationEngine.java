@@ -247,12 +247,20 @@ public final class SortVisualizationEngine {
                 ? "Heap Sort repeatedly extracts the maximum root into the sorted suffix."
                 : "Heap Sort is restoring the heap after the latest extraction.";
         }
-        if ("radix_sort".equals(techniqueId) && safeMessage.contains("finished the")) {
-            return "The current digit pass is complete, so the array is now stable for that place value and ready for the next larger digit.";
-        }
-        if ("radix_sort".equals(techniqueId) && stepIndex >= 0 && stepIndex < safeValues.length) {
-            return "Radix Sort is grouping values by the current digit, so value " + safeValues[stepIndex]
-                + " is being placed according to its active bucket.";
+        if ("radix_sort".equals(techniqueId)) {
+            if (safeMessage.contains("complete")) {
+                return "Radix Sort is complete!\n\nWhy does this work?\nRadix Sort does not compare complete numbers directly. It repeatedly sorts numbers according to individual digits. Because each digit-level sort is stable, the ordering created by earlier digits is preserved.";
+            }
+            if (safeMessage.contains("step 1") || safeMessage.contains("units")) {
+                return "We are sorting using the units digit.";
+            }
+            if (safeMessage.contains("step 2") || safeMessage.contains("tens")) {
+                return "Now we sort using the tens digit. The previous ordering is preserved when digits are equal.";
+            }
+            if (safeMessage.contains("step 3") || safeMessage.contains("hundreds")) {
+                return "Finally, we sort using the hundreds digit.";
+            }
+            return "Radix Sort sorts numbers digit by digit from right to left using Least Significant Digit (LSD).";
         }
         return null;
     }

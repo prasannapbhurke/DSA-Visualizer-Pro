@@ -59,10 +59,6 @@ public final class VisualizationTechniqueRegistry {
         "traverse_circular_header_list",
         "search_circular_header_list",
         "delete_circular_header_list",
-        "union_find",
-        "hash_collision_handling",
-        "recursion_basics",
-        "dynamic_programming_basics",
         "leetcode_valid_parentheses",
         "leetcode_reverse_linked_list",
         "leetcode_merge_two_sorted_lists",
@@ -101,7 +97,75 @@ public final class VisualizationTechniqueRegistry {
         "breadth_first_search",
         "depth_first_search",
         "topological_sort",
-        "spanning_tree"
+        "spanning_tree",
+        "graph_bellman_ford",
+        "graph_floyd_warshall",
+        "graph_prim",
+        "graph_kruskal",
+        "graph_tarjan_scc",
+        "graph_kosaraju_scc",
+        "graph_bridges_articulation",
+        "graph_astar",
+        "graph_edmonds_karp",
+        "graph_johnson"
+    ));
+
+    private static final Set<String> DYNAMIC_PROGRAMMING = new HashSet<>(Arrays.asList(
+        "dp_knapsack",
+        "dp_lcs",
+        "dp_lis",
+        "dp_coin_change",
+        "dp_matrix_chain",
+        "dp_edit_distance",
+        "dp_rod_cutting",
+        "dp_subset_sum",
+        "dp_kadane"
+    ));
+
+    private static final Set<String> BACKTRACKING = new HashSet<>(Arrays.asList(
+        "backtracking_n_queens", "bt_n_queens",
+        "backtracking_sudoku", "bt_sudoku",
+        "backtracking_knights_tour", "bt_knights_tour",
+        "backtracking_maze_solver", "bt_maze",
+        "backtracking_hamiltonian", "bt_hamiltonian",
+        "backtracking_graph_coloring", "bt_graph_coloring"
+    ));
+
+    private static final Set<String> STRING_PATTERN = new HashSet<>(Arrays.asList(
+        "string_kmp",
+        "string_rabin_karp",
+        "string_boyer_moore",
+        "string_z_algorithm", "string_z_algo",
+        "string_aho_corasick",
+        "string_suffix_array",
+        "string_manacher"
+    ));
+
+    private static final Set<String> ADVANCED_DS = new HashSet<>(Arrays.asList(
+        "ds_trie", "adv_trie",
+        "ds_segment_tree", "adv_segment_tree",
+        "ds_persistent_segment_tree", "adv_persistent_st",
+        "ds_fenwick_tree", "adv_fenwick_tree",
+        "ds_avl_tree", "adv_avl_tree",
+        "ds_red_black_tree", "adv_red_black_tree",
+        "ds_splay_tree", "adv_splay_tree",
+        "ds_b_tree", "adv_b_tree",
+        "ds_disjoint_set", "adv_dsu",
+        "ds_bloom_filter", "adv_bloom_filter",
+        "ds_lru_cache", "adv_lru_cache"
+    ));
+
+    private static final Set<String> SPECIALIZED = new HashSet<>(Arrays.asList(
+        "spec_convex_hull",
+        "spec_closest_pair",
+        "spec_line_intersection",
+        "spec_fft", "spec_fast_fourier_transform",
+        "spec_karatsuba",
+        "spec_sieve", "spec_sieve_eratosthenes",
+        "spec_miller_rabin",
+        "spec_extended_euclidean", "spec_euclidean_gcd",
+        "spec_crt", "spec_chinese_remainder",
+        "spec_activity_selection"
     ));
 
     private static final Set<String> TREE_TARGET_INPUT = new HashSet<>(Arrays.asList(
@@ -137,6 +201,26 @@ public final class VisualizationTechniqueRegistry {
         return GRAPHS.contains(techniqueId);
     }
 
+    public static boolean isDynamicProgramming(String techniqueId) {
+        return DYNAMIC_PROGRAMMING.contains(techniqueId);
+    }
+
+    public static boolean isBacktracking(String techniqueId) {
+        return BACKTRACKING.contains(techniqueId);
+    }
+
+    public static boolean isStringPattern(String techniqueId) {
+        return STRING_PATTERN.contains(techniqueId);
+    }
+
+    public static boolean isAdvancedDs(String techniqueId) {
+        return ADVANCED_DS.contains(techniqueId);
+    }
+
+    public static boolean isSpecialized(String techniqueId) {
+        return SPECIALIZED.contains(techniqueId);
+    }
+
     public static boolean isTreeOrGraph(String techniqueId) {
         return isTree(techniqueId) || isGraph(techniqueId);
     }
@@ -146,6 +230,6 @@ public final class VisualizationTechniqueRegistry {
     }
 
     public static boolean isPatternMatching(String techniqueId) {
-        return "pattern_matching".equals(techniqueId);
+        return "pattern_matching".equals(techniqueId) || isStringPattern(techniqueId);
     }
 }

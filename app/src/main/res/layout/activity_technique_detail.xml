@@ -103,95 +103,95 @@
                 android:textColor="#7DD3FC"
                 android:textStyle="bold" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/detail_flow_label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Learning Flow"
-            android:textColor="#DDE7F1"
-            android:textSize="@dimen/dsa_body_text"
-            android:textStyle="bold" />
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/detail_flow_toggle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal"
-            app:selectionRequired="true"
-            app:singleSelection="true">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/detail_flow_understand"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:minHeight="48dp"
-                android:minWidth="0dp"
-                android:paddingLeft="1dp"
-                android:paddingRight="1dp"
-                android:text="@string/tab_understand"
-                android:textAllCaps="false"
-                android:textSize="@dimen/dsa_flow_chip_text" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/detail_flow_visualize"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:minHeight="48dp"
-                android:minWidth="0dp"
-                android:paddingLeft="1dp"
-                android:paddingRight="1dp"
-                android:text="@string/tab_visualize"
-                android:textAllCaps="false"
-                android:textSize="@dimen/dsa_flow_chip_text" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/detail_flow_practice"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:minHeight="48dp"
-                android:minWidth="0dp"
-                android:paddingLeft="1dp"
-                android:paddingRight="1dp"
-                android:text="@string/tab_practice"
-                android:textAllCaps="false"
-                android:textSize="@dimen/dsa_flow_chip_text" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/detail_flow_code"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:minHeight="48dp"
-                android:minWidth="0dp"
-                android:paddingLeft="1dp"
-                android:paddingRight="1dp"
-                android:text="@string/tab_code"
-                android:textAllCaps="false"
-                android:textSize="@dimen/dsa_flow_chip_text" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/detail_flow_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Learning Flow"
+        android:textColor="#DDE7F1"
+        android:textSize="@dimen/dsa_body_text"
+        android:textStyle="bold" />
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/detail_flow_toggle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal"
+        app:selectionRequired="true"
+        app:singleSelection="true">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/detail_flow_understand"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-condensed"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingLeft="1dp"
+            android:paddingRight="1dp"
+            android:text="@string/tab_understand"
+            android:textAllCaps="false"
+            android:textSize="@dimen/dsa_flow_chip_text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/detail_flow_visualize"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-condensed"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingLeft="1dp"
+            android:paddingRight="1dp"
+            android:text="@string/tab_visualize"
+            android:textAllCaps="false"
+            android:textSize="@dimen/dsa_flow_chip_text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/detail_flow_practice"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-condensed"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingLeft="1dp"
+            android:paddingRight="1dp"
+            android:text="@string/tab_practice"
+            android:textAllCaps="false"
+            android:textSize="@dimen/dsa_flow_chip_text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/detail_flow_code"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-condensed"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingLeft="1dp"
+            android:paddingRight="1dp"
+            android:text="@string/tab_code"
+            android:textAllCaps="false"
+            android:textSize="@dimen/dsa_flow_chip_text" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <FrameLayout
         android:id="@+id/detail_fragment_container"

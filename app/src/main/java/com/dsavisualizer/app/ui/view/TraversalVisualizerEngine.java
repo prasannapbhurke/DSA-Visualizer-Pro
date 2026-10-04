@@ -37,7 +37,18 @@ final class TraversalVisualizerEngine implements VisualizerEngine {
             || "breadth_first_search".equals(techniqueId)
             || "depth_first_search".equals(techniqueId)
             || "topological_sort".equals(techniqueId)
-            || "spanning_tree".equals(techniqueId);
+            || "spanning_tree".equals(techniqueId)
+            || "leetcode_invert_binary_tree".equals(techniqueId)
+            || "graph_bellman_ford".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId)
+            || "graph_prim".equals(techniqueId)
+            || "graph_kruskal".equals(techniqueId)
+            || "graph_tarjan_scc".equals(techniqueId)
+            || "graph_kosaraju_scc".equals(techniqueId)
+            || "graph_bridges_articulation".equals(techniqueId)
+            || "graph_astar".equals(techniqueId)
+            || "graph_edmonds_karp".equals(techniqueId)
+            || "graph_johnson".equals(techniqueId);
     }
 
     @Override
@@ -51,7 +62,8 @@ final class TraversalVisualizerEngine implements VisualizerEngine {
             || "bst_deletion_case_b".equals(techniqueId)
             || "bst_deletion_del".equals(techniqueId)
             || "max_heap_insertion".equals(techniqueId)
-            || "max_heap_deletion".equals(techniqueId)) {
+            || "max_heap_deletion".equals(techniqueId)
+            || "leetcode_invert_binary_tree".equals(techniqueId)) {
             view.drawHeapTree(canvas);
             return;
         }
@@ -73,11 +85,18 @@ final class TraversalVisualizerEngine implements VisualizerEngine {
         }
         if ("warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
-            || "shortest_paths".equals(techniqueId)) {
+            || "shortest_paths".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId)
+            || "graph_johnson".equals(techniqueId)) {
             view.drawMatrixScene(canvas);
             return;
         }
-        if ("dijkstra_algorithm".equals(techniqueId)) {
+        if ("graph_astar".equals(techniqueId) || "graph_a_star".equals(techniqueId)) {
+            view.drawAStarScene(canvas);
+            return;
+        }
+        if ("dijkstra_algorithm".equals(techniqueId)
+            || "graph_bellman_ford".equals(techniqueId)) {
             view.drawDijkstraScene(canvas);
             return;
         }
@@ -93,14 +112,18 @@ final class TraversalVisualizerEngine implements VisualizerEngine {
     public int resolveDesiredHeight(TechniqueVisualizerView view, String techniqueId) {
         if ("warshall_algorithm".equals(techniqueId)
             || "floyd_algorithm".equals(techniqueId)
-            || "shortest_paths".equals(techniqueId)) {
+            || "shortest_paths".equals(techniqueId)
+            || "graph_floyd_warshall".equals(techniqueId)
+            || "graph_johnson".equals(techniqueId)) {
             return Math.max(view.resolveTraversalDesiredHeight(), 540);
         }
-        if ("dijkstra_algorithm".equals(techniqueId)) {
+        if ("dijkstra_algorithm".equals(techniqueId)
+            || "graph_bellman_ford".equals(techniqueId)
+            || "graph_astar".equals(techniqueId)) {
             return Math.max(view.resolveTraversalDesiredHeight(), 620);
         }
         if ("huffman_algorithm".equals(techniqueId)) {
-            return Math.max(view.resolveTraversalDesiredHeight(), 560);
+            return Math.max(view.resolveTraversalDesiredHeight(), 640);
         }
         if ("avl_tree".equals(techniqueId) || "trie".equals(techniqueId)) {
             return Math.max(view.resolveTraversalDesiredHeight(), 460);

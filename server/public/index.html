@@ -1751,7 +1751,56 @@
 
     // Startup Initialization
     window.addEventListener('DOMContentLoaded', () => {
-      loadAlgo('bubble');
+      const params = new URLSearchParams(window.location.search);
+      const rawTech = params.get('tech') || params.get('algo');
+      const dataParam = params.get('data');
+      const stepParam = params.get('step');
+
+      const techMap = {
+        'bubble_sort': 'bubble',
+        'bubble': 'bubble',
+        'quick_sort': 'quick',
+        'quick': 'quick',
+        'merge_sort': 'merge',
+        'merge': 'merge',
+        'insertion_sort': 'insertion',
+        'insertion': 'insertion',
+        'selection_sort': 'selection',
+        'selection': 'selection',
+        'linear_search': 'linear_search',
+        'linear': 'linear_search',
+        'binary_search': 'binary_search',
+        'binary': 'binary_search',
+        'singly_linked_list': 'singly_linked_list',
+        'doubly_linked_list': 'doubly_linked_list',
+        'stack': 'stack',
+        'queue': 'queue',
+        'binary_search_tree': 'bst',
+        'bst': 'bst'
+      };
+
+      const algoKey = rawTech ? (techMap[rawTech.toLowerCase()] || (ALGO_REGISTRY[rawTech] ? rawTech : 'bubble')) : 'bubble';
+
+      if (dataParam) {
+        const parsed = dataParam.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        if (parsed.length > 0 && ALGO_REGISTRY[algoKey]) {
+          ALGO_REGISTRY[algoKey].data = parsed;
+        }
+      }
+
+      loadAlgo(algoKey);
+
+      if (stepParam) {
+        const stepNum = parseInt(stepParam, 10);
+        if (!isNaN(stepNum) && stepNum >= 0 && stepNum < traceSteps.length) {
+          currentStepIdx = stepNum;
+          renderCurrentState();
+        }
+      }
+
+      if (rawTech || dataParam) {
+        switchTab('visualizer');
+      }
     });
   </script>
 </body>

@@ -21,8 +21,8 @@ public final class LeetCodeProblemProvider {
         List<TechniqueItem> techniques,
         Map<String, TechniqueContent> contentMap
     ) {
-        // 1. Add Category
-        categories.add(0, new CategoryItem(
+        // 1. Add Category (appended to end of catalog)
+        categories.add(new CategoryItem(
             "leetcode",
             "🔥 LeetCode Top Picks",
             "Top interview problems with animated solutions & code",
@@ -86,6 +86,20 @@ public final class LeetCodeProblemProvider {
             "Amazon, Microsoft • Floyd's Tortoise & Hare O(n)",
             "Easy"
         ));
+        techniques.add(8, new TechniqueItem(
+            "leetcode_concatenation_array",
+            "leetcode",
+            "LeetCode #1929: Concatenation of Array",
+            "Google, Amazon, Microsoft • Array Direct Copy O(n)",
+            "Easy"
+        ));
+        techniques.add(9, new TechniqueItem(
+            "leetcode_running_sum",
+            "leetcode",
+            "LeetCode #1480: Running Sum of 1d Array",
+            "Microsoft, Apple, Amazon • Prefix Sum O(n)",
+            "Easy"
+        ));
 
         // 3. Register TechniqueContent
         registerTwoSum(contentMap);
@@ -96,6 +110,8 @@ public final class LeetCodeProblemProvider {
         registerMergeTwoLists(contentMap);
         registerInvertBinaryTree(contentMap);
         registerLinkedListCycle(contentMap);
+        registerConcatenationArray(contentMap);
+        registerRunningSum(contentMap);
     }
 
     // ==========================================
@@ -772,6 +788,261 @@ public final class LeetCodeProblemProvider {
         tc.putCode("C++", "Iterative", cppCode, true);
         tc.putCode("Python", "Iterative", pyCode, true);
         tc.codeByStyle.put("Iterative", javaCode);
+
+        contentMap.put(tc.techniqueId, tc);
+    }
+
+    // ==========================================
+    // 9. LeetCode #1929: Concatenation of Array
+    // ==========================================
+    private static void registerConcatenationArray(Map<String, TechniqueContent> contentMap) {
+        TechniqueContent tc = new TechniqueContent(
+            "leetcode_concatenation_array",
+            "LeetCode #1929: Concatenation of Array",
+            "Given an integer array nums of length n, you want to create an array ans of length 2n where ans[i] == nums[i] and ans[i + n] == nums[i] for 0 <= i < n (0-indexed).\n\n"
+                + "Specifically, ans is the concatenation of two nums arrays.\n\n"
+                + "Return the array ans.\n\n"
+                + "Example 1:\n"
+                + "Input: nums = [1, 2, 1]\n"
+                + "Output: [1, 2, 1, 1, 2, 1]\n"
+                + "Explanation: The array ans is formed as follows:\n"
+                + "- ans = [nums[0], nums[1], nums[2], nums[0], nums[1], nums[2]]\n"
+                + "- ans = [1, 2, 1, 1, 2, 1]",
+            "🏢 Asked in: Google, Amazon, Microsoft, Adobe\n⭐ Status: Array Concatenation & Memory Layout Foundation",
+            "O(n)",
+            "O(n)",
+            "O(n)",
+            "O(n)",
+            new int[] {1, 2, 1},
+            0
+        );
+        tc.sourceType = "LeetCode";
+        tc.sourceTitle = "LeetCode #1929";
+        tc.sourceReference = "https://leetcode.com/problems/concatenation-of-array/";
+
+        tc.algorithmByStyle.put("Iterative",
+            "💡 Optimal Direct-Placement Iteration:\n\n"
+                + "1. Pre-allocate an array ans of size 2 * n.\n"
+                + "2. Loop i from 0 to n - 1:\n"
+                + "   • Place current element at index i:\n"
+                + "     ans[i] = nums[i];\n"
+                + "   • Place current element at the second-half offset (i + n):\n"
+                + "     ans[i + n] = nums[i];\n"
+                + "3. Return ans.\n\n"
+                + "Complexity Analysis:\n"
+                + "• Time Complexity: O(n) — single linear loop doing 2 assignments per index.\n"
+                + "• Space Complexity: O(n) — for the required output array of size 2n."
+        );
+        tc.algorithmByStyle.put("Functions",
+            "🛠️ System Memory Copy / Built-in Approaches:\n\n"
+                + "• Java Block Copy: System.arraycopy(nums, 0, ans, 0, n) followed by System.arraycopy(nums, 0, ans, n, n) operates on raw memory buffers.\n"
+                + "• Python Operator: nums + nums or nums * 2 returns a contiguous concatenated list instantly.\n"
+                + "• C++ Vector: vector<int> ans(nums); ans.insert(ans.end(), nums.begin(), nums.end())."
+        );
+        tc.algorithmByStyle.put("Recursion",
+            "🔄 Recursive Formulation:\n\n"
+                + "• Base Case: If index i == n, all elements have been mirrored into both halves; return ans.\n"
+                + "• Recursive Step:\n"
+                + "  1. Set ans[i] = nums[i] and ans[i + n] = nums[i].\n"
+                + "  2. Recurse: helper(nums, ans, i + 1, n).\n"
+                + "• Call Stack Depth: O(n)."
+        );
+
+        String javaIterative = "class Solution {\n"
+            + "    public int[] getConcatenation(int[] nums) {\n"
+            + "        int n = nums.length;\n"
+            + "        int[] ans = new int[2 * n];\n"
+            + "        for (int i = 0; i < n; i++) {\n"
+            + "            ans[i] = nums[i];\n"
+            + "            ans[i + n] = nums[i];\n"
+            + "        }\n"
+            + "        return ans;\n"
+            + "    }\n"
+            + "}";
+
+        String javaFunctions = "class Solution {\n"
+            + "    public int[] getConcatenation(int[] nums) {\n"
+            + "        int n = nums.length;\n"
+            + "        int[] ans = new int[2 * n];\n"
+            + "        System.arraycopy(nums, 0, ans, 0, n);\n"
+            + "        System.arraycopy(nums, 0, ans, n, n);\n"
+            + "        return ans;\n"
+            + "    }\n"
+            + "}";
+
+        String javaRecursion = "class Solution {\n"
+            + "    public int[] getConcatenation(int[] nums) {\n"
+            + "        int[] ans = new int[2 * nums.length];\n"
+            + "        copyRecursive(nums, ans, 0);\n"
+            + "        return ans;\n"
+            + "    }\n\n"
+            + "    private void copyRecursive(int[] nums, int[] ans, int i) {\n"
+            + "        if (i == nums.length) return;\n"
+            + "        ans[i] = nums[i];\n"
+            + "        ans[i + nums.length] = nums[i];\n"
+            + "        copyRecursive(nums, ans, i + 1);\n"
+            + "    }\n"
+            + "}";
+
+        String cppIterative = "class Solution {\n"
+            + "public:\n"
+            + "    vector<int> getConcatenation(vector<int>& nums) {\n"
+            + "        int n = nums.size();\n"
+            + "        vector<int> ans(2 * n);\n"
+            + "        for (int i = 0; i < n; i++) {\n"
+            + "            ans[i] = nums[i];\n"
+            + "            ans[i + n] = nums[i];\n"
+            + "        }\n"
+            + "        return ans;\n"
+            + "    }\n"
+            + "};";
+
+        String pyIterative = "class Solution:\n"
+            + "    def getConcatenation(self, nums: list[int]) -> list[int]:\n"
+            + "        n = len(nums)\n"
+            + "        ans = [0] * (2 * n)\n"
+            + "        for i in range(n):\n"
+            + "            ans[i] = nums[i]\n"
+            + "            ans[i + n] = nums[i]\n"
+            + "        return ans";
+
+        String jsIterative = "var getConcatenation = function(nums) {\n"
+            + "    const n = nums.length;\n"
+            + "    const ans = new Array(2 * n);\n"
+            + "    for (let i = 0; i < n; i++) {\n"
+            + "        ans[i] = nums[i];\n"
+            + "        ans[i + n] = nums[i];\n"
+            + "    }\n"
+            + "    return ans;\n"
+            + "};";
+
+        tc.putCode("Java", "Iterative", javaIterative, true);
+        tc.putCode("Java", "Functions", javaFunctions, true);
+        tc.putCode("Java", "Recursion", javaRecursion, true);
+        tc.putCode("C++", "Iterative", cppIterative, true);
+        tc.putCode("Python", "Iterative", pyIterative, true);
+        tc.putCode("JavaScript", "Iterative", jsIterative, true);
+        tc.codeByStyle.put("Iterative", javaIterative);
+        tc.codeByStyle.put("Functions", javaFunctions);
+        tc.codeByStyle.put("Recursion", javaRecursion);
+
+        contentMap.put(tc.techniqueId, tc);
+    }
+
+    // ==========================================
+    // 10. LeetCode #1480: Running Sum of 1d Array
+    // ==========================================
+    private static void registerRunningSum(Map<String, TechniqueContent> contentMap) {
+        TechniqueContent tc = new TechniqueContent(
+            "leetcode_running_sum",
+            "LeetCode #1480: Running Sum of 1d Array",
+            "Given an array nums. We define a running sum of an array as runningSum[i] = sum(nums[0]…nums[i]).\n\n"
+                + "Return the running sum of nums.\n\n"
+                + "Example 1:\n"
+                + "Input: nums = [1, 2, 3, 4]\n"
+                + "Output: [1, 3, 6, 10]\n"
+                + "Explanation: Running sum is obtained as follows: [1, 1+2, 1+2+3, 1+2+3+4].",
+            "🏢 Asked in: Microsoft, Apple, Amazon, Adobe\n⭐ Status: Prefix Sum / Cumulative Sum Building Block",
+            "O(n)",
+            "O(n)",
+            "O(n)",
+            "O(1)",
+            new int[] {1, 2, 3, 4},
+            0
+        );
+        tc.sourceType = "LeetCode";
+        tc.sourceTitle = "LeetCode #1480";
+        tc.sourceReference = "https://leetcode.com/problems/running-sum-of-1d-array/";
+
+        tc.algorithmByStyle.put("Iterative",
+            "💡 In-Place Prefix Sum Accumulation:\n\n"
+                + "1. Iterate i from 1 to nums.length - 1:\n"
+                + "   • Accumulate the previous running sum into current element:\n"
+                + "     nums[i] = nums[i] + nums[i - 1];\n"
+                + "2. Return nums.\n\n"
+                + "Complexity Analysis:\n"
+                + "• Time Complexity: O(n) — single pass of n-1 iterations.\n"
+                + "• Space Complexity: O(1) — purely in-place, zero extra memory allocation."
+        );
+        tc.algorithmByStyle.put("Functions",
+            "🛠️ Non-Destructive Array Variant:\n\n"
+                + "• When the input array must remain immutable:\n"
+                + "  1. Allocate int[] result = new int[nums.length];\n"
+                + "  2. Set result[0] = nums[0];\n"
+                + "  3. Loop i = 1 to n - 1: result[i] = result[i - 1] + nums[i];\n"
+                + "  4. Space complexity becomes O(n) for the output."
+        );
+        tc.algorithmByStyle.put("Recursion",
+            "🔄 Recursive Prefix Sum Decomposition:\n\n"
+                + "• Base Case: index i == 0 -> return nums[0].\n"
+                + "• Recurrence: runningSum(i) = runningSum(i - 1) + nums[i].\n"
+                + "• Stack Depth: O(n)."
+        );
+
+        String javaIterative = "class Solution {\n"
+            + "    public int[] runningSum(int[] nums) {\n"
+            + "        for (int i = 1; i < nums.length; i++) {\n"
+            + "            nums[i] += nums[i - 1];\n"
+            + "        }\n"
+            + "        return nums;\n"
+            + "    }\n"
+            + "}";
+
+        String javaFunctions = "class Solution {\n"
+            + "    public int[] runningSum(int[] nums) {\n"
+            + "        int[] result = new int[nums.length];\n"
+            + "        result[0] = nums[0];\n"
+            + "        for (int i = 1; i < nums.length; i++) {\n"
+            + "            result[i] = result[i - 1] + nums[i];\n"
+            + "        }\n"
+            + "        return result;\n"
+            + "    }\n"
+            + "}";
+
+        String javaRecursion = "class Solution {\n"
+            + "    public int[] runningSum(int[] nums) {\n"
+            + "        accumulate(nums, 1);\n"
+            + "        return nums;\n"
+            + "    }\n\n"
+            + "    private void accumulate(int[] nums, int i) {\n"
+            + "        if (i >= nums.length) return;\n"
+            + "        nums[i] += nums[i - 1];\n"
+            + "        accumulate(nums, i + 1);\n"
+            + "    }\n"
+            + "}";
+
+        String cppIterative = "class Solution {\n"
+            + "public:\n"
+            + "    vector<int> runningSum(vector<int>& nums) {\n"
+            + "        for (int i = 1; i < nums.size(); i++) {\n"
+            + "            nums[i] += nums[i - 1];\n"
+            + "        }\n"
+            + "        return nums;\n"
+            + "    }\n"
+            + "};";
+
+        String pyIterative = "class Solution:\n"
+            + "    def runningSum(self, nums: list[int]) -> list[int]:\n"
+            + "        for i in range(1, len(nums)):\n"
+            + "            nums[i] += nums[i - 1]\n"
+            + "        return nums";
+
+        String jsIterative = "var runningSum = function(nums) {\n"
+            + "    for (let i = 1; i < nums.length; i++) {\n"
+            + "        nums[i] += nums[i - 1];\n"
+            + "    }\n"
+            + "    return nums;\n"
+            + "};";
+
+        tc.putCode("Java", "Iterative", javaIterative, true);
+        tc.putCode("Java", "Functions", javaFunctions, true);
+        tc.putCode("Java", "Recursion", javaRecursion, true);
+        tc.putCode("C++", "Iterative", cppIterative, true);
+        tc.putCode("Python", "Iterative", pyIterative, true);
+        tc.putCode("JavaScript", "Iterative", jsIterative, true);
+        tc.codeByStyle.put("Iterative", javaIterative);
+        tc.codeByStyle.put("Functions", javaFunctions);
+        tc.codeByStyle.put("Recursion", javaRecursion);
 
         contentMap.put(tc.techniqueId, tc);
     }

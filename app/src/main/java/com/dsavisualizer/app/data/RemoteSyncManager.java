@@ -324,6 +324,10 @@ public class RemoteSyncManager {
         });
     }
 
+    public interface StudentFeedbackCallback {
+        void onResult(@NonNull java.util.List<com.dsavisualizer.app.model.FeedbackInboxItem> items);
+    }
+
     public void submitFeedback(
         @NonNull String type,
         @NonNull String message,
@@ -349,6 +353,29 @@ public class RemoteSyncManager {
                     feedback.put("techniqueId", techniqueId == null ? "" : techniqueId);
                     feedback.put("screen", screen == null ? "" : screen);
                     feedback.put("difficulty", difficulty == null ? "" : difficulty);
+
+                    // Automatic Device Diagnostic Telemetry
+                    JSONObject deviceInfo = new JSONObject();
+                    try {
+                        deviceInfo.put("deviceModel", Build.MANUFACTURER + " " + Build.MODEL);
+                        deviceInfo.put("osVersion", "Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")");
+                        String versionName = "1.0.0";
+                        long versionCode = 1;
+                        try {
+                            android.content.pm.PackageInfo pInfo = appContext.getPackageManager().getPackageInfo(appContext.getPackageName(), 0);
+                            versionName = pInfo.versionName;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                versionCode = pInfo.getLongVersionCode();
+                            } else {
+                                versionCode = pInfo.versionCode;
+                            }
+                        } catch (Exception ignored) {}
+                        deviceInfo.put("appVersion", "v" + versionName + " (" + versionCode + ")");
+                        android.util.DisplayMetrics dm = appContext.getResources().getDisplayMetrics();
+                        deviceInfo.put("display", dm.widthPixels + "x" + dm.heightPixels + " (" + dm.densityDpi + "dpi)");
+                    } catch (Exception ignored) {}
+                    feedback.put("deviceInfo", deviceInfo);
+
                     JSONObject body = new JSONObject();
                     body.put("feedback", feedback);
                     performJsonRequest("POST", "/api/feedback", preferences.getAuthToken(), body);
@@ -357,6 +384,53 @@ public class RemoteSyncManager {
                     dispatchCompletion(callback, false);
                 }
             });
+        });
+    }
+
+    public void fetchStudentFeedback(@Nullable StudentFeedbackCallback callback) {
+        if (!preferences.hasGoogleSession()) {
+            if (callback != null) {
+                mainHandler.post(() -> callback.onResult(new java.util.ArrayList<>()));
+            }
+            return;
+        }
+        executor.execute(() -> {
+            java.util.List<com.dsavisualizer.app.model.FeedbackInboxItem> resultList = new java.util.ArrayList<>();
+            try {
+                JSONObject res = performJsonRequest("GET", "/api/student/feedback", preferences.getAuthToken(), null, false);
+                org.json.JSONArray array = res.optJSONArray("data");
+                if (array == null && res.has("feedback")) {
+                    array = res.optJSONArray("feedback");
+                }
+                if (array != null) {
+                    for (int i = 0; i < array.length(); i++) {
+                        JSONObject obj = array.getJSONObject(i);
+                        resultList.add(new com.dsavisualizer.app.model.FeedbackInboxItem(
+                            obj.optString("id", ""),
+                            obj.optString("type", ""),
+                            obj.optString("message", ""),
+                            obj.optString("techniqueId", obj.optString("technique_id", "")),
+                            obj.optString("screen", ""),
+                            obj.optString("difficulty", ""),
+                            obj.optString("createdAt", obj.optString("created_at", "")),
+                            obj.optString("userDisplayName", obj.optString("user_display_name", "")),
+                            obj.optString("userEmail", obj.optString("user_email", "")),
+                            obj.optString("userRole", obj.optString("user_role", "")),
+                            obj.optString("classId", obj.optString("class_id", "")),
+                            obj.optString("className", obj.optString("class_name", "")),
+                            obj.optString("reviewedAt", obj.optString("reviewed_at", "")),
+                            obj.optString("reviewedBy", obj.optString("reviewed_by", "")),
+                            obj.optString("adminReply", obj.optString("admin_reply", "")),
+                            obj.optString("repliedAt", obj.optString("replied_at", ""))
+                        ));
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("RemoteSyncManager", "fetchStudentFeedback error", e);
+            }
+            if (callback != null) {
+                mainHandler.post(() -> callback.onResult(resultList));
+            }
         });
     }
 

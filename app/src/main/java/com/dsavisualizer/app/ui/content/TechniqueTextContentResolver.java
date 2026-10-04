@@ -35,8 +35,21 @@ public class TechniqueTextContentResolver {
         boolean showComments
     ) {
         TechniqueContent content = repository.getContent(techniqueId);
+        if (content == null) {
+            return "Not Available\n\nContent for this topic is not available.";
+        }
+
         if (CONTENT_TYPE_CODE.equals(contentType)) {
             String raw = repository.getCodeSnippet(content.techniqueId, style, language, showComments);
+            if ((raw == null || raw.trim().isEmpty() || raw.contains("Not Available") || raw.contains("implementation will be added")) && "C".equalsIgnoreCase(language)) {
+                raw = repository.getCodeSnippet(content.techniqueId, style, "C++", showComments);
+            } else if ((raw == null || raw.trim().isEmpty() || raw.contains("Not Available") || raw.contains("implementation will be added")) && "C++".equalsIgnoreCase(language)) {
+                raw = repository.getCodeSnippet(content.techniqueId, style, "C", showComments);
+            }
+            if (raw == null || raw.trim().isEmpty() || raw.contains("implementation will be added here") || raw.contains("Not Available")) {
+                return "// Not Available\n// Implementation for " + (language != null ? language : "selected language")
+                        + " (" + (style != null ? style : "selected mode") + ") is not available.";
+            }
             if (showComments && !repository.hasExplicitCommentedCode(content.techniqueId, style, language)) {
                 return formatter.formatCode(content.techniqueId, raw, language, true);
             }
@@ -51,6 +64,9 @@ public class TechniqueTextContentResolver {
         if (value == null && "Functions".equals(style)) {
             value = content.algorithmByStyle.get("Function");
         }
-        return formatter.formatAlgorithm(value == null ? "Algorithm explanation will be added soon." : value);
+        if (value == null || value.trim().isEmpty() || value.contains("will be added") || value.contains("Not Available")) {
+            return "Not Available\n\nAlgorithm logic for " + (style != null ? style : "this mode") + " is not available.";
+        }
+        return formatter.formatAlgorithm(value);
     }
 }

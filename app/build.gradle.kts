@@ -85,7 +85,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
     testOptions {
         unitTests.all {
@@ -101,6 +101,15 @@ android {
         checkReleaseBuilds = false
         abortOnError = false
     }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.isFork = true
+    options.forkOptions.jvmArgs = listOf(
+        "-Xmx256m",
+        "-XX:+UseSerialGC",
+        "-XX:TieredStopAtLevel=1"
+    )
 }
 
 dependencies {

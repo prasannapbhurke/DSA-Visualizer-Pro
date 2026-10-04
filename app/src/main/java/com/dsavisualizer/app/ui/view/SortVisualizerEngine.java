@@ -39,13 +39,16 @@ final class SortVisualizerEngine implements VisualizerEngine {
 
     @Override
     public int resolveDesiredWidth(TechniqueVisualizerView view, String techniqueId) {
+        if ("radix_sort".equals(techniqueId)) {
+            return view.resolveRadixDesiredWidth();
+        }
         return view.resolveArrayDesiredWidth();
     }
 
     @Override
     public int resolveDesiredHeight(TechniqueVisualizerView view, String techniqueId) {
         if ("radix_sort".equals(techniqueId)) {
-            return Math.max(view.resolveStandardDesiredHeight(), 760);
+            return view.resolveRadixDesiredHeight();
         }
         if ("merging".equals(techniqueId) || "merge_sort".equals(techniqueId)) {
             return Math.max(view.resolveStandardDesiredHeight(), 520);

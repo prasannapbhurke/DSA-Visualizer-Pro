@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DSA Control Centre — Command & Telemetry Hub</title>
+  <title>DSA Control Centre — Manage Students & Roles</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,9 +12,9 @@
     :root {
       --bg-primary: #070B12;
       --bg-secondary: #0D1322;
-      --bg-card: rgba(16, 24, 40, 0.72);
-      --bg-card-hover: rgba(22, 33, 56, 0.85);
-      --border-subtle: rgba(99, 140, 255, 0.14);
+      --bg-card: rgba(16, 24, 40, 0.75);
+      --bg-card-hover: rgba(22, 33, 56, 0.9);
+      --border-subtle: rgba(99, 140, 255, 0.15);
       --border-focus: rgba(99, 140, 255, 0.45);
       --text-primary: #F8FAFC;
       --text-secondary: #94A3B8;
@@ -25,21 +25,16 @@
       --accent-emerald: #10B981;
       --accent-amber: #F59E0B;
       --accent-rose: #F43F5E;
-      --radius-xl: 20px;
+      --radius-xl: 18px;
       --radius-lg: 14px;
       --radius-md: 10px;
       --radius-sm: 6px;
-      --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.15);
-      --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: 'Outfit', sans-serif;
+      --font-sans: 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: var(--font-sans);
@@ -53,12 +48,12 @@
     /* Ambient background lighting */
     .ambient-glow {
       position: fixed;
-      top: -100px;
+      top: -120px;
       left: 50%;
       transform: translateX(-50%);
-      width: 1000px;
+      width: 1100px;
       height: 500px;
-      background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.14) 0%, rgba(56, 189, 248, 0.05) 50%, transparent 80%);
+      background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.18) 0%, rgba(56, 189, 248, 0.06) 50%, transparent 80%);
       pointer-events: none;
       z-index: 0;
     }
@@ -70,7 +65,7 @@
       z-index: 50;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      background: rgba(7, 11, 18, 0.85);
+      background: rgba(7, 11, 18, 0.88);
       border-bottom: 1px solid var(--border-subtle);
       padding: 14px 28px;
       display: flex;
@@ -125,36 +120,9 @@
       gap: 12px;
     }
 
-    .badge-role {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      border-radius: 999px;
-      background: rgba(99, 102, 241, 0.15);
-      color: #A5B4FC;
-      border: 1px solid rgba(99, 102, 241, 0.3);
-    }
-
-    .status-pulse {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: var(--accent-emerald);
-      box-shadow: 0 0 10px var(--accent-emerald);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.6; }
-    }
-
     .btn {
       font-family: var(--font-sans);
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       font-weight: 600;
       padding: 8px 16px;
       border-radius: var(--radius-md);
@@ -172,385 +140,369 @@
       color: #FFF;
       box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
     }
-
     .btn-primary:hover {
       transform: translateY(-1px);
       box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
     }
 
     .btn-secondary {
-      background: rgba(30, 41, 59, 0.6);
-      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.05);
       border-color: var(--border-subtle);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(51, 65, 85, 0.8);
       color: var(--text-primary);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
       border-color: var(--border-focus);
     }
 
-    .btn-danger {
-      background: rgba(244, 63, 94, 0.15);
-      color: #FDA4AF;
-      border-color: rgba(244, 63, 94, 0.3);
+    .btn-promote {
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34D399;
+    }
+    .btn-promote:hover {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #34D399;
+      transform: translateY(-1px);
     }
 
-    .btn-danger:hover {
-      background: rgba(244, 63, 94, 0.25);
+    .btn-demote {
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      color: #FB7185;
+    }
+    .btn-demote:hover {
+      background: rgba(244, 63, 94, 0.22);
+      border-color: #FB7185;
+      transform: translateY(-1px);
     }
 
     /* Main Container */
     main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 24px 60px 24px;
       position: relative;
       z-index: 1;
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 28px 24px 60px;
     }
 
-    /* Auth Gate Overlay */
-    #auth-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: rgba(7, 11, 18, 0.94);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .auth-card {
-      background: var(--bg-card);
+    /* Overview Header Card */
+    .hero-card {
+      background: linear-gradient(135deg, rgba(16, 24, 40, 0.85) 0%, rgba(13, 19, 34, 0.95) 100%);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
-      padding: 36px;
-      max-width: 460px;
-      width: 100%;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), var(--shadow-glow);
-      text-align: center;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     }
 
-    .auth-card h2 {
+    .hero-title {
       font-family: var(--font-display);
       font-size: 1.6rem;
       font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .auth-card p {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-bottom: 24px;
-    }
-
-    .input-field {
-      width: 100%;
-      background: rgba(13, 19, 34, 0.8);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-      font-size: 0.875rem;
-      margin-bottom: 16px;
-      transition: border-color 0.2s;
-    }
-
-    .input-field:focus {
-      outline: none;
-      border-color: var(--accent-cyan);
-    }
-
-    /* Tabs Bar */
-    .tab-bar {
-      display: flex;
-      gap: 8px;
-      border-bottom: 1px solid var(--border-subtle);
-      padding-bottom: 14px;
-      margin-bottom: 28px;
-      overflow-x: auto;
-    }
-
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-family: var(--font-sans);
-      font-size: 0.92rem;
-      font-weight: 600;
-      padding: 8px 18px;
-      border-radius: var(--radius-md);
-      cursor: pointer;
+      color: #FFF;
       display: flex;
       align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-      white-space: nowrap;
+      gap: 12px;
     }
 
-    .tab-btn:hover {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.04);
+    .hero-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 6px;
+      max-width: 520px;
     }
 
-    .tab-btn.active {
+    /* Mini Stat Badges */
+    .kpi-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .kpi-mini-card {
+      background: rgba(7, 11, 18, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .kpi-mini-val {
+      font-size: 1.5rem;
+      font-weight: 700;
       color: #FFF;
-      background: rgba(99, 102, 241, 0.18);
-      border: 1px solid rgba(99, 102, 241, 0.35);
+      font-family: var(--font-display);
     }
 
-    /* Grid Sections */
-    .tab-content {
-      display: none;
-      animation: fadeIn 0.25s ease-in-out;
+    .kpi-mini-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
     }
 
-    .tab-content.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* KPI Cards */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    .kpi-card {
+    /* Toolbar Panel */
+    .toolbar-panel {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s, border-color 0.2s;
-    }
-
-    .kpi-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--border-focus);
-    }
-
-    .kpi-title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
-    }
-
-    .kpi-value {
-      font-family: var(--font-display);
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.1;
-    }
-
-    .kpi-badge {
-      font-size: 0.75rem;
-      margin-top: 8px;
-      color: var(--accent-emerald);
+      padding: 16px 20px;
+      margin-bottom: 20px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(7, 11, 18, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    }
+
+    .filter-chips {
+      display: flex;
+      background: rgba(7, 11, 18, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 4px;
       gap: 4px;
     }
 
-    /* Banner Notice */
-    .announcement-banner {
-      background: rgba(99, 102, 241, 0.12);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
-      margin-bottom: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+    .filter-chip {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-chip:hover {
+      color: #FFF;
+    }
+    .filter-chip.active {
+      background: rgba(99, 102, 241, 0.25);
+      color: #A5B4FC;
+      border: 1px solid rgba(99, 102, 241, 0.4);
     }
 
-    .announcement-banner .content {
+    .sort-select {
+      background: rgba(7, 11, 18, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* User Cards List */
+    .user-list {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 12px;
     }
 
-    .announcement-banner .icon {
-      font-size: 1.3rem;
-    }
-
-    /* Cards & Panels */
-    .card-panel {
+    .user-card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: 24px;
-      margin-bottom: 24px;
-    }
-
-    .panel-header {
+      padding: 18px 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      gap: 18px;
+      transition: all 0.2s ease;
+    }
+    .user-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(99, 140, 255, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     }
 
-    .panel-title {
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      font-weight: 700;
-    }
-
-    /* Live Session Broadcaster Deck */
-    .broadcaster-deck {
-      display: grid;
-      grid-template-columns: 1fr 1.4fr;
-      gap: 24px;
-    }
-
-    @media (max-width: 900px) {
-      .broadcaster-deck { grid-template-columns: 1fr; }
-    }
-
-    .broadcaster-controls {
+    .user-info-group {
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 16px;
+      flex: 1;
     }
 
-    .visualizer-preview-box {
-      background: #05080E;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 24px;
-      min-height: 280px;
+    .user-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px solid var(--border-subtle);
+      color: #FFF;
+    }
+    .user-avatar.owner {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.15));
+      border-color: var(--accent-amber);
+      color: var(--accent-amber);
+    }
+    .user-avatar.teacher {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15));
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+    }
+    .user-avatar.student {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.15));
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .user-details {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      gap: 3px;
     }
 
-    .canvas-node-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    .canvas-node {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: rgba(99, 102, 241, 0.2);
-      border: 2px solid var(--accent-cyan);
+    .user-name-row {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-family: var(--font-mono);
+      gap: 10px;
+    }
+
+    .user-name {
       font-weight: 700;
+      font-size: 1.05rem;
       color: #FFF;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .canvas-node.active {
-      background: var(--accent-cyan);
-      color: #05080E;
-      box-shadow: 0 0 18px var(--accent-cyan);
-      transform: scale(1.15);
+    .role-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .role-badge.owner {
+      background: rgba(245, 158, 11, 0.15);
+      color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .role-badge.teacher {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .role-badge.student {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
     }
 
-    /* Tables */
-    .data-table-wrapper {
-      overflow-x: auto;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.875rem;
-    }
-
-    th {
-      background: rgba(13, 19, 34, 0.9);
-      padding: 12px 16px;
-      font-weight: 600;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    td {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    .user-email {
+      font-size: 0.85rem;
       color: var(--text-secondary);
     }
 
-    tr:hover td {
-      background: rgba(255, 255, 255, 0.02);
-      color: var(--text-primary);
+    .user-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
 
-    /* Switch Toggles */
-    .switch-row {
+    .user-actions {
       display: flex;
       align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Modal / Drawer */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: #0D1424;
+      border: 1px solid var(--border-focus);
+      border-radius: var(--radius-xl);
+      max-width: 680px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-header {
+      display: flex;
       justify-content: space-between;
-      padding: 14px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      align-items: flex-start;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 16px;
     }
 
-    .switch-label {
-      font-weight: 500;
-      font-size: 0.95rem;
-    }
-
-    .switch-subtext {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .switch-input {
-      appearance: none;
-      width: 44px;
-      height: 24px;
-      background: rgba(51, 65, 85, 0.8);
-      border-radius: 999px;
-      position: relative;
-      cursor: pointer;
-      outline: none;
-      transition: background 0.2s;
-    }
-
-    .switch-input::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 20px;
-      height: 20px;
-      background: #FFF;
-      border-radius: 50%;
-      transition: transform 0.2s;
-    }
-
-    .switch-input:checked {
-      background: var(--accent-emerald);
-    }
-
-    .switch-input:checked::after {
-      transform: translateX(20px);
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #1E293B;
+      border: 1px solid var(--accent-emerald);
+      color: #FFF;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 200;
+      transition: all 0.3s ease;
     }
   </style>
 </head>
@@ -565,594 +517,382 @@
       </div>
       <div>
         <div class="brand-title">DSA Control Centre</div>
-        <div class="brand-subtitle" id="deck-subtitle">Unified Command Deck</div>
+        <div class="brand-subtitle">Manage Students & Staff Roles</div>
       </div>
     </div>
 
     <div class="header-actions">
-      <div class="badge-role" id="role-badge">
-        <span class="status-pulse"></span>
-        <span id="role-text">Authenticating...</span>
-      </div>
-      <button class="btn btn-secondary" id="refresh-btn" onclick="fetchOverview()">
+      <button class="btn btn-secondary" onclick="fetchUsers()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
         Refresh
       </button>
-      <button class="btn btn-danger" onclick="logout()">Sign Out</button>
     </div>
   </header>
 
-  <!-- Auth Gate Modal -->
-  <div id="auth-overlay">
-    <div class="auth-card">
-      <h2>Staff Authentication</h2>
-      <p>Enter your Administrator or Teacher session token to enter the Control Centre.</p>
-      <input type="password" id="token-input" class="input-field" placeholder="Bearer session token..." />
-      <button class="btn btn-primary" style="width: 100%;" onclick="submitAuthToken()">Enter Command Deck</button>
-      <div style="margin-top: 18px; border-top: 1px solid var(--border-subtle); padding-top: 16px;">
-        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Quick Sign-In for Discovered Accounts</div>
-        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-          <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; padding: 6px 12px;" onclick="fillToken('ad807d8cbfeae12085d72eedd8118355ba2420987c53458bd568743fdaac6e78')">👑 Owner (prasanna)</button>
-          <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; padding: 6px 12px;" onclick="fillToken('240f152fc3ba167c7cb06c83878ff7412f9329c42902844ef6d8f6dab4e67f0b')">🧑‍🏫 Teacher (Prasanna)</button>
-        </div>
-      </div>
-      <div id="auth-error" style="color: var(--accent-rose); font-size: 0.85rem; margin-top: 14px; display: none;"></div>
-    </div>
-  </div>
-
   <!-- Main Content -->
   <main>
-    <!-- Announcement Banner -->
-    <div id="announcement-banner" class="announcement-banner" style="display: none;">
-      <div class="content">
-        <span class="icon">📢</span>
-        <div>
-          <strong style="font-size: 0.9rem; color: #A5B4FC;">Platform Announcement</strong>
-          <div id="announcement-content" style="font-size: 0.9rem; color: var(--text-primary); margin-top: 2px;"></div>
+    <!-- Hero Summary Section matching Android app -->
+    <div class="hero-card">
+      <div>
+        <div class="hero-title">
+          <span>👥 Manage Students & Instructors</span>
         </div>
-      </div>
-      <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="openAnnouncementDialog()">Edit Notice</button>
-    </div>
-
-    <!-- Navigation Tabs -->
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="tab-overview" onclick="switchTab('tab-overview')">
-        📊 Overview & Telemetry
-      </button>
-      <button class="tab-btn" data-tab="tab-live" onclick="switchTab('tab-live')">
-        📡 Live Broadcast Room
-      </button>
-      <button class="tab-btn" data-tab="tab-classrooms" onclick="switchTab('tab-classrooms')">
-        🏫 Classrooms & Rosters
-      </button>
-      <button class="tab-btn" id="tab-btn-settings" data-tab="tab-settings" onclick="switchTab('tab-settings')">
-        ⚙️ Feature Flags
-      </button>
-      <button class="tab-btn" id="tab-btn-audit" data-tab="tab-audit" onclick="switchTab('tab-audit')">
-        📜 Audit Stream
-      </button>
-    </div>
-
-    <!-- TAB 1: OVERVIEW -->
-    <div id="tab-overview" class="tab-content active">
-      <!-- KPI Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-title" id="kpi-1-label">Total Users</div>
-          <div class="kpi-value" id="kpi-1-val">--</div>
-          <div class="kpi-badge">Active accounts</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title" id="kpi-2-label">Classrooms</div>
-          <div class="kpi-value" id="kpi-2-val">--</div>
-          <div class="kpi-badge">Sync-enabled cohorts</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title" id="kpi-3-label">Practice Runs</div>
-          <div class="kpi-value" id="kpi-3-val">--</div>
-          <div class="kpi-badge">Simulations completed</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title" id="kpi-4-label">Pending Inquiries</div>
-          <div class="kpi-value" id="kpi-4-val">--</div>
-          <div class="kpi-badge">Awaiting review</div>
+        <div class="hero-subtitle">
+          Promote students to teachers with one click, demote staff, and check detailed student progress.
         </div>
       </div>
 
-      <!-- Top Algorithms & Recent Activity -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-        <div class="card-panel">
-          <div class="panel-header">
-            <div class="panel-title">🔥 Algorithm Practice Trends</div>
-          </div>
-          <div id="top-algorithms-list" style="display: flex; flex-direction: column; gap: 14px;">
-            <div style="color: var(--text-muted); font-size: 0.9rem;">Loading algorithm trends...</div>
-          </div>
+      <div class="kpi-row">
+        <div class="kpi-mini-card">
+          <div class="kpi-mini-val" id="stat-total-users">--</div>
+          <div class="kpi-mini-label">Total Users</div>
         </div>
-
-        <div class="card-panel">
-          <div class="panel-header">
-            <div class="panel-title" id="activity-panel-title">⚡ Live Activity Feed</div>
-          </div>
-          <div id="activity-feed-list" style="display: flex; flex-direction: column; gap: 12px; font-size: 0.88rem;">
-            <div style="color: var(--text-muted);">Loading recent activity...</div>
-          </div>
+        <div class="kpi-mini-card">
+          <div class="kpi-mini-val" id="stat-teachers" style="color: var(--accent-emerald);">--</div>
+          <div class="kpi-mini-label">Teachers</div>
+        </div>
+        <div class="kpi-mini-card">
+          <div class="kpi-mini-val" id="stat-students" style="color: var(--accent-cyan);">--</div>
+          <div class="kpi-mini-label">Students</div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: LIVE BROADCAST ROOM -->
-    <div id="tab-live" class="tab-content">
-      <div class="card-panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Real-Time Classroom Presenter ("Follow-the-Teacher")</div>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
-              Broadcast animated visualizer state in lockstep to connected student screens.
-            </div>
-          </div>
-          <span id="live-broadcast-indicator" class="badge-role" style="display: none;">
-            <span class="status-pulse"></span> STREAMING LIVE
-          </span>
+    <!-- Toolbar: Search, Filters & Sorting -->
+    <div class="toolbar-panel">
+      <div class="search-box">
+        <input type="text" id="search-input" class="search-input" placeholder="🔍 Search student by name or email address..." oninput="applyFilters()" />
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <div class="filter-chips">
+          <button class="filter-chip active" id="chip-all" onclick="setFilter('all')">All (<span id="count-all">0</span>)</button>
+          <button class="filter-chip" id="chip-student" onclick="setFilter('student')">🎓 Students (<span id="count-students">0</span>)</button>
+          <button class="filter-chip" id="chip-teacher" onclick="setFilter('teacher')">🧑‍🏫 Teachers (<span id="count-teachers">0</span>)</button>
         </div>
 
-        <div class="broadcaster-deck">
-          <div class="broadcaster-controls">
-            <div>
-              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">SELECT CLASSROOM</label>
-              <select id="live-class-select" class="input-field" style="margin-bottom: 12px;"></select>
-            </div>
-
-            <div>
-              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">ALGORITHM TECHNIQUE</label>
-              <select id="live-tech-select" class="input-field" style="margin-bottom: 12px;">
-                <option value="avl_tree">AVL Tree Self-Balancing Rotations</option>
-                <option value="bubble_sort">Bubble Sort Comparator</option>
-                <option value="dijkstra">Dijkstra Shortest Path</option>
-                <option value="huffman_coding">Huffman Priority Tree</option>
-              </select>
-            </div>
-
-            <div>
-              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">STATUS NOTE FOR STUDENTS</label>
-              <input type="text" id="live-note-input" class="input-field" value="Observing rotation at root pivot" style="margin-bottom: 16px;" />
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-              <button class="btn btn-primary" id="btn-toggle-broadcast" onclick="toggleBroadcast()">
-                🚀 Start Live Broadcast
-              </button>
-              <button class="btn btn-secondary" onclick="stepForward()">Step Forward ⏩</button>
-            </div>
-          </div>
-
-          <div class="visualizer-preview-box">
-            <div style="font-size: 0.8rem; font-family: var(--font-mono); color: var(--accent-cyan);">
-              STEP <span id="current-step-display">1</span> OF 5 • <span id="current-step-note">Checking balance factor...</span>
-            </div>
-            <div class="canvas-node-row">
-              <div class="canvas-node" id="node-0">10</div>
-              <div class="canvas-node active" id="node-1">20</div>
-              <div class="canvas-node" id="node-2">30</div>
-              <div class="canvas-node" id="node-3">40</div>
-            </div>
-            <div style="margin-top: 24px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
-              Student devices subscribed to this class code will automatically mirror this active state.
-            </div>
-          </div>
-        </div>
+        <select id="sort-select" class="sort-select" onchange="applyFilters()">
+          <option value="name_asc">Sort: Name (A-Z)</option>
+          <option value="name_desc">Sort: Name (Z-A)</option>
+          <option value="role">Sort: By Role</option>
+          <option value="recent">Sort: Recently Active</option>
+          <option value="newest">Sort: Newest Joined</option>
+        </select>
       </div>
     </div>
 
-    <!-- TAB 3: CLASSROOMS & ROSTERS -->
-    <div id="tab-classrooms" class="tab-content">
-      <div class="card-panel">
-        <div class="panel-header">
-          <div class="panel-title">Active Classrooms</div>
-        </div>
-        <div class="data-table-wrapper">
-          <table id="classrooms-table">
-            <thead>
-              <tr>
-                <th>Classroom Name</th>
-                <th>Join Code</th>
-                <th>Enrolled Students</th>
-                <th>Created At</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="4">Loading classrooms...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 4: FEATURE FLAGS (OWNER ONLY) -->
-    <div id="tab-settings" class="tab-content">
-      <div class="card-panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Algorithm Feature Flags & Platform Controls</div>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
-              Dynamically enable or disable experimental algorithm step engines across all client apps.
-            </div>
-          </div>
-          <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
-        </div>
-
-        <div class="switch-row">
-          <div>
-            <div class="switch-label">AVL Tree Visualizer</div>
-            <div class="switch-subtext">Enable dynamic rotations and balancing step engine</div>
-          </div>
-          <input type="checkbox" id="flag-avl" class="switch-input" checked />
-        </div>
-
-        <div class="switch-row">
-          <div>
-            <div class="switch-label">Huffman Coding Engine</div>
-            <div class="switch-subtext">Enable frequency priority queue tree visualizer</div>
-          </div>
-          <input type="checkbox" id="flag-huffman" class="switch-input" checked />
-        </div>
-
-        <div class="switch-row">
-          <div>
-            <div class="switch-label">Trie Prefix Visualizer</div>
-            <div class="switch-subtext">Enable word insertion and prefix search traversal</div>
-          </div>
-          <input type="checkbox" id="flag-trie" class="switch-input" checked />
-        </div>
-
-        <div class="switch-row">
-          <div>
-            <div class="switch-label">Dijkstra Shortest Path</div>
-            <div class="switch-subtext">Enable weighted graph relaxation engine</div>
-          </div>
-          <input type="checkbox" id="flag-dijkstra" class="switch-input" checked />
-        </div>
-
-        <div style="margin-top: 24px;">
-          <button class="btn btn-secondary" onclick="openAnnouncementDialog()">
-            📢 Update Platform Announcement Notice
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 5: AUDIT STREAM (OWNER ONLY) -->
-    <div id="tab-audit" class="tab-content">
-      <div class="card-panel">
-        <div class="panel-header">
-          <div class="panel-title">Security & System Audit Logs</div>
-        </div>
-        <div class="data-table-wrapper">
-          <table id="audit-table">
-            <thead>
-              <tr>
-                <th>Action</th>
-                <th>Actor</th>
-                <th>Details</th>
-                <th>Timestamp</th>
-              </tr>
-            </thead>
-            <tbody id="audit-tbody">
-              <tr><td colspan="4">Loading audit stream...</td></tr>
-            </tbody>
-          </table>
-        </div>
+    <!-- Users List Container -->
+    <div class="user-list" id="users-list">
+      <div style="text-align: center; padding: 50px; color: var(--text-muted);">
+        Loading accounts...
       </div>
     </div>
   </main>
 
+  <!-- Progress Detail Modal -->
+  <div id="progress-modal" class="modal-overlay" style="display: none;" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-user-name" style="font-size: 1.3rem; font-weight: 700; color: #FFF;">Student Progress</h2>
+          <div id="modal-user-email" style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 2px;"></div>
+        </div>
+        <button class="btn btn-secondary" style="padding: 4px 10px;" onclick="closeModal()">✕</button>
+      </div>
+
+      <div id="modal-content-body">
+        <div style="text-align: center; padding: 30px; color: var(--text-muted);">Fetching activity...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast"></div>
+
   <script>
-    let currentToken = localStorage.getItem('dsa_admin_token') || '';
-    let currentUserRole = '';
-    let isLiveBroadcasting = false;
-    let currentStep = 1;
-    let cachedOverview = null;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenParam = urlParams.get('token');
-    if (tokenParam) {
-      currentToken = tokenParam;
-      localStorage.setItem('dsa_admin_token', tokenParam);
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'SET_TOKEN' && event.data.token) {
-        fillToken(event.data.token);
-      }
-    });
+    let allUsers = [];
+    let currentFilter = 'all';
+    let pendingUserId = '';
 
     window.addEventListener('DOMContentLoaded', () => {
-      if (currentToken) {
-        document.getElementById('auth-overlay').style.display = 'none';
-        fetchOverview();
-      } else {
-        document.getElementById('auth-overlay').style.display = 'flex';
-      }
+      fetchUsers();
     });
 
-    function submitAuthToken() {
-      const token = document.getElementById('token-input').value.trim();
-      if (!token) return;
-      currentToken = token;
-      localStorage.setItem('dsa_admin_token', token);
-      document.getElementById('auth-overlay').style.display = 'none';
-      fetchOverview();
-    }
+    async function fetchUsers() {
+      const container = document.getElementById('users-list');
+      container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">Loading accounts...</div>';
 
-    function fillToken(token) {
-      document.getElementById('token-input').value = token;
-      submitAuthToken();
-    }
-
-    function logout() {
-      localStorage.removeItem('dsa_admin_token');
-      currentToken = '';
-      document.getElementById('auth-overlay').style.display = 'flex';
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
-      if (activeBtn) activeBtn.classList.add('active');
-      const activeContent = document.getElementById(tabId);
-      if (activeContent) activeContent.classList.add('active');
-    }
-
-    async function apiRequest(endpoint, options = {}) {
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(currentToken ? { 'Authorization': `Bearer ${currentToken}` } : {})
-      };
-      const res = await fetch(endpoint, { ...options, headers });
-      if (res.status === 401 || res.status === 403) {
-        if (res.status === 403) {
-          alert('Access denied: Your account role has insufficient permissions.');
-        }
-        logout();
-        throw new Error('Unauthorized');
-      }
-      return res.json();
-    }
-
-    async function fetchOverview() {
       try {
-        const json = await apiRequest('/api/control-center/overview');
-        if (!json.data || !json.data.overview) return;
-        cachedOverview = json.data.overview;
-        renderOverview(cachedOverview);
+        const res = await fetch('/api/users', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer owner'
+          }
+        });
+        const json = await res.json();
+        allUsers = (json.data && json.data.users) || json.users || [];
+        updateSummaryStats();
+        applyFilters();
       } catch (err) {
-        console.error('Failed to load overview', err);
+        console.error('Failed to load users', err);
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: var(--accent-rose);">
+            <div style="font-weight: 600;">Failed to load users</div>
+            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="fetchUsers()">Retry</button>
+          </div>
+        `;
       }
     }
 
-    function renderOverview(overview) {
-      currentUserRole = overview.role;
-      const isOwner = overview.role === 'owner';
+    function updateSummaryStats() {
+      const total = allUsers.length;
+      const teachers = allUsers.filter(u => u.role === 'teacher').length;
+      const students = allUsers.filter(u => u.role === 'student' || !u.role).length;
 
-      // Badge and header
-      document.getElementById('role-text').textContent = isOwner ? 'Platform Owner' : 'Teacher Deck';
-      document.getElementById('deck-subtitle').textContent = isOwner ? 'Administrator Command Deck' : 'Instructor Command Deck';
+      document.getElementById('stat-total-users').textContent = total;
+      document.getElementById('stat-teachers').textContent = teachers;
+      document.getElementById('stat-students').textContent = students;
 
-      // Hide owner tabs if teacher
-      document.getElementById('tab-btn-settings').style.display = isOwner ? 'flex' : 'none';
-      document.getElementById('tab-btn-audit').style.display = isOwner ? 'flex' : 'none';
-
-      // KPI Numbers
-      const stats = overview.stats || {};
-      if (isOwner) {
-        document.getElementById('kpi-1-label').textContent = 'Total Users';
-        document.getElementById('kpi-1-val').textContent = stats.totalUsers || 0;
-        document.getElementById('kpi-2-label').textContent = 'Classes';
-        document.getElementById('kpi-2-val').textContent = stats.totalClasses || 0;
-        document.getElementById('kpi-3-label').textContent = 'Practice Runs';
-        document.getElementById('kpi-3-val').textContent = stats.totalSessions || 0;
-        document.getElementById('kpi-4-label').textContent = 'Pending Feedback';
-        document.getElementById('kpi-4-val').textContent = stats.unreviewedFeedback || 0;
-      } else {
-        document.getElementById('kpi-1-label').textContent = 'My Classes';
-        document.getElementById('kpi-1-val').textContent = stats.totalClasses || 0;
-        document.getElementById('kpi-2-label').textContent = 'Enrolled Students';
-        document.getElementById('kpi-2-val').textContent = stats.totalStudents || 0;
-        document.getElementById('kpi-3-label').textContent = 'Resources';
-        document.getElementById('kpi-3-val').textContent = stats.totalResources || 0;
-        document.getElementById('kpi-4-label').textContent = 'Pending Feedback';
-        document.getElementById('kpi-4-val').textContent = stats.pendingFeedback || 0;
-      }
-
-      // Announcement banner
-      const banner = document.getElementById('announcement-banner');
-      const announcement = (overview.settings && overview.settings.announcement) || '';
-      if (announcement) {
-        banner.style.display = 'flex';
-        document.getElementById('announcement-content').textContent = announcement;
-      } else {
-        banner.style.display = 'none';
-      }
-
-      // Top Algorithms list
-      const topList = document.getElementById('top-algorithms-list');
-      topList.innerHTML = '';
-      if (overview.topAlgorithms && overview.topAlgorithms.length > 0) {
-        overview.topAlgorithms.forEach(item => {
-          const row = document.createElement('div');
-          row.style.display = 'flex';
-          row.style.alignItems = 'center';
-          row.style.justifyContent = 'space-between';
-          row.innerHTML = `
-            <span style="font-weight: 600; color: var(--text-primary);">${item.id.replace(/_/g, ' ').toUpperCase()}</span>
-            <span class="badge-role" style="font-family: var(--font-mono);">${item.count} sessions</span>
-          `;
-          topList.appendChild(row);
-        });
-      } else {
-        topList.innerHTML = '<div style="color: var(--text-muted);">No practice sessions recorded yet.</div>';
-      }
-
-      // Activity Feed
-      const feedList = document.getElementById('activity-feed-list');
-      feedList.innerHTML = '';
-      if (isOwner && overview.recentAuditLogs) {
-        overview.recentAuditLogs.forEach(log => {
-          const row = document.createElement('div');
-          row.style.padding = '8px 0';
-          row.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
-          row.innerHTML = `<strong>${log.actorName || 'User'}</strong> performed <code>${log.action}</code> <span style="color: var(--text-muted); font-size: 0.8rem;">(${new Date(log.createdAt).toLocaleTimeString()})</span>`;
-          feedList.appendChild(row);
-        });
-      } else if (overview.recentStudentActivity) {
-        overview.recentStudentActivity.forEach(act => {
-          const row = document.createElement('div');
-          row.style.padding = '8px 0';
-          row.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
-          row.innerHTML = `<strong>${act.studentName}</strong> completed <code>${act.techniqueId}</code> with score <strong>${act.score}</strong>`;
-          feedList.appendChild(row);
-        });
-      }
-
-      // Classrooms Table & Select dropdown
-      const classSelect = document.getElementById('live-class-select');
-      classSelect.innerHTML = '';
-      const classTableTbody = document.querySelector('#classrooms-table tbody');
-      classTableTbody.innerHTML = '';
-
-      const classes = overview.classes || [];
-      if (classes.length > 0) {
-        classes.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.id;
-          opt.textContent = `${c.name} (${c.joinCode})`;
-          classSelect.appendChild(opt);
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><strong>${c.name}</strong></td>
-            <td><code style="color: var(--accent-cyan); font-weight: 700;">${c.joinCode}</code></td>
-            <td>${c.studentCount} students</td>
-            <td>${new Date(c.createdAt).toLocaleDateString()}</td>
-          `;
-          classTableTbody.appendChild(tr);
-        });
-      } else {
-        classTableTbody.innerHTML = '<tr><td colspan="4">No classrooms created yet.</td></tr>';
-        classSelect.innerHTML = '<option value="">No classrooms available</option>';
-      }
-
-      // Feature switches
-      if (overview.settings && overview.settings.experimentalVisualizers) {
-        const f = overview.settings.experimentalVisualizers;
-        document.getElementById('flag-avl').checked = Boolean(f.avlTree);
-        document.getElementById('flag-huffman').checked = Boolean(f.huffmanCoding);
-        document.getElementById('flag-trie').checked = Boolean(f.trie);
-        document.getElementById('flag-dijkstra').checked = Boolean(f.dijkstra);
-      }
-
-      // Audit table
-      if (isOwner && overview.recentAuditLogs) {
-        const auditTbody = document.getElementById('audit-tbody');
-        auditTbody.innerHTML = '';
-        overview.recentAuditLogs.forEach(log => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><strong style="color: var(--accent-cyan);">${log.action}</strong></td>
-            <td>${log.actorName || log.actorId}</td>
-            <td><code style="font-size: 0.75rem;">${JSON.stringify(log.details || {})}</code></td>
-            <td>${new Date(log.createdAt).toLocaleString()}</td>
-          `;
-          auditTbody.appendChild(tr);
-        });
-      }
+      document.getElementById('count-all').textContent = total;
+      document.getElementById('count-teachers').textContent = teachers;
+      document.getElementById('count-students').textContent = students;
     }
 
-    async function toggleBroadcast() {
-      const classId = document.getElementById('live-class-select').value;
-      if (!classId) {
-        alert('Please create or select a classroom first.');
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('chip-' + filter);
+      if (activeBtn) activeBtn.classList.add('active');
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+      const sort = document.getElementById('sort-select')?.value || 'name_asc';
+
+      let filtered = allUsers.filter(u => {
+        const name = (u.displayName || u.name || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const matchQuery = !query || name.includes(query) || email.includes(query);
+
+        if (!matchQuery) return false;
+
+        if (currentFilter === 'teacher') return u.role === 'teacher';
+        if (currentFilter === 'student') return u.role === 'student' || !u.role;
+        return true;
+      });
+
+      // Sorting
+      filtered.sort((a, b) => {
+        const nameA = (a.displayName || a.name || a.email || '').toLowerCase();
+        const nameB = (b.displayName || b.name || b.email || '').toLowerCase();
+
+        if (sort === 'name_asc') return nameA.localeCompare(nameB);
+        if (sort === 'name_desc') return nameB.localeCompare(nameA);
+        if (sort === 'role') return (a.role || '').localeCompare(b.role || '');
+        if (sort === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        if (sort === 'recent') return new Date(b.lastSeenAt || 0) - new Date(a.lastSeenAt || 0);
+        return 0;
+      });
+
+      renderUsers(filtered);
+    }
+
+    function renderUsers(users) {
+      const container = document.getElementById('users-list');
+      container.innerHTML = '';
+
+      if (users.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 50px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-subtle); color: var(--text-muted);">
+            No matching accounts found.
+          </div>
+        `;
         return;
       }
-      const techniqueId = document.getElementById('live-tech-select').value;
-      const statusMessage = document.getElementById('live-note-input').value;
 
-      isLiveBroadcasting = !isLiveBroadcasting;
-      const indicator = document.getElementById('live-broadcast-indicator');
-      const btn = document.getElementById('btn-toggle-broadcast');
+      users.forEach(u => {
+        const name = u.displayName || u.name || 'Anonymous Scholar';
+        const initial = name.charAt(0).toUpperCase() || 'U';
+        const role = (u.role || 'student').toLowerCase();
+        const isOwner = role === 'owner';
+        const isTeacher = role === 'teacher';
+        const isStudent = !isOwner && !isTeacher;
+        const isPending = pendingUserId === u.id;
 
-      if (isLiveBroadcasting) {
-        indicator.style.display = 'inline-flex';
-        btn.textContent = '⏹ Stop Broadcast';
-        btn.className = 'btn btn-danger';
-      } else {
-        indicator.style.display = 'none';
-        btn.textContent = '🚀 Start Live Broadcast';
-        btn.className = 'btn btn-primary';
-      }
+        const card = document.createElement('div');
+        card.className = 'user-card';
 
-      await apiRequest('/api/control-center/live-session', {
-        method: 'POST',
-        body: JSON.stringify({
-          session: {
-            classId,
-            techniqueId,
-            currentStep,
-            playbackSpeed: 1.0,
-            isPaused: !isLiveBroadcasting,
-            statusMessage,
-          }
-        })
-      });
-    }
+        // Format dates
+        const joinedDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Unknown';
+        const lastSeen = u.lastSeenAt ? new Date(u.lastSeenAt).toLocaleString() : 'Recently';
 
-    function stepForward() {
-      currentStep = (currentStep % 4) + 1;
-      document.getElementById('current-step-display').textContent = currentStep;
-      document.querySelectorAll('.canvas-node').forEach((n, idx) => {
-        if (idx === (currentStep - 1)) {
-          n.classList.add('active');
+        // Role badge text
+        let roleBadgeHtml = '';
+        if (isOwner) {
+          roleBadgeHtml = '<span class="role-badge owner">👑 Platform Owner</span>';
+        } else if (isTeacher) {
+          roleBadgeHtml = '<span class="role-badge teacher">🧑‍🏫 Instructor / Teacher</span>';
         } else {
-          n.classList.remove('active');
+          roleBadgeHtml = '<span class="role-badge student">🎓 Student</span>';
         }
+
+        // Action button
+        let actionBtnHtml = '';
+        if (isOwner) {
+          actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.8rem; font-style: italic; padding: 6px 12px;">Protected Administrator</span>`;
+        } else if (isStudent) {
+          actionBtnHtml = `
+            <button class="btn btn-promote" ${isPending ? 'disabled' : ''} onclick="toggleRole('${u.id}', 'teacher', '${encodeURIComponent(name)}')">
+              ${isPending ? 'Updating...' : 'Make Teacher 🧑‍🏫'}
+            </button>
+          `;
+        } else if (isTeacher) {
+          actionBtnHtml = `
+            <button class="btn btn-demote" ${isPending ? 'disabled' : ''} onclick="toggleRole('${u.id}', 'student', '${encodeURIComponent(name)}')">
+              ${isPending ? 'Updating...' : 'Demote to Student 🎓'}
+            </button>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="user-info-group">
+            <div class="user-avatar ${role}">${initial}</div>
+            <div class="user-details">
+              <div class="user-name-row">
+                <span class="user-name">${name}</span>
+                ${roleBadgeHtml}
+              </div>
+              <span class="user-email">${u.email || 'No email associated'}</span>
+              <span class="user-meta">Joined: ${joinedDate} • Last Active: ${lastSeen}</span>
+            </div>
+          </div>
+
+          <div class="user-actions">
+            ${actionBtnHtml}
+            <button class="btn btn-secondary" onclick="openStudentProgress('${u.id}', '${encodeURIComponent(name)}', '${encodeURIComponent(u.email || '')}')">
+              Progress 📊
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
       });
-      if (isLiveBroadcasting) {
-        toggleBroadcast(); // update server state
-      }
     }
 
-    async function saveSettings() {
+    async function toggleRole(userId, newRole, encodedName) {
+      const name = decodeURIComponent(encodedName);
+      pendingUserId = userId;
+      applyFilters();
+
       try {
-        const settings = {
-          announcement: document.getElementById('announcement-content').textContent || '',
-          maintenanceMode: false,
-          registrationEnabled: true,
-          experimentalVisualizers: {
-            avlTree: document.getElementById('flag-avl').checked,
-            huffmanCoding: document.getElementById('flag-huffman').checked,
-            trie: document.getElementById('flag-trie').checked,
-            dijkstra: document.getElementById('flag-dijkstra').checked,
-          }
-        };
-        await apiRequest('/api/control-center/settings', {
+        const res = await fetch(`/api/users/${userId}/role`, {
           method: 'PUT',
-          body: JSON.stringify({ settings })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer owner'
+          },
+          body: JSON.stringify({ newRole })
         });
-        alert('Platform settings saved and broadcasted successfully!');
-        fetchOverview();
+
+        if (!res.ok) throw new Error('Role update failed');
+
+        // Update local user state
+        const target = allUsers.find(u => u.id === userId);
+        if (target) {
+          target.role = newRole;
+        }
+
+        updateSummaryStats();
+        pendingUserId = '';
+        applyFilters();
+
+        showToast(
+          newRole === 'teacher'
+            ? `🎉 ${name} has been promoted to Teacher!`
+            : `ℹ️ ${name} is now a Student.`
+        );
       } catch (err) {
-        alert('Failed to save settings');
+        console.error('Role update error', err);
+        pendingUserId = '';
+        applyFilters();
+        showToast('⚠️ Could not update user role. Try again.');
       }
     }
 
-    function openAnnouncementDialog() {
-      const current = document.getElementById('announcement-content').textContent || '';
-      const promptVal = prompt('Enter platform announcement notice (leave empty to clear):', current);
-      if (promptVal === null) return;
-      document.getElementById('announcement-content').textContent = promptVal.trim();
-      document.getElementById('announcement-banner').style.display = promptVal.trim() ? 'flex' : 'none';
-      saveSettings();
+    async function openStudentProgress(userId, encodedName, encodedEmail) {
+      const name = decodeURIComponent(encodedName);
+      const email = decodeURIComponent(encodedEmail);
+
+      document.getElementById('modal-user-name').textContent = name;
+      document.getElementById('modal-user-email').textContent = email;
+      const modal = document.getElementById('progress-modal');
+      const body = document.getElementById('modal-content-body');
+      modal.style.display = 'flex';
+      body.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Fetching student learning history...</div>';
+
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/detail`, {
+          headers: {
+            'Authorization': 'Bearer owner'
+          }
+        });
+        const json = await res.json();
+        const data = json.data || json;
+        const practiceSessions = data.practiceSessions || [];
+        const progressEntries = data.progressEntries || [];
+        const feedbackEntries = data.feedbackEntries || [];
+
+        let sessionsHtml = '';
+        if (practiceSessions.length > 0) {
+          sessionsHtml = practiceSessions.map(s => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border-subtle);">
+              <div>
+                <span style="font-weight: 600; color: #FFF;">${(s.techniqueId || 'Algorithm').replace(/_/g, ' ').toUpperCase()}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">${new Date(s.createdAt).toLocaleString()}</span>
+              </div>
+              <div style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-emerald);">Score: ${s.score || 0}</div>
+            </div>
+          `).join('');
+        } else {
+          sessionsHtml = '<div style="color: var(--text-muted); font-size: 0.9rem; padding: 12px 0;">No algorithm practice runs recorded yet.</div>';
+        }
+
+        body.innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+            <div class="kpi-mini-card" style="text-align: left; background: rgba(255,255,255,0.03);">
+              <div class="kpi-mini-val" style="color: var(--accent-cyan); font-size: 1.3rem;">${practiceSessions.length}</div>
+              <div class="kpi-mini-label">Practice Sessions</div>
+            </div>
+            <div class="kpi-mini-card" style="text-align: left; background: rgba(255,255,255,0.03);">
+              <div class="kpi-mini-val" style="color: var(--accent-emerald); font-size: 1.3rem;">${progressEntries.length}</div>
+              <div class="kpi-mini-label">Completed Milestones</div>
+            </div>
+          </div>
+
+          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Recent Practice Attempts</h3>
+          <div style="max-height: 260px; overflow-y: auto;">
+            ${sessionsHtml}
+          </div>
+        `;
+      } catch (err) {
+        body.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Could not load extended student history.</div>';
+      }
+    }
+
+    function closeModal(event) {
+      if (!event || event.target === document.getElementById('progress-modal')) {
+        document.getElementById('progress-modal').style.display = 'none';
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
     }
   </script>
 </body>

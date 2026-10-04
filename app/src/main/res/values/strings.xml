@@ -507,6 +507,7 @@
     <string name="vis_traversal">Traversal</string>
     <string name="vis_random">Random</string>
     <string name="vis_apply_input">Apply Input</string>
+    <string name="vis_share_web_link">Share Interactive Web Link</string>
     <string name="vis_edit_input">Edit Input</string>
     <string name="vis_step_prev">Previous step</string>
     <string name="vis_restart">Restart</string>

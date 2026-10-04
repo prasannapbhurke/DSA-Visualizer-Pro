@@ -29,8 +29,6 @@ public final class AppRepository {
         CATEGORIES.add(new CategoryItem("linked_list", "Linked List", "Connected node based storage", "#A78BFA"));
         CATEGORIES.add(new CategoryItem("trees", "Trees", "Hierarchical node structures", "#FBBF24"));
         CATEGORIES.add(new CategoryItem("graph", "Graph", "Vertex and edge relationships", "#FB7185"));
-        CATEGORIES.add(new CategoryItem("foundations", "Foundations", "Core thinking patterns and basics", "#F97316"));
-        CATEGORIES.add(new CategoryItem("advanced", "Advanced", "More specialized DSA topics", "#14B8A6"));
 
         TECHNIQUES.add(new TechniqueItem("linear_search", "searching", "Linear Search", "Checks each element one by one", "Easy"));
         TECHNIQUES.add(new TechniqueItem("binary_search", "searching", "Binary Search", "Cuts the sorted range in half", "Medium"));
@@ -101,10 +99,6 @@ public final class AppRepository {
         TECHNIQUES.add(new TechniqueItem("spanning_tree", "graph", "Spanning Tree", "Connect all vertices without cycles", "Hard"));
         TECHNIQUES.add(new TechniqueItem("quicksort", "sorting", "Quicksort", "Partition around a pivot and sort subarrays", "Medium"));
         TECHNIQUES.add(new TechniqueItem("heapsort", "sorting", "HEAPSORT", "Build a max heap and repeatedly delete the max", "Hard"));
-        TECHNIQUES.add(new TechniqueItem("union_find", "advanced", "Union-Find", "Track connected components with parent sets", "Medium"));
-        TECHNIQUES.add(new TechniqueItem("hash_collision_handling", "advanced", "Hash Collision Handling", "Resolve hash conflicts by chaining or probing", "Medium"));
-        TECHNIQUES.add(new TechniqueItem("recursion_basics", "foundations", "Recursion Basics", "Solve a problem by reducing it to smaller cases", "Easy"));
-        TECHNIQUES.add(new TechniqueItem("dynamic_programming_basics", "foundations", "Dynamic Programming Basics", "Reuse solved subproblems to save time", "Medium"));
 
         TechniqueContent linearSearch = new TechniqueContent(
             "linear_search",
@@ -2677,10 +2671,6 @@ public final class AppRepository {
         registerSupplementalTopic("dijkstra_algorithm", "Dijkstra's Algorithm", "Dijkstra's algorithm grows shortest known distances from one source using the nearest unsettled vertex each time.", "It is like always choosing the closest confirmed city before extending routes to farther cities.", "O(V^2)", "O((V + E) log V)", "O((V + E) log V)", "O(V)", new int[] {0, 1, 2, 3, 4}, 0, "Algorithm: DIJKSTRA(G, SOURCE)\n1. Set distance of SOURCE to 0\n   and all others to infinity.\n2. Choose the unsettled vertex\n   with smallest distance.\n3. Relax all outgoing edges of that vertex.\n4. Mark it settled.\n5. Continue until all reachable vertices are settled.", "Algorithm: DIJKSTRA_FUNC(G, SOURCE)\n1. EXTRACT_MIN chooses the next unsettled vertex.\n2. RELAX_NEIGHBORS updates tentative distances.\n3. MARK_SETTLED fixes the chosen distance.\n4. Return the final distance array.", "Algorithm: DIJKSTRA_REC(G, STATE)\n1. If no unsettled reachable vertex remains,\n   return.\n2. Pick the current minimum-distance vertex.\n3. Relax its outgoing edges.\n4. Recurse on the updated state.\n5. Return the final distances.");
         registerSupplementalTopic("avl_tree", "AVL Tree", "An AVL tree keeps the height of left and right subtrees nearly balanced after insertions and deletions.", "It is like keeping a shelf balanced so one side never grows too heavy compared with the other.", "O(log n)", "O(log n)", "O(log n)", "O(n)", new int[] {30, 20, 40, 10, 25, 35, 50}, 0, "Algorithm: AVL_INSERT(T, ITEM)\n1. Insert ITEM as in a BST.\n2. Update heights while moving upward.\n3. Compute the balance factor\n   of each ancestor.\n4. If unbalanced,\n   apply the needed rotation.\n5. Return the rebalanced root.", "Algorithm: AVL_FUNC(T, ITEM)\n1. BST_INSERT places the node.\n2. UPDATE_HEIGHT refreshes ancestors.\n3. REBALANCE chooses LL, RR, LR,\n   or RL rotation.\n4. Return the new root.", "Algorithm: AVL_REC(T, ITEM)\n1. If T is null,\n   create and return a node.\n2. Recursively insert ITEM\n   into left or right subtree.\n3. Update height and balance factor.\n4. Apply any needed rotation\n   and return the root.");
         registerSupplementalTopic("trie", "Trie", "A trie stores strings by characters along root-to-leaf paths so shared prefixes reuse the same path.", "It is like storing words in a branching dictionary where common beginnings share the same corridor.", "O(m)", "O(m)", "O(m)", "O(alphabet * nodes)", new int[] {19, 18, 9, 5}, 0, "Algorithm: TRIE_INSERT(ROOT, WORD)\n1. Start from ROOT.\n2. For each character in WORD,\n   follow its child edge.\n3. If the child does not exist,\n   create it.\n4. Move to the child and continue.\n5. Mark the final node as end-of-word.", "Algorithm: TRIE_FUNC(ROOT, WORD)\n1. FIND_OR_CREATE_CHILD handles each next character.\n2. MOVE advances to that child.\n3. MARK_END records the whole word.\n4. Return the updated root.", "Algorithm: TRIE_REC(NODE, WORD, INDEX)\n1. If INDEX reaches the word length,\n   mark end-of-word and return.\n2. Create the next child if needed.\n3. Recurse on the child and INDEX + 1.\n4. Return.");
-        registerSupplementalTopic("union_find", "Union-Find", "Union-Find tracks which elements belong to the same set using parent representatives.", "It is like grouping students by club and quickly checking whether two students belong to the same club.", "O(1)", "O(alpha(n))", "O(alpha(n))", "O(n)", new int[] {0, 1, 2, 3, 4, 5}, 0, "Algorithm: UNION_FIND\n1. MAKESET gives each element itself as parent.\n2. FIND follows parent links\n   to the representative.\n3. UNION joins two representatives.\n4. Path compression and rank\n   improve performance.", "Algorithm: UNION_FIND_FUNC\n1. FIND_SET returns the leader.\n2. LINK joins two leaders.\n3. UNION calls FIND_SET\n   and LINK together.\n4. Return the updated parent structure.", "Algorithm: UNION_FIND_REC(PARENT, X)\n1. If PARENT[X] = X,\n   return X.\n2. Recursively find the representative.\n3. Compress the path while returning.\n4. Return the representative.");
-        registerSupplementalTopic("hash_collision_handling", "Hash Collision Handling", "Collision handling stores multiple items that map to the same hash address by chaining or probing.", "It is like multiple people reaching the same locker number and following a backup rule to store their items.", "O(1)", "O(1)", "O(n)", "O(n)", new int[] {14, 24, 34, 44, 54}, 0, "Algorithm: HASH_INSERT(KEY)\n1. Compute the hash address H(KEY).\n2. If the slot is empty,\n   store the item there.\n3. If a collision occurs,\n   follow chaining or probing.\n4. Store the item\n   in the resolved location.\n5. Return.", "Algorithm: HASH_FUNC(KEY)\n1. HASH maps the key to an index.\n2. RESOLVE_COLLISION finds the next place.\n3. INSERT stores the value.\n4. SEARCH follows the same collision path.", "Algorithm: HASH_REC(TABLE, INDEX)\n1. If the current slot is suitable,\n   use it and return.\n2. Otherwise recurse on the next candidate slot.\n3. Return the resolved location.");
-        registerSupplementalTopic("recursion_basics", "Recursion Basics", "Recursion solves a problem by handling one small part now and calling the same logic on a smaller case.", "It is like climbing down stairs by saying: solve one step, then solve the rest in the same way.", "O(n)", "O(n)", "O(n)", "O(n)", new int[] {5}, 5, "Algorithm: RECURSION(N)\n1. Define a base case.\n2. Reduce the problem to a smaller similar case.\n3. Call the same procedure on that smaller case.\n4. Combine or return the result.", "Algorithm: RECURSION_FUNC(N)\n1. If N matches the base case, return directly.\n2. Otherwise call the same function on a smaller value.\n3. Use the returned value to build the answer.\n4. Return.", "Algorithm: RECURSION_REC(N)\n1. If N = 0 or N = 1, return the base value.\n2. Return the result of a recursive call on smaller N.\n3. Continue until the base case stops the calls.");
-        registerSupplementalTopic("dynamic_programming_basics", "Dynamic Programming Basics", "Dynamic programming stores answers to repeated subproblems so the same work is not done again.", "It is like keeping solved homework steps written down so you can reuse them instantly later.", "O(n)", "O(n^2)", "O(n^2)", "O(n)", new int[] {1, 2, 3, 4, 5}, 5, "Algorithm: DP(PROBLEM)\n1. Define the state\n   of a smaller subproblem.\n2. Write a recurrence\n   between one state and smaller states.\n3. Store solved values in a table.\n4. Fill the table in dependency order.\n5. Return the final state value.", "Algorithm: DP_FUNC(PROBLEM)\n1. BASE initializes known answers.\n2. TRANSITION computes each new state\n   from stored older states.\n3. MEMO or TABLE keeps results.\n4. Return the target state.", "Algorithm: DP_REC(STATE)\n1. If STATE is already stored,\n   return it.\n2. If STATE is a base case,\n   return its base answer.\n3. Recursively solve smaller states.\n4. Store and return the computed answer.");
         applyPdfAlgorithmCorrections();
     }
 
@@ -2979,6 +2969,14 @@ public final class AppRepository {
 
         // Register LeetCode Top Interview Problems
         LeetCodeProblemProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
+
+        // Register All Comprehensive Algorithm Suites
+        com.dsavisualizer.app.data.provider.DynamicProgrammingProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
+        com.dsavisualizer.app.data.provider.BacktrackingProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
+        com.dsavisualizer.app.data.provider.StringPatternProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
+        com.dsavisualizer.app.data.provider.AdvancedDataStructureProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
+        com.dsavisualizer.app.data.provider.GraphAlgorithmsProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
+        com.dsavisualizer.app.data.provider.SpecializedAlgorithmsProvider.register(CATEGORIES, TECHNIQUES, CONTENT);
     }
 
     private static void putPdfAlgorithm(String techniqueId, String algorithm) {
@@ -3015,6 +3013,13 @@ public final class AppRepository {
     }
 
     public static TechniqueContent getContent(String techniqueId) {
+        if (techniqueId != null && (techniqueId.startsWith("leetcode_") || techniqueId.matches("\\d+"))) {
+            TechniqueContent lcContent = LeetCodePart1Repository.getContent(techniqueId);
+            if (lcContent != null) {
+                return lcContent;
+            }
+        }
+
         TechniqueContent content = CONTENT.get(techniqueId);
         if (content != null) {
             return content;
@@ -3024,8 +3029,8 @@ public final class AppRepository {
         TechniqueContent placeholder = new TechniqueContent(
             techniqueId,
             item != null ? item.title : "Technique",
-            "This topic is ready for explanation, algorithm, code, and visualization expansion.",
-            "A practical everyday example will appear here as the content grows.",
+            "Not Available",
+            "Not Available",
             "Varies",
             "Varies",
             "Varies",
@@ -3033,30 +3038,48 @@ public final class AppRepository {
             new int[] {5, 9, 2, 7, 1},
             7
         );
-        placeholder.algorithmByStyle.put("Iterative", "This algorithm content will be added in the same beginner-friendly style.");
-        placeholder.algorithmByStyle.put("Functions", "This function-style algorithm content will be added next.");
-        placeholder.algorithmByStyle.put("Recursion", "This recursive algorithm content will be added where suitable.");
-        placeholder.codeByStyle.put("Iterative", "// Java implementation will be added here.");
-        placeholder.codeByStyle.put("Functions", "// Function-oriented Java implementation will be added here.");
-        placeholder.codeByStyle.put("Recursion", "// Recursive Java implementation will be added here.");
+        placeholder.algorithmByStyle.put("Iterative", "Not Available\n\nAlgorithm logic for Iterative mode is not available.");
+        placeholder.algorithmByStyle.put("Functions", "Not Available\n\nAlgorithm logic for Functions mode is not available.");
+        placeholder.algorithmByStyle.put("Recursion", "Not Available\n\nAlgorithm logic for Recursion mode is not available.");
+        placeholder.codeByStyle.put("Iterative", "// Not Available");
+        placeholder.codeByStyle.put("Functions", "// Not Available");
+        placeholder.codeByStyle.put("Recursion", "// Not Available");
         return placeholder;
     }
 
     public static String getCodeSnippet(String techniqueId, String style, String language) {
-        return CodeSnippetProvider.getCodeSnippet(techniqueId, style, language);
+        return getCodeSnippet(techniqueId, style, language, false);
     }
 
     public static String getCodeSnippet(String techniqueId, String style, String language, boolean preferCommented) {
-        TechniqueContent content = CONTENT.get(techniqueId);
+        TechniqueContent content = getContent(techniqueId);
         if (content != null) {
             String explicit = content.getCode(language, style, preferCommented);
-            if (explicit != null && !explicit.trim().isEmpty()) {
+            if (explicit != null && !explicit.trim().isEmpty() && !explicit.contains("Not Available")) {
                 return explicit;
             }
+            // Fallback between C and C++
+            if ("C".equalsIgnoreCase(language)) {
+                String cppCode = content.getCode("C++", style, preferCommented);
+                if (cppCode != null && !cppCode.trim().isEmpty() && !cppCode.contains("Not Available")) {
+                    return cppCode;
+                }
+            } else if ("C++".equalsIgnoreCase(language)) {
+                String cCode = content.getCode("C", style, preferCommented);
+                if (cCode != null && !cCode.trim().isEmpty() && !cCode.contains("Not Available")) {
+                    return cCode;
+                }
+            }
+
             if (preferCommented) {
                 String clean = content.getCode(language, style, false);
-                if (clean != null && !clean.trim().isEmpty()) {
+                if (clean != null && !clean.trim().isEmpty() && !clean.contains("Not Available")) {
                     return clean;
+                }
+            } else {
+                String commented = content.getCode(language, style, true);
+                if (commented != null && !commented.trim().isEmpty() && !commented.contains("Not Available")) {
+                    return commented;
                 }
             }
         }
@@ -3064,7 +3087,7 @@ public final class AppRepository {
     }
 
     public static boolean hasExplicitCommentedCode(String techniqueId, String style, String language) {
-        TechniqueContent content = CONTENT.get(techniqueId);
+        TechniqueContent content = getContent(techniqueId);
         if (content == null) {
             return false;
         }

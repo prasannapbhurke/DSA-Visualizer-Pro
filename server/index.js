@@ -51,6 +51,12 @@ const createApp = ({
   app.set('trust proxy', true);
   app.use(cors());
   app.use(express.json());
+
+  // Strictly Control Centre: root redirects to admin dashboard
+  app.get('/', (req, res) => {
+    res.redirect('/admin');
+  });
+
   app.use(express.static(path.join(__dirname, 'public')));
   app.use('/uploads', express.static(uploadDir));
   app.use('/admin', express.static(path.join(__dirname, 'public', 'admin')));

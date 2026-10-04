@@ -41,6 +41,19 @@ public class AppPreferences {
     private static final String KEY_PRO_CODE = "pro_code";
     private static final String KEY_HAS_RATED_STORE = "has_rated_store";
     private static final String KEY_EXPLORED_ACTION_COUNT = "explored_action_count";
+    private static final String KEY_NQUEENS_BOARD_SIZE = "nqueens_board_size";
+    private static final String KEY_SUDOKU_GRID_SIZE = "sudoku_grid_size";
+    private static final String KEY_SUDOKU_PRESET = "sudoku_preset";
+    private static final String KEY_KNIGHTS_TOUR_BOARD_SIZE = "knights_tour_board_size";
+    private static final String KEY_KNIGHTS_TOUR_START_POS = "knights_tour_start_pos";
+    private static final String KEY_MAZE_SIZE = "maze_size";
+    private static final String KEY_MAZE_PRESET = "maze_preset";
+    private static final String KEY_HAMILTONIAN_NODES = "hamiltonian_nodes";
+    private static final String KEY_HAMILTONIAN_TYPE = "hamiltonian_type";
+    private static final String KEY_GRAPH_COLORING_COLORS = "graph_coloring_colors";
+    private static final String KEY_GRAPH_COLORING_PRESET = "graph_coloring_preset";
+    private static final String KEY_LEETCODE_SOLVED = "leetcode_solved";
+    private static final String KEY_LEETCODE_BOOKMARKS = "leetcode_bookmarks";
     private static final String SEPARATOR = "||";
 
     public static final String THEME_SYSTEM = "system";
@@ -117,6 +130,44 @@ public class AppPreferences {
 
     public int getVisitedCount() {
         return preferences.getStringSet(scopedKey(KEY_PROGRESS), new LinkedHashSet<>()).size();
+    }
+
+    public Set<String> getLeetCodeSolvedProblems() {
+        return new LinkedHashSet<>(preferences.getStringSet(scopedKey(KEY_LEETCODE_SOLVED), new LinkedHashSet<>()));
+    }
+
+    public boolean isLeetCodeSolved(String problemId) {
+        return problemId != null && getLeetCodeSolvedProblems().contains(problemId);
+    }
+
+    public void setLeetCodeSolved(String problemId, boolean solved) {
+        if (problemId == null) return;
+        Set<String> set = getLeetCodeSolvedProblems();
+        if (solved) {
+            set.add(problemId);
+        } else {
+            set.remove(problemId);
+        }
+        preferences.edit().putStringSet(scopedKey(KEY_LEETCODE_SOLVED), set).apply();
+    }
+
+    public Set<String> getLeetCodeBookmarks() {
+        return new LinkedHashSet<>(preferences.getStringSet(scopedKey(KEY_LEETCODE_BOOKMARKS), new LinkedHashSet<>()));
+    }
+
+    public boolean isLeetCodeBookmarked(String problemId) {
+        return problemId != null && getLeetCodeBookmarks().contains(problemId);
+    }
+
+    public void toggleLeetCodeBookmark(String problemId) {
+        if (problemId == null) return;
+        Set<String> set = getLeetCodeBookmarks();
+        if (set.contains(problemId)) {
+            set.remove(problemId);
+        } else {
+            set.add(problemId);
+        }
+        preferences.edit().putStringSet(scopedKey(KEY_LEETCODE_BOOKMARKS), set).apply();
     }
 
     public void saveNote(String topicId, String note) {
@@ -422,6 +473,252 @@ public class AppPreferences {
         int current = preferences.getInt(KEY_EXPLORED_ACTION_COUNT, 0) + 1;
         preferences.edit().putInt(KEY_EXPLORED_ACTION_COUNT, current).apply();
         return current;
+    }
+
+    public int getNQueensBoardSize() {
+        return preferences.getInt(KEY_NQUEENS_BOARD_SIZE, 4);
+    }
+
+    public void setNQueensBoardSize(int size) {
+        preferences.edit().putInt(KEY_NQUEENS_BOARD_SIZE, size).apply();
+    }
+
+    public int getSudokuGridSize() {
+        return preferences.getInt(KEY_SUDOKU_GRID_SIZE, 4);
+    }
+
+    public void setSudokuGridSize(int size) {
+        preferences.edit().putInt(KEY_SUDOKU_GRID_SIZE, size).apply();
+    }
+
+    public int getSudokuPreset() {
+        return preferences.getInt(KEY_SUDOKU_PRESET, 1);
+    }
+
+    public void setSudokuPreset(int preset) {
+        preferences.edit().putInt(KEY_SUDOKU_PRESET, preset).apply();
+    }
+
+    public int getKnightsTourBoardSize() {
+        return preferences.getInt(KEY_KNIGHTS_TOUR_BOARD_SIZE, 5);
+    }
+
+    public void setKnightsTourBoardSize(int size) {
+        preferences.edit().putInt(KEY_KNIGHTS_TOUR_BOARD_SIZE, size).apply();
+    }
+
+    public int getKnightsTourStartPos() {
+        return preferences.getInt(KEY_KNIGHTS_TOUR_START_POS, 1);
+    }
+
+    public void setKnightsTourStartPos(int pos) {
+        preferences.edit().putInt(KEY_KNIGHTS_TOUR_START_POS, pos).apply();
+    }
+
+    public int getMazeSize() {
+        return preferences.getInt(KEY_MAZE_SIZE, 5);
+    }
+
+    public void setMazeSize(int size) {
+        preferences.edit().putInt(KEY_MAZE_SIZE, size).apply();
+    }
+
+    public int getMazePreset() {
+        return preferences.getInt(KEY_MAZE_PRESET, 1);
+    }
+
+    public void setMazePreset(int preset) {
+        preferences.edit().putInt(KEY_MAZE_PRESET, preset).apply();
+    }
+
+    public int getHamiltonianNodes() {
+        return preferences.getInt(KEY_HAMILTONIAN_NODES, 5);
+    }
+
+    public void setHamiltonianNodes(int nodes) {
+        preferences.edit().putInt(KEY_HAMILTONIAN_NODES, nodes).apply();
+    }
+
+    public int getHamiltonianType() {
+        return preferences.getInt(KEY_HAMILTONIAN_TYPE, 1);
+    }
+
+    public void setHamiltonianType(int type) {
+        preferences.edit().putInt(KEY_HAMILTONIAN_TYPE, type).apply();
+    }
+
+    public int getGraphColoringColors() {
+        return preferences.getInt(KEY_GRAPH_COLORING_COLORS, 3);
+    }
+
+    public void setGraphColoringColors(int colors) {
+        preferences.edit().putInt(KEY_GRAPH_COLORING_COLORS, colors).apply();
+    }
+
+    public int getGraphColoringPreset() {
+        return preferences.getInt(KEY_GRAPH_COLORING_PRESET, 1);
+    }
+
+    public void setGraphColoringPreset(int preset) {
+        preferences.edit().putInt(KEY_GRAPH_COLORING_PRESET, preset).apply();
+    }
+
+    public int getDpPreset(String techniqueId) {
+        String key = "dp_preset_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getInt(key, 1);
+    }
+
+    public void setDpPreset(String techniqueId, int preset) {
+        String key = "dp_preset_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putInt(key, preset).apply();
+    }
+
+    public int getStringPatternPreset(String techniqueId) {
+        String key = "strpat_preset_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getInt(key, 1);
+    }
+
+    public void setStringPatternPreset(String techniqueId, int preset) {
+        String key = "strpat_preset_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putInt(key, preset).apply();
+    }
+
+    public String getStringPatternText(String techniqueId, String defaultText) {
+        String key = "strpat_text_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getString(key, defaultText != null ? defaultText : "");
+    }
+
+    public void setStringPatternText(String techniqueId, String text) {
+        String key = "strpat_text_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putString(key, text != null ? text : "").apply();
+    }
+
+    public String getStringPatternQuery(String techniqueId, String defaultQuery) {
+        String key = "strpat_query_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getString(key, defaultQuery != null ? defaultQuery : "");
+    }
+
+    public void setStringPatternQuery(String techniqueId, String query) {
+        String key = "strpat_query_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putString(key, query != null ? query : "").apply();
+    }
+
+    public int getGraphPreset(String techniqueId) {
+        String key = "graph_preset_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getInt(key, 1);
+    }
+
+    public void setGraphPreset(String techniqueId, int preset) {
+        String key = "graph_preset_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putInt(key, preset).apply();
+    }
+
+    public int getGraphStartNode(String techniqueId) {
+        String key = "graph_start_node_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getInt(key, 0);
+    }
+
+    public void setGraphStartNode(String techniqueId, int node) {
+        String key = "graph_start_node_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putInt(key, node).apply();
+    }
+
+    public int getGraphNodeCount(String techniqueId) {
+        String key = "graph_node_count_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getInt(key, 5);
+    }
+
+    public void setGraphNodeCount(String techniqueId, int count) {
+        String key = "graph_node_count_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putInt(key, count).apply();
+    }
+
+    public int getAdvancedDsPreset(String techniqueId) {
+        String key = "advds_preset_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getInt(key, 1);
+    }
+
+    public void setAdvancedDsPreset(String techniqueId, int preset) {
+        String key = "advds_preset_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putInt(key, preset).apply();
+    }
+
+    public String getAdvancedDsCustomInput(String techniqueId, String defaultInput) {
+        String key = "advds_input_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getString(key, defaultInput != null ? defaultInput : "");
+    }
+
+    public void setAdvancedDsCustomInput(String techniqueId, String input) {
+        String key = "advds_input_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putString(key, input != null ? input : "").apply();
+    }
+
+    public int getSpecializedPreset(String techniqueId) {
+        String key = "spec_preset_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getInt(key, 1);
+    }
+
+    public void setSpecializedPreset(String techniqueId, int preset) {
+        String key = "spec_preset_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putInt(key, preset).apply();
+    }
+
+    public String getSpecializedCustomInput(String techniqueId, String defaultInput) {
+        String key = "spec_input_" + (techniqueId != null ? techniqueId : "generic");
+        return preferences.getString(key, defaultInput != null ? defaultInput : "");
+    }
+
+    public void setSpecializedCustomInput(String techniqueId, String input) {
+        String key = "spec_input_" + (techniqueId != null ? techniqueId : "generic");
+        preferences.edit().putString(key, input != null ? input : "").apply();
+    }
+
+    public int getHuffmanPreset() {
+        return preferences.getInt("huffman_preset", 1);
+    }
+
+    public void setHuffmanPreset(int preset) {
+        preferences.edit().putInt("huffman_preset", preset).apply();
+    }
+
+    public String getHuffmanCustomInput() {
+        return getHuffmanCustomInput("");
+    }
+
+    public String getHuffmanCustomInput(String defaultInput) {
+        return preferences.getString("huffman_custom_input", defaultInput != null ? defaultInput : "");
+    }
+
+    public void setHuffmanCustomInput(String input) {
+        preferences.edit().putString("huffman_custom_input", input != null ? input : "").apply();
+    }
+
+    public int getAvlTreePreset() {
+        return preferences.getInt("avl_tree_preset", 1);
+    }
+
+    public void setAvlTreePreset(int preset) {
+        preferences.edit().putInt("avl_tree_preset", preset).apply();
+    }
+
+    public String getAvlTreeCustomInput() {
+        return getAvlTreeCustomInput("");
+    }
+
+    public String getAvlTreeCustomInput(String defaultInput) {
+        return preferences.getString("avl_tree_custom_input", defaultInput != null ? defaultInput : "");
+    }
+
+    public void setAvlTreeCustomInput(String input) {
+        preferences.edit().putString("avl_tree_custom_input", input != null ? input : "").apply();
+    }
+
+    public String getLastSeenReply(String feedbackId) {
+        return preferences.getString("last_seen_reply_" + feedbackId, "");
+    }
+
+    public void setLastSeenReply(String feedbackId, String reply) {
+        preferences.edit().putString("last_seen_reply_" + feedbackId, reply != null ? reply : "").apply();
     }
 
     public static class MistakeReview {

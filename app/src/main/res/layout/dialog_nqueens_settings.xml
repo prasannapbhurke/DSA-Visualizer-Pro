@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_nqueens_dialog"
+    android:paddingStart="24dp"
+    android:paddingTop="28dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="28dp">
+
+    <!-- Title: N-Queens Settings -->
+    <TextView
+        android:id="@+id/nqueens_settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="N-Queens Settings"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Subtitle: Board size is the only algorithm-specific setting for N-Queens. -->
+    <TextView
+        android:id="@+id/nqueens_settings_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Board size is the only algorithm-specific setting for N-Queens."
+        android:textColor="#94A3B8"
+        android:textSize="13sp" />
+
+    <!-- Section Header: Board Size -->
+    <TextView
+        android:id="@+id/nqueens_board_size_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Board Size"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- Board size option buttons: 4 x 4, 5 x 5, 6 x 6, 8 x 8 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nqueens_size_4"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:text="4 x 4"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nqueens_size_5"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="5 x 5"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nqueens_size_6"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="6 x 6"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nqueens_size_8"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="8 x 8"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+    </LinearLayout>
+
+    <!-- Close button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/nqueens_btn_close"
+        android:layout_width="128dp"
+        android:layout_height="46dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="28dp"
+        android:text="Close"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        app:backgroundTint="#7C3AED"
+        app:cornerRadius="16dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp" />
+
+</LinearLayout>

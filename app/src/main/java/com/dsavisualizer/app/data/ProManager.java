@@ -29,8 +29,7 @@ public final class ProManager {
 
     // Set of advanced / Pro categories
     private static final Set<String> PRO_CATEGORIES = new HashSet<>(Arrays.asList(
-        "graph",
-        "advanced"
+        "graph"
     ));
 
     // Specific algorithms flagged as Pro
@@ -46,10 +45,7 @@ public final class ProManager {
         "warshall_algorithm",
         "shortest_paths",
         "topological_sort",
-        "spanning_tree",
-        "dynamic_programming_basics",
-        "union_find",
-        "hash_collision_handling"
+        "spanning_tree"
     ));
 
     private ProManager() {}

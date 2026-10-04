@@ -116,6 +116,18 @@ public final class GraphVisualizationController {
         if ("shortest_paths".equals(techniqueId)) {
             return "Shortest Path Matrix";
         }
+        if ("backtracking_n_queens".equals(techniqueId) || "bt_n_queens".equals(techniqueId)) {
+            return "N-Queens 4x4 Chessboard";
+        }
+        if ("backtracking_sudoku".equals(techniqueId) || "bt_sudoku".equals(techniqueId)) {
+            return "Sudoku 4x4 Grid";
+        }
+        if ("backtracking_knights_tour".equals(techniqueId) || "bt_knights_tour".equals(techniqueId)) {
+            return "Knight's Tour 5x5";
+        }
+        if ("backtracking_maze_solver".equals(techniqueId) || "bt_maze".equals(techniqueId) || "bt_rat_in_a_maze".equals(techniqueId)) {
+            return "Rat in a Maze 4x4";
+        }
         return "Matrix";
     }
 }

@@ -1,0 +1,2 @@
+# Ignore everything in root project if vercel is mistakenly executed from root
+*

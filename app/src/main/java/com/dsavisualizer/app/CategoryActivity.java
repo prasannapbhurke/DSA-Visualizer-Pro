@@ -144,6 +144,12 @@ public class CategoryActivity extends AppCompatActivity {
         }
         navigationInProgress = true;
         new AppPreferences(this).incrementExploredActions();
+        if (item.id != null && item.id.startsWith("leetcode_")) {
+            Intent intent = new Intent(this, LeetCodeProblemActivity.class);
+            intent.putExtra(LeetCodeProblemActivity.EXTRA_TECHNIQUE_ID, item.id);
+            startActivity(intent);
+            return;
+        }
         Intent intent = new Intent(this, TechniqueDetailActivity.class);
         intent.putExtra(TechniqueDetailActivity.EXTRA_TECHNIQUE_ID, item.id);
         startActivity(intent);

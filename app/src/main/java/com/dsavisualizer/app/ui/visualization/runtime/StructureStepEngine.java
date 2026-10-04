@@ -16,9 +16,7 @@ public final class StructureStepEngine extends BaseStepEngine {
     }
 
     public static void advance(VisualizationRuntimeHost host) {
-        if ("union_find".equals(host.getTechniqueId())) {
-            UnionFindStepEngine.advance(host);
-        } else if ("postfix_evaluation".equals(host.getTechniqueId())) {
+        if ("postfix_evaluation".equals(host.getTechniqueId())) {
             advancePostfixEvaluation(host);
         } else if ("infix_to_postfix".equals(host.getTechniqueId())) {
             advanceInfixToPostfix(host);
