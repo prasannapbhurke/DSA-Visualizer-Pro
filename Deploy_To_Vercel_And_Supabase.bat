@@ -7,10 +7,6 @@ echo     DSA Cloud Deployment: Supabase and Vercel
 echo ===================================================
 echo.
 
-:: Clean up any accidental root .vercel folder if created
-if exist "%~dp0\.vercel" (
-    rmdir /s /q "%~dp0\.vercel" >nul 2>&1
-)
 
 :: Step 1: Apply Supabase Postgres Schema
 echo [1/3] Applying latest database schema to Supabase...
@@ -42,12 +38,12 @@ echo.
 
 :: Step 3: Direct Vercel Deployment for Backend API
 echo [3/3] Deploying server to Vercel production...
-cd /d "%~dp0server"
+cd /d "%~dp0"
 call npx -y vercel --prod --yes
 if %ERRORLEVEL% EQU 0 (
     echo [OK] Vercel production deployment completed successfully!
 ) else (
-    echo [INFO] Vercel CLI finished.
+    echo [INFO] Direct Vercel CLI finished. Note: GitHub auto-build was already triggered in Step 2.
 )
 
 echo.
