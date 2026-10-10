@@ -27,7 +27,7 @@ echo.
 echo [2/3] Committing and pushing updates to GitHub...
 cd /d "%~dp0"
 git add .
-git commit -m "feat: two-way feedback reply, device diagnostic telemetry, and android desktop console"
+git commit -m "feat: quiz session sync, mistake logging, and teacher classroom analytics"
 git push origin main
 if %ERRORLEVEL% EQU 0 (
     echo [OK] Pushed to GitHub main branch! Vercel auto-build triggered.

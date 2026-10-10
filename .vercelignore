@@ -1,2 +1,18 @@
-# Ignore everything in root project if vercel is mistakenly executed from root
-*
+# Ignore Android, Gradle, and Web frontend apps when deploying server
+app/
+.gradle/
+.idea/
+gradle/
+admin-web/
+client/
+scratch/
+build/
+dist/
+out/
+release/
+*.bat
+*.apk
+*.md
+*.properties
+*.jks
+*.keystore
