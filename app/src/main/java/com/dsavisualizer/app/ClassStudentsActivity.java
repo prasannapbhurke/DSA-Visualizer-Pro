@@ -116,9 +116,9 @@ public class ClassStudentsActivity extends AppCompatActivity {
             emptyText.setVisibility(students.isEmpty() ? View.VISIBLE : View.GONE);
         });
         viewModel.getWeakTopics().observe(this, this::bindWeakTopicSummary);
-        viewModel.getStudentCount().observe(this, count -> {
-            summaryText.setText(getString(R.string.class_students_summary, count != null ? count : 0));
-        });
+        viewModel.getStudentCount().observe(this, count -> updateClassSummary());
+        viewModel.getClassAverageScore().observe(this, avg -> updateClassSummary());
+        viewModel.getClassTotalQuizzes().observe(this, total -> updateClassSummary());
         viewModel.getLoading().observe(this, this::setLoading);
         viewModel.getErrorMessage().observe(this, error -> {
             if (error != null) {
@@ -163,6 +163,21 @@ public class ClassStudentsActivity extends AppCompatActivity {
             clipboard.setPrimaryClip(ClipData.newPlainText("Join code", joinCode));
             Toast.makeText(this, getString(R.string.classroom_copy_code_done, joinCode), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void updateClassSummary() {
+        Integer count = viewModel.getStudentCount().getValue();
+        Integer avgScore = viewModel.getClassAverageScore().getValue();
+        Integer totalQuizzes = viewModel.getClassTotalQuizzes().getValue();
+        int safeCount = count != null ? count : 0;
+        int safeAvg = avgScore != null ? avgScore : 0;
+        int safeQuizzes = totalQuizzes != null ? totalQuizzes : 0;
+
+        String summary = getString(R.string.class_students_summary, safeCount);
+        if (safeQuizzes > 0) {
+            summary += " • " + safeQuizzes + " Quizzes • Avg: " + safeAvg + "%";
+        }
+        summaryText.setText(summary);
     }
 
     private void bindWeakTopicSummary(List<ClassWeakTopicSummaryItem> summaryItems) {

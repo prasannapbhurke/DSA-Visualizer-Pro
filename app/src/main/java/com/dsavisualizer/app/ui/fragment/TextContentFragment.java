@@ -18,8 +18,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.HorizontalScrollView;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,7 +61,7 @@ public class TextContentFragment extends Fragment {
     private TextView modeHintView;
     private TextView zoomBadgeView;
     private TextView codeThemeLabelView;
-    private HorizontalScrollView horizontalScrollView;
+    private FrameLayout contentContainer;
     private MaterialButton zoomInButton;
     private MaterialButton zoomOutButton;
     private MaterialButton copyButton;
@@ -117,7 +116,7 @@ public class TextContentFragment extends Fragment {
         zoomBadgeView = view.findViewById(R.id.content_zoom_badge);
         codeThemeLabelView = view.findViewById(R.id.content_code_theme_label);
         codeThemeToggle = view.findViewById(R.id.content_code_theme_toggle);
-        horizontalScrollView = view.findViewById(R.id.content_horizontal_scroll);
+        contentContainer = view.findViewById(R.id.content_horizontal_scroll);
         sessionViewModel = new ViewModelProvider(requireActivity()).get(TechniqueSessionViewModel.class);
         contentResolver = new TechniqueTextContentResolver();
         lightTheme = isLightTheme();
@@ -359,7 +358,9 @@ public class TextContentFragment extends Fragment {
         } else {
             configureCodeViewport(textSizeSp);
         }
-        horizontalScrollView.scrollTo(0, 0);
+        if (contentContainer != null) {
+            contentContainer.scrollTo(0, 0);
+        }
         modeHintView.setText(algorithmTab ? R.string.content_mode_hint_algorithm : R.string.content_mode_hint_code);
     }
 
@@ -371,7 +372,9 @@ public class TextContentFragment extends Fragment {
         } else {
             configureAlgorithmViewport(textSizeSp);
         }
-        horizontalScrollView.scrollTo(0, 0);
+        if (contentContainer != null) {
+            contentContainer.scrollTo(0, 0);
+        }
         contentView.setAlpha(0f);
         if (isCodeTab()) {
             contentView.setTranslationX(dpToPx(18));
@@ -396,7 +399,7 @@ public class TextContentFragment extends Fragment {
     private void configureCodeViewport(float sizeSp) {
         contentView.setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp);
         contentView.setTypeface(Typeface.MONOSPACE);
-        contentView.setHorizontallyScrolling(true);
+        contentView.setHorizontallyScrolling(false);
         contentView.setSingleLine(false);
         contentView.setMaxLines(Integer.MAX_VALUE);
         contentView.setIncludeFontPadding(false);
@@ -406,13 +409,13 @@ public class TextContentFragment extends Fragment {
         contentView.setPaddingRelative(dpToPx(16), dpToPx(14), dpToPx(18), dpToPx(18));
         ViewGroup.LayoutParams params = contentView.getLayoutParams();
         if (params != null) {
-            params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
             contentView.setLayoutParams(params);
         }
-        horizontalScrollView.setHorizontalScrollBarEnabled(true);
-        horizontalScrollView.setScrollbarFadingEnabled(false);
-        horizontalScrollView.setSmoothScrollingEnabled(true);
-        horizontalScrollView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        if (contentContainer != null) {
+            contentContainer.setHorizontalScrollBarEnabled(false);
+            contentContainer.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        }
         updateZoomBadge();
         applyCodeSurfaceTheme();
     }
@@ -438,10 +441,10 @@ public class TextContentFragment extends Fragment {
             params.width = ViewGroup.LayoutParams.MATCH_PARENT;
             contentView.setLayoutParams(params);
         }
-        horizontalScrollView.setHorizontalScrollBarEnabled(false);
-        horizontalScrollView.setScrollbarFadingEnabled(true);
-        horizontalScrollView.setSmoothScrollingEnabled(false);
-        horizontalScrollView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        if (contentContainer != null) {
+            contentContainer.setHorizontalScrollBarEnabled(false);
+            contentContainer.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        }
     }
 
     private float resolveDefaultAlgorithmTextSizeSp() {
@@ -826,11 +829,11 @@ public class TextContentFragment extends Fragment {
     }
 
     private void applyCodeSurfaceTheme() {
-        if (!isCodeTab() || horizontalScrollView == null) {
+        if (!isCodeTab() || contentContainer == null) {
             return;
         }
         CodeThemePalette palette = resolveCodeThemePalette();
-        ViewCompat.setBackgroundTintList(horizontalScrollView, ColorStateList.valueOf(palette.surfaceColor));
+        ViewCompat.setBackgroundTintList(contentContainer, ColorStateList.valueOf(palette.surfaceColor));
     }
 
     private void updateCodeThemeButtons() {

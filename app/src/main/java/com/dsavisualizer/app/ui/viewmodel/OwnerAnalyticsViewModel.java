@@ -51,6 +51,16 @@ public class OwnerAnalyticsViewModel extends ViewModel {
         }
     }
 
+    public static class MistakeTopicItem {
+        public final String techniqueId;
+        public final int count;
+
+        public MistakeTopicItem(String techniqueId, int count) {
+            this.techniqueId = techniqueId;
+            this.count = count;
+        }
+    }
+
     public static class AnalyticsUiState {
         public final int totalUsers;
         public final int activeTeachers;
@@ -59,8 +69,10 @@ public class OwnerAnalyticsViewModel extends ViewModel {
         public final int totalResources;
         public final int totalFeedback;
         public final int totalPracticeSessions;
+        public final int averageQuizScore;
         public final List<TopicItem> topics;
         public final List<IssueItem> issues;
+        public final List<MistakeTopicItem> topMistakes;
         public final List<AuditItem> auditLogs;
 
         public AnalyticsUiState(
@@ -71,8 +83,10 @@ public class OwnerAnalyticsViewModel extends ViewModel {
             int totalResources,
             int totalFeedback,
             int totalPracticeSessions,
+            int averageQuizScore,
             List<TopicItem> topics,
             List<IssueItem> issues,
+            List<MistakeTopicItem> topMistakes,
             List<AuditItem> auditLogs
         ) {
             this.totalUsers = totalUsers;
@@ -82,8 +96,10 @@ public class OwnerAnalyticsViewModel extends ViewModel {
             this.totalResources = totalResources;
             this.totalFeedback = totalFeedback;
             this.totalPracticeSessions = totalPracticeSessions;
+            this.averageQuizScore = averageQuizScore;
             this.topics = topics;
             this.issues = issues;
+            this.topMistakes = topMistakes;
             this.auditLogs = auditLogs;
         }
     }
@@ -122,6 +138,7 @@ public class OwnerAnalyticsViewModel extends ViewModel {
                     : analyticsResponse.optJSONObject("data").optJSONObject("analytics");
                 JSONArray mostUsedTopics = analytics == null ? null : analytics.optJSONArray("mostUsedTopics");
                 JSONArray mostReportedIssues = analytics == null ? null : analytics.optJSONArray("mostReportedContentIssues");
+                JSONArray topMistakeTopics = analytics == null ? null : analytics.optJSONArray("topMistakeTopics");
                 JSONObject summary = analytics == null ? null : analytics.optJSONObject("summary");
                 JSONArray auditLogs = auditResponse.optJSONObject("data") == null
                     ? null
@@ -143,6 +160,16 @@ public class OwnerAnalyticsViewModel extends ViewModel {
                         JSONObject item = mostReportedIssues.optJSONObject(i);
                         if (item != null) {
                             issueItems.add(new IssueItem(item.optString("techniqueId", ""), item.optString("type", "general"), item.optInt("count", 0)));
+                        }
+                    }
+                }
+
+                List<MistakeTopicItem> mistakeItems = new ArrayList<>();
+                if (topMistakeTopics != null) {
+                    for (int i = 0; i < topMistakeTopics.length(); i++) {
+                        JSONObject item = topMistakeTopics.optJSONObject(i);
+                        if (item != null) {
+                            mistakeItems.add(new MistakeTopicItem(item.optString("techniqueId", ""), item.optInt("count", 0)));
                         }
                     }
                 }
@@ -170,8 +197,10 @@ public class OwnerAnalyticsViewModel extends ViewModel {
                     summary == null ? 0 : summary.optInt("totalResources", 0),
                     summary == null ? 0 : summary.optInt("totalFeedback", 0),
                     summary == null ? 0 : summary.optInt("totalPracticeSessions", 0),
+                    summary == null ? 0 : summary.optInt("averageQuizScore", 0),
                     topicItems,
                     issueItems,
+                    mistakeItems,
                     auditItems
                 );
 

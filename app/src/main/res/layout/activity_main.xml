@@ -561,6 +561,7 @@
                 android:layout_marginTop="14dp"
                 android:text="🎓 Campus Pass &amp; Pro"
                 android:textColor="@color/amber_500"
+                android:visibility="gone"
                 app:icon="@drawable/ic_star_pro"
                 app:iconGravity="textStart"
                 app:iconPadding="10dp"

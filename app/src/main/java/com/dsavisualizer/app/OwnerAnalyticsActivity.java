@@ -69,7 +69,7 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
             if (state == null) {
                 return;
             }
-            summaryText.setText(getString(
+            String summaryStr = getString(
                 R.string.owner_analytics_summary,
                 state.totalUsers,
                 state.activeTeachers,
@@ -78,7 +78,11 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
                 state.totalResources,
                 state.totalFeedback,
                 state.totalPracticeSessions
-            ));
+            );
+            if (state.totalPracticeSessions > 0) {
+                summaryStr += "\nPlatform Quiz Avg: " + state.averageQuizScore + "%";
+            }
+            summaryText.setText(summaryStr);
 
             List<String> topicLines = new ArrayList<>();
             for (OwnerAnalyticsViewModel.TopicItem topic : state.topics) {
@@ -93,6 +97,15 @@ public class OwnerAnalyticsActivity extends AppCompatActivity {
                 : android.text.TextUtils.join("\n", topicLines));
 
             List<String> issueLines = new ArrayList<>();
+            if (state.topMistakes != null && !state.topMistakes.isEmpty()) {
+                issueLines.add("Top Quiz Mistake Topics:");
+                for (OwnerAnalyticsViewModel.MistakeTopicItem mistake : state.topMistakes) {
+                    issueLines.add("• " + prettifyTechniqueId(mistake.techniqueId) + ": " + mistake.count + " mistakes");
+                }
+                if (!state.issues.isEmpty()) {
+                    issueLines.add("\nReported Content Issues:");
+                }
+            }
             for (OwnerAnalyticsViewModel.IssueItem issue : state.issues) {
                 issueLines.add(getString(
                     R.string.owner_analytics_issue_line,

@@ -1,0 +1,4 @@
+Stop memorizing code. DSA Visualizer Pro breaks down 25+ Data Structures and Algorithms into interactive, step-by-step animations with real-time pointer tracking, an unlockable RPG skill tree, and practice quizzes with a built-in mistake bank. 
+
+Available now for Android and Web — 100% ad-free, open-source, and built for students, teachers, and interview prep.
+Explore the code and live demo: https://github.com/prasannapbhurke/DSA-Visualizer-Pro

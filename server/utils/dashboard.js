@@ -72,12 +72,18 @@ const buildDashboard = ({ user, progressEntries, practiceSessions }) => {
       lastDifficulty: entry.lastDifficulty || '',
     }));
 
+  const totalScore = sortedSessions.reduce((acc, s) => acc + Number(s.score || 0), 0);
+  const averageQuizScore = sortedSessions.length > 0 ? Math.round(totalScore / sortedSessions.length) : 0;
+  const highestQuizScore = sortedSessions.reduce((max, s) => Math.max(max, Number(s.score || 0)), 0);
+
   return {
     user: sanitizeUser(user),
     summary: {
       totalTechniquesStarted: (progressEntries || []).length,
       completedTechniques,
       totalPracticeSessions: sortedSessions.length,
+      averageQuizScore,
+      highestQuizScore,
       streakDays: calculateStreakDays(sortedSessions),
       todaySessions,
       dailyGoalTarget: DAILY_GOAL_TARGET,

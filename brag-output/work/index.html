@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSA Visualizer Pro • Master Product Explainer Studio</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .scene-navigator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 1920px;
+      padding: 8px 16px;
+      background: rgba(13, 18, 34, 0.6);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .scene-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .scene-btn:hover, .scene-btn.active {
+      background: rgba(0, 242, 254, 0.15);
+      border-color: #00f2fe;
+      color: #00f2fe;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="studio-wrapper">
+    <!-- Header Control Bar -->
+    <header class="studio-header">
+      <div class="studio-title">
+        <span class="badge-tag">Master Studio</span>
+        <span>DSA Visualizer Pro — Complete Human Walkthrough</span>
+      </div>
+
+      <div class="studio-controls">
+        <span class="time-display" id="timeDisplay">00.0s / 66.0s</span>
+        <button class="btn btn-secondary" id="btnPlayPause">▶ Play with Narration</button>
+        <button class="btn btn-secondary" id="btnRestart">↺ Restart</button>
+        <button class="btn btn-secondary" id="btnToggleVoice">🎙️ Voice: ON</button>
+        <button class="btn btn-secondary" id="btnSavePoster">📸 Export Poster</button>
+        <button class="btn btn-primary" id="btnRecordVideo">🎬 Export Master Video (brag.mp4)</button>
+      </div>
+    </header>
+
+    <!-- Quick Scene Jump Navigator -->
+    <div class="scene-navigator">
+      <span style="font-size: 0.8rem; font-weight: 800; color: #38bdf8; margin-right: 8px;">JUMP TO:</span>
+      <button class="scene-btn" onclick="jumpTo(0.5)">01 • Problem & Solution</button>
+      <button class="scene-btn" onclick="jumpTo(9.0)">02 • Sign-in & Dashboard</button>
+      <button class="scene-btn" onclick="jumpTo(18.5)">03 • Android QuickSort Engine</button>
+      <button class="scene-btn" onclick="jumpTo(29.5)">04 • 25+ DSA Catalog</button>
+      <button class="scene-btn" onclick="jumpTo(39.0)">05 • RPG Skill Tree</button>
+      <button class="scene-btn" onclick="jumpTo(48.5)">06 • Practice Quizzes & Class</button>
+      <button class="scene-btn" onclick="jumpTo(58.0)">07 • Grand Finale & CTA</button>
+    </div>
+
+    <!-- Master 1920x1080 Video Stage -->
+    <div class="stage-container" id="stageContainer">
+      <canvas id="videoCanvas" width="1920" height="1080"></canvas>
+      
+      <!-- Timeline scrubber -->
+      <div class="stage-timeline" id="stageTimeline">
+        <div class="stage-timeline-fill" id="timelineFill"></div>
+      </div>
+
+      <!-- Export status pill -->
+      <div class="status-pill" id="statusPill">
+        <div class="spinner"></div>
+        <span id="statusText">Rendering master launch video...</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="audio.js"></script>
+  <script src="visualizer.js"></script>
+
+  <script>
+    const canvas = document.getElementById('videoCanvas');
+    const renderer = new VideoRenderer(canvas);
+    const sound = new LaunchSoundtrack();
+
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnToggleVoice = document.getElementById('btnToggleVoice');
+    const btnSavePoster = document.getElementById('btnSavePoster');
+    const btnRecordVideo = document.getElementById('btnRecordVideo');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const timelineFill = document.getElementById('timelineFill');
+    const stageTimeline = document.getElementById('stageTimeline');
+    const statusPill = document.getElementById('statusPill');
+    const statusText = document.getElementById('statusText');
+
+    let currentTime = 0;
+    const duration = 66.0;
+    let isPlaying = false;
+    let animFrameId = null;
+    let lastTimestamp = null;
+    let voiceEnabled = true;
+
+    btnToggleVoice.addEventListener('click', () => {
+      voiceEnabled = !voiceEnabled;
+      btnToggleVoice.textContent = voiceEnabled ? '🎙️ Voice: ON' : '🔇 Voice: OFF';
+      if (!voiceEnabled) sound.stopVoiceover();
+    });
+
+    function renderAt(t) {
+      currentTime = Math.max(0, Math.min(duration, t));
+      renderer.render(currentTime);
+      const pct = (currentTime / duration) * 100;
+      timelineFill.style.width = pct + '%';
+      timeDisplay.textContent = currentTime.toFixed(1).padStart(4, '0') + 's / 66.0s';
+    }
+
+    function jumpTo(t) {
+      const wasPlaying = isPlaying;
+      if (isPlaying) pause();
+      renderAt(t);
+      if (wasPlaying) play();
+    }
+
+    function loop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      currentTime += dt;
+      if (currentTime >= duration) {
+        currentTime = duration;
+        renderAt(currentTime);
+        pause();
+        return;
+      }
+
+      renderAt(currentTime);
+      animFrameId = requestAnimationFrame(loop);
+    }
+
+    function play() {
+      if (isPlaying) return;
+      isPlaying = true;
+      btnPlayPause.textContent = '⏸ Pause';
+      sound.init();
+
+      if (currentTime >= duration - 0.2) {
+        currentTime = 0;
+      }
+
+      sound.scheduleSoundtrack(sound.ctx.currentTime);
+      if (voiceEnabled) {
+        sound.playVoiceover(currentTime);
+      }
+      lastTimestamp = performance.now();
+      animFrameId = requestAnimationFrame(loop);
+    }
+
+    function pause() {
+      isPlaying = false;
+      btnPlayPause.textContent = '▶ Play with Narration';
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      sound.stopVoiceover();
+      lastTimestamp = null;
+    }
+
+    btnPlayPause.addEventListener('click', () => {
+      if (isPlaying) pause();
+      else play();
+    });
+
+    btnRestart.addEventListener('click', () => {
+      pause();
+      currentTime = 0;
+      renderAt(0);
+      play();
+    });
+
+    stageTimeline.addEventListener('click', (e) => {
+      const rect = stageTimeline.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const targetPct = clickX / rect.width;
+      jumpTo(targetPct * duration);
+    });
+
+    function exportPoster() {
+      renderAt(59.0);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const link = document.createElement('a');
+      link.download = 'brag.jpg';
+      link.href = dataUrl;
+      link.click();
+    }
+
+    btnSavePoster.addEventListener('click', exportPoster);
+
+    async function recordVideo() {
+      pause();
+      renderAt(0);
+      sound.init();
+
+      statusPill.classList.add('visible');
+      statusText.textContent = 'Recording 66-second Master Explainer Video at 60 FPS...';
+
+      const canvasStream = canvas.captureStream(60);
+      const audioStream = sound.getAudioStream();
+
+      const combinedStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        ...audioStream.getAudioTracks()
+      ]);
+
+      let mimeType = 'video/mp4; codecs="avc1.424028, mp4a.40.2"';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm; codecs=vp9,opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+      const recorder = new MediaRecorder(combinedStream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 14000000
+      });
+
+      const chunks = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        statusPill.classList.remove('visible');
+        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const blob = new Blob(chunks, { type: mimeType });
+        const videoUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.download = `brag.${ext}`;
+        a.href = videoUrl;
+        a.click();
+      };
+
+      recorder.start();
+      sound.scheduleSoundtrack(sound.ctx.currentTime);
+
+      const startTime = performance.now();
+      const recInterval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        renderAt(elapsed);
+        if (elapsed >= duration) {
+          clearInterval(recInterval);
+          recorder.stop();
+          renderAt(59.0);
+        }
+      }, 1000 / 60);
+    }
+
+    btnRecordVideo.addEventListener('click', recordVideo);
+
+    setTimeout(() => { renderAt(18.5); }, 200);
+
+    window.jumpTo = jumpTo;
+    window.renderAt = renderAt;
+  </script>
+
+</body>
+</html>

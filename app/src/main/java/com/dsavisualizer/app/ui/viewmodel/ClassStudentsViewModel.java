@@ -20,6 +20,8 @@ public class ClassStudentsViewModel extends ViewModel {
     private final MutableLiveData<List<ClassroomStudentSummary>> students = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<List<ClassWeakTopicSummaryItem>> weakTopics = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Integer> studentCount = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> classAverageScore = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> classTotalQuizzes = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>(null);
 
@@ -33,6 +35,14 @@ public class ClassStudentsViewModel extends ViewModel {
 
     public LiveData<Integer> getStudentCount() {
         return studentCount;
+    }
+
+    public LiveData<Integer> getClassAverageScore() {
+        return classAverageScore;
+    }
+
+    public LiveData<Integer> getClassTotalQuizzes() {
+        return classTotalQuizzes;
     }
 
     public LiveData<Boolean> getLoading() {
@@ -93,6 +103,7 @@ public class ClassStudentsViewModel extends ViewModel {
                             summary == null ? 0 : summary.optInt("totalTechniquesStarted", 0),
                             summary == null ? 0 : summary.optInt("completedTechniques", 0),
                             summary == null ? 0 : summary.optInt("totalPracticeSessions", 0),
+                            summary == null ? 0 : summary.optInt("averageQuizScore", 0),
                             summary == null ? 0 : summary.optInt("streakDays", 0),
                             item.optString("lastActiveAt", ""),
                             item.optString("joinedAt", "")
@@ -101,9 +112,13 @@ public class ClassStudentsViewModel extends ViewModel {
                 }
 
                 int count = classroom == null ? loaded.size() : classroom.optInt("studentCount", loaded.size());
+                int avgScore = classroom == null ? 0 : classroom.optInt("averageQuizScore", 0);
+                int quizzes = classroom == null ? 0 : classroom.optInt("totalQuizzes", 0);
                 students.setValue(loaded);
                 weakTopics.setValue(weakTopicSummary);
                 studentCount.setValue(count);
+                classAverageScore.setValue(avgScore);
+                classTotalQuizzes.setValue(quizzes);
                 loading.setValue(false);
             }
 

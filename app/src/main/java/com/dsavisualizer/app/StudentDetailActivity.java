@@ -210,14 +210,21 @@ public class StudentDetailActivity extends AppCompatActivity {
     }
 
     private void bindSummary(JSONObject summary, String joinedAt) {
-        summaryText.setText(getString(
+        String baseSummary = getString(
             R.string.student_detail_summary,
             summary == null ? 0 : summary.optInt("totalTechniquesStarted", 0),
             summary == null ? 0 : summary.optInt("completedTechniques", 0),
             summary == null ? 0 : summary.optInt("totalPracticeSessions", 0),
             summary == null ? 0 : summary.optInt("streakDays", 0),
             joinedAt == null || joinedAt.trim().isEmpty() ? getString(R.string.owner_users_meta_unknown) : joinedAt
-        ));
+        );
+        int totalSessions = summary == null ? 0 : summary.optInt("totalPracticeSessions", 0);
+        if (totalSessions > 0) {
+            int avgScore = summary.optInt("averageQuizScore", 0);
+            int highScore = summary.optInt("highestQuizScore", 0);
+            baseSummary += "\nQuiz Accuracy: " + avgScore + "% avg • High: " + highScore + " pts";
+        }
+        summaryText.setText(baseSummary);
     }
 
     private void bindWeakTopics(List<String> weakTopics) {

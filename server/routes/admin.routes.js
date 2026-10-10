@@ -152,6 +152,8 @@ const createAdminRouter = ({ store, logger = console, requireAuth }) => {
         totalSessionsRes,
         mostUsedRes,
         mostReportedRes,
+        avgScoreRes,
+        topMistakesRes,
       ] = await Promise.all([
         store.query('SELECT COUNT(*) FROM app_users'),
         store.query("SELECT COUNT(*) FROM app_users WHERE role = 'teacher' AND last_seen_at >= NOW() - INTERVAL '30 days'"),
@@ -166,6 +168,10 @@ const createAdminRouter = ({ store, logger = console, requireAuth }) => {
         store.query(
           'SELECT technique_id, type, COUNT(*) as count FROM feedback_entries GROUP BY technique_id, type ORDER BY count DESC LIMIT 5'
         ),
+        store.query('SELECT ROUND(COALESCE(AVG(score), 0)) as avg_score FROM practice_sessions'),
+        store.query(
+          'SELECT technique_id, COUNT(*) as mistakes FROM mistakes GROUP BY technique_id ORDER BY mistakes DESC LIMIT 5'
+        ),
       ]);
 
       res.json(
@@ -178,12 +184,17 @@ const createAdminRouter = ({ store, logger = console, requireAuth }) => {
             totalResources: parseInt(totalResourcesRes.rows[0].count, 10),
             totalFeedback: parseInt(totalFeedbackRes.rows[0].count, 10),
             totalPracticeSessions: parseInt(totalSessionsRes.rows[0].count, 10),
+            averageQuizScore: parseInt(avgScoreRes.rows[0].avg_score, 10) || 0,
           },
           mostUsedTopics: mostUsedRes.rows.map((r) => ({ techniqueId: r.technique_id, uses: parseInt(r.uses, 10) })),
           mostReportedContentIssues: mostReportedRes.rows.map((r) => ({
             techniqueId: r.technique_id,
             type: r.type,
             count: parseInt(r.count, 10),
+          })),
+          topMistakeTopics: topMistakesRes.rows.map((r) => ({
+            techniqueId: r.technique_id,
+            count: parseInt(r.mistakes, 10),
           })),
         })
       );

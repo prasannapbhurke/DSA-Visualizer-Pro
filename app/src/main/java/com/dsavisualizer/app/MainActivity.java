@@ -179,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
         menuButton.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
         View redeemBtn = findViewById(R.id.redeem_pro_button);
         if (redeemBtn != null) {
+            redeemBtn.setVisibility(View.GONE);
             redeemBtn.setOnClickListener(v -> ProManager.showRedeemDialog(this, () -> {
                 updateProgress();
             }));
@@ -635,19 +636,14 @@ public class MainActivity extends AppCompatActivity {
             accountModeText.setText(getString(R.string.home_account_guest_badge));
             accountStatusText.setText(getString(R.string.home_account_guest_local, resolveDisplayName()));
         }
-        if (ProManager.isPro(this)) {
+        if (appPreferences.isProUnlocked()) {
             String code = appPreferences.getProCode();
             String badge = code.isEmpty() ? "⭐ PRO" : "⭐ " + code;
             accountModeText.setText(badge);
         }
         com.google.android.material.button.MaterialButton redeemBtn = findViewById(R.id.redeem_pro_button);
         if (redeemBtn != null) {
-            if (ProManager.isPro(this)) {
-                String code = appPreferences.getProCode();
-                redeemBtn.setText(code.isEmpty() ? "⭐ DSA Pro Unlocked" : "⭐ " + code + " Active");
-            } else {
-                redeemBtn.setText("🎓 Campus Pass & Pro");
-            }
+            redeemBtn.setVisibility(View.GONE);
         }
         updateOwnerActionsVisibility();
     }

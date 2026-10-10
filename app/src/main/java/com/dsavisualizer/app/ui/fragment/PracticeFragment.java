@@ -1,6 +1,8 @@
 package com.dsavisualizer.app.ui.fragment;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -8,6 +10,8 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -46,12 +50,31 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class PracticeFragment extends Fragment {
 
     private static final String ARG_TECHNIQUE_ID = "technique_id";
-    private static final int QUESTION_SET_SIZE = 50;
+    private static final int QUESTION_SET_SIZE = 10;
     private enum QuizMode { THEORY, PRACTICAL }
+
+    private static class QuizQuestionAttempt {
+        final int questionNumber;
+        final String prompt;
+        final String userAnswer;
+        final String correctAnswer;
+        final String explanation;
+        final boolean correct;
+
+        QuizQuestionAttempt(int questionNumber, String prompt, String userAnswer, String correctAnswer, String explanation, boolean correct) {
+            this.questionNumber = questionNumber;
+            this.prompt = prompt;
+            this.userAnswer = userAnswer;
+            this.correctAnswer = correctAnswer;
+            this.explanation = explanation;
+            this.correct = correct;
+        }
+    }
 
     private String techniqueId = "linear_search";
     private LearningQuestion currentQuestion;
@@ -59,6 +82,7 @@ public class PracticeFragment extends Fragment {
     private StepState currentStepState;
     private List<StepState> practicalQuestionSet = new ArrayList<>();
     private List<TheoryQuestion> theoryQuestionSet = new ArrayList<>();
+    private final List<QuizQuestionAttempt> sessionAttempts = new ArrayList<>();
     private int currentQuestionIndex = 0;
     private boolean currentQuestionSolved = false;
     private boolean currentQuestionAnsweredOnce = false;
@@ -87,6 +111,33 @@ public class PracticeFragment extends Fragment {
     private boolean reviewMode = false;
     private int reviewIndex = 0;
     private List<AppPreferences.MistakeReview> mistakeReviews = Collections.emptyList();
+    private boolean sessionAlreadySynced = false;
+
+    private final Handler timerHandler = new Handler(Looper.getMainLooper());
+    private boolean timerEnabled = true;
+    private long sessionElapsedSeconds = 0;
+    private final Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (timerEnabled && !isCompleted()) {
+                sessionElapsedSeconds++;
+                updateTimerDisplay();
+                timerHandler.postDelayed(this, 1000L);
+            }
+        }
+    };
+
+    private TextView timerTextView;
+    private MaterialButton timerToggleButton;
+    private ProgressBar progressBar;
+    private LinearLayout activeQuizContainer;
+    private LinearLayout resultsContainer;
+    private TextView resultsTitleView;
+    private TextView resultsBadgeView;
+    private TextView resultsStatsView;
+    private LinearLayout resultsBreakdownList;
+    private MaterialButton resultsReplayButton;
+    private MaterialButton resultsReviewButton;
 
     public static PracticeFragment newInstance(String techniqueId) {
         PracticeFragment fragment = new PracticeFragment();
@@ -118,6 +169,48 @@ public class PracticeFragment extends Fragment {
         nextButton = view.findViewById(R.id.practice_next_button);
         reviewButton = view.findViewById(R.id.practice_review_button);
         MaterialButtonToggleGroup modeToggle = view.findViewById(R.id.practice_mode_toggle);
+
+        timerTextView = view.findViewById(R.id.practice_timer_text);
+        timerToggleButton = view.findViewById(R.id.practice_timer_toggle_button);
+        progressBar = view.findViewById(R.id.practice_progress_bar);
+        activeQuizContainer = view.findViewById(R.id.practice_active_quiz_container);
+        resultsContainer = view.findViewById(R.id.practice_results_container);
+        resultsTitleView = view.findViewById(R.id.practice_results_title);
+        resultsBadgeView = view.findViewById(R.id.practice_results_badge);
+        resultsStatsView = view.findViewById(R.id.practice_results_stats);
+        resultsBreakdownList = view.findViewById(R.id.practice_results_breakdown_list);
+        resultsReplayButton = view.findViewById(R.id.practice_results_replay_button);
+        resultsReviewButton = view.findViewById(R.id.practice_results_review_button);
+
+        if (progressBar != null) {
+            progressBar.setMax(QUESTION_SET_SIZE);
+            progressBar.setProgress(1);
+        }
+
+        if (timerToggleButton != null) {
+            timerToggleButton.setOnClickListener(v -> {
+                timerEnabled = !timerEnabled;
+                timerToggleButton.setText(timerEnabled ? "Timer: ON" : "Timer: OFF");
+                if (timerEnabled) {
+                    startTimer();
+                } else {
+                    stopTimer();
+                }
+                updateTimerDisplay();
+            });
+        }
+
+        if (resultsReplayButton != null) {
+            resultsReplayButton.setOnClickListener(v -> {
+                resetQuestionSet();
+                loadQuestion();
+            });
+        }
+
+        if (resultsReviewButton != null) {
+            resultsReviewButton.setOnClickListener(v -> toggleReviewMode());
+        }
+
         applyThemeColors(view);
 
         sessionViewModel = new ViewModelProvider(requireActivity()).get(TechniqueSessionViewModel.class);
@@ -159,6 +252,9 @@ public class PracticeFragment extends Fragment {
         nextButton.setOnClickListener(v -> {
             if (reviewMode) {
                 showNextMistakeReview();
+            } else if (currentQuestionIndex >= QUESTION_SET_SIZE) {
+                resetQuestionSet();
+                loadQuestion();
             } else if (!currentQuestionSolved) {
                 feedbackView.setVisibility(View.VISIBLE);
                 feedbackView.setText("Solve this question correctly to unlock the next one.");
@@ -169,6 +265,7 @@ public class PracticeFragment extends Fragment {
         });
         reviewButton.setOnClickListener(v -> toggleReviewMode());
 
+        startTimer();
         loadQuestion();
     }
 
@@ -189,6 +286,15 @@ public class PracticeFragment extends Fragment {
         if (currentQuestionIndex >= QUESTION_SET_SIZE) {
             showCompletedQuestionSet();
             return;
+        }
+        if (activeQuizContainer != null) {
+            activeQuizContainer.setVisibility(View.VISIBLE);
+        }
+        if (resultsContainer != null) {
+            resultsContainer.setVisibility(View.GONE);
+        }
+        if (progressBar != null) {
+            progressBar.setProgress(Math.min(currentQuestionIndex + 1, QUESTION_SET_SIZE));
         }
         if (currentMode == QuizMode.THEORY) {
             loadTheoryQuestion();
@@ -228,11 +334,15 @@ public class PracticeFragment extends Fragment {
         }
 
         optionsGroup.removeAllViews();
-        for (QuestionOption option : currentQuestion.options) {
+        List<QuestionOption> shuffledOptions = new ArrayList<>(currentQuestion.options);
+        Collections.shuffle(shuffledOptions);
+        for (int i = 0; i < shuffledOptions.size(); i++) {
+            QuestionOption option = shuffledOptions.get(i);
+            String letter = String.valueOf((char) ('A' + i));
             RadioButton radioButton = new RadioButton(requireContext());
             radioButton.setId(View.generateViewId());
             radioButton.setTag(option.actionType);
-            radioButton.setText(getString(R.string.practice_radio_option, option.id, option.label));
+            radioButton.setText(getString(R.string.practice_radio_option, letter, option.label));
             styleQuizOption(radioButton);
             optionsGroup.addView(radioButton);
         }
@@ -327,6 +437,13 @@ public class PracticeFragment extends Fragment {
             ? getString(R.string.practice_feedback_correct, feedback.explanation)
             : getString(R.string.practice_feedback_wrong, feedback.explanation));
 
+        if (!currentQuestionAnsweredOnce) {
+            String userAnswer = selectedView instanceof RadioButton ? ((RadioButton) selectedView).getText().toString() : "";
+            QuestionOption correctOption = currentQuestion == null ? null : currentQuestion.getCorrectOption();
+            String correctLabel = correctOption == null ? "" : correctOption.label;
+            recordAttempt(currentQuestion == null ? "" : currentQuestion.prompt, userAnswer, correctLabel, feedback.explanation, feedback.correct);
+        }
+
         if (feedback.correct) {
             currentQuestionSolved = true;
             nextButton.setEnabled(true);
@@ -356,10 +473,13 @@ public class PracticeFragment extends Fragment {
         if (!currentQuestionMistakeLogged) {
             currentQuestionMistakeLogged = true;
             QuestionOption correctOption = currentQuestion == null ? null : currentQuestion.getCorrectOption();
+            String correctLabel = correctOption == null ? "" : correctOption.label;
+            String promptText = currentQuestion == null ? "" : currentQuestion.prompt;
+            String userAnswer = selectedView instanceof RadioButton ? ((RadioButton) selectedView).getText().toString() : "";
             appPreferences.saveMistakeReview(
                 techniqueId,
-                currentQuestion == null ? "" : currentQuestion.prompt,
-                correctOption == null ? "" : correctOption.label,
+                promptText,
+                correctLabel,
                 feedback.explanation,
                 resolvePracticeModeApiValue()
             );
@@ -368,6 +488,12 @@ public class PracticeFragment extends Fragment {
                 resolvePracticeModeApiValue(),
                 scorePoints,
                 false
+            );
+            remoteSyncManager.saveMistake(
+                techniqueId,
+                promptText,
+                correctLabel,
+                userAnswer
             );
         }
     }
@@ -387,8 +513,17 @@ public class PracticeFragment extends Fragment {
             return;
         }
         boolean correct = selectedIndex == currentTheoryQuestion.correctIndex;
+        HapticFeedbackHelper.performConfirm(feedbackView);
         feedbackView.setVisibility(View.VISIBLE);
         feedbackView.setText((correct ? "Correct\n" : "Wrong\n") + currentTheoryQuestion.explanation);
+
+        if (!currentQuestionAnsweredOnce) {
+            String userAnswer = selectedView instanceof RadioButton ? ((RadioButton) selectedView).getText().toString() : "";
+            String correctLabel = currentTheoryQuestion.correctIndex >= 0 && currentTheoryQuestion.correctIndex < currentTheoryQuestion.options.size()
+                ? currentTheoryQuestion.options.get(currentTheoryQuestion.correctIndex)
+                : "";
+            recordAttempt(currentTheoryQuestion.prompt, userAnswer, correctLabel, currentTheoryQuestion.explanation, correct);
+        }
         if (correct) {
             currentQuestionSolved = true;
             nextButton.setEnabled(true);
@@ -414,6 +549,8 @@ public class PracticeFragment extends Fragment {
             String correctLabel = currentTheoryQuestion.correctIndex >= 0 && currentTheoryQuestion.correctIndex < currentTheoryQuestion.options.size()
                 ? currentTheoryQuestion.options.get(currentTheoryQuestion.correctIndex)
                 : "";
+            View selectedView = optionsGroup.findViewById(checkedId);
+            String userAnswer = selectedView instanceof RadioButton ? ((RadioButton) selectedView).getText().toString() : "";
             appPreferences.saveMistakeReview(
                 techniqueId,
                 currentTheoryQuestion.prompt,
@@ -422,6 +559,12 @@ public class PracticeFragment extends Fragment {
                 "theory"
             );
             remoteSyncManager.savePracticeProgress(techniqueId, "theory", scorePoints, false);
+            remoteSyncManager.saveMistake(
+                techniqueId,
+                currentTheoryQuestion.prompt,
+                correctLabel,
+                userAnswer
+            );
         }
     }
 
@@ -491,12 +634,16 @@ public class PracticeFragment extends Fragment {
             items.add(items.get(fillIndex % items.size()));
             fillIndex += 1;
         }
-        return items;
+        if (!items.isEmpty()) {
+            Collections.shuffle(items);
+        }
+        return items.size() > QUESTION_SET_SIZE ? new ArrayList<>(items.subList(0, QUESTION_SET_SIZE)) : items;
     }
 
     private void resetQuestionSet() {
         practicalQuestionSet.clear();
         theoryQuestionSet.clear();
+        sessionAttempts.clear();
         currentQuestionIndex = 0;
         currentQuestionSolved = false;
         currentQuestionAnsweredOnce = false;
@@ -506,6 +653,19 @@ public class PracticeFragment extends Fragment {
         questionsAnswered = 0;
         correctAnswers = 0;
         scorePoints = 0;
+        sessionElapsedSeconds = 0;
+        updateTimerDisplay();
+        if (progressBar != null) {
+            progressBar.setProgress(1);
+        }
+        if (activeQuizContainer != null) {
+            activeQuizContainer.setVisibility(View.VISIBLE);
+        }
+        if (resultsContainer != null) {
+            resultsContainer.setVisibility(View.GONE);
+        }
+        sessionAlreadySynced = false;
+        startTimer();
     }
 
     private String buildQuestionSummary(StepState stepState, String modeLabel) {
@@ -543,19 +703,192 @@ public class PracticeFragment extends Fragment {
     }
 
     private void showCompletedQuestionSet() {
-        questionView.setText("Question set complete.");
-        summaryView.setText((currentMode == QuizMode.THEORY ? "Theory" : "Practical")
-            + " set complete.\n\nSolved: " + correctAnswers + "/" + QUESTION_SET_SIZE + "\nScore: " + scorePoints);
-        hintView.setVisibility(View.GONE);
-        optionsGroup.removeAllViews();
-        feedbackView.setVisibility(View.VISIBLE);
-        feedbackView.setText("Great work. Switch between Theory and Practical to start another 50-question set.");
-        checkButton.setEnabled(false);
-        checkButton.setAlpha(0.45f);
-        nextButton.setEnabled(false);
-        nextButton.setAlpha(0.45f);
-        nextButton.setText("Completed");
+        stopTimer();
+        if (progressBar != null) {
+            progressBar.setProgress(QUESTION_SET_SIZE);
+        }
+        if (activeQuizContainer != null) {
+            activeQuizContainer.setVisibility(View.GONE);
+        }
+        if (resultsContainer != null) {
+            resultsContainer.setVisibility(View.VISIBLE);
+        }
+
+        int accuracy = (int) Math.round(((double) correctAnswers / Math.max(1, QUESTION_SET_SIZE)) * 100);
+        long minutes = sessionElapsedSeconds / 60;
+        long seconds = sessionElapsedSeconds % 60;
+        String timeString = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+        String avgTime = sessionElapsedSeconds > 0
+            ? String.format(Locale.getDefault(), "%.1fs", (double) sessionElapsedSeconds / Math.max(1, QUESTION_SET_SIZE))
+            : "N/A";
+
+        if (resultsTitleView != null) {
+            String titleText = accuracy == 100 ? "🌟 Flawless Mastery!"
+                : (accuracy >= 80 ? "🏆 Excellent Performance!"
+                : (accuracy >= 60 ? "🎯 Good Job!"
+                : "📚 Keep Practicing!"));
+            resultsTitleView.setText(titleText);
+        }
+
+        if (resultsBadgeView != null) {
+            resultsBadgeView.setText("Accuracy: " + accuracy + "% (" + correctAnswers + "/" + QUESTION_SET_SIZE + ")");
+            int badgeColor = accuracy >= 80 ? ContextCompat.getColor(requireContext(), R.color.emerald_500)
+                : (accuracy >= 60 ? ContextCompat.getColor(requireContext(), R.color.sky_500)
+                : ContextCompat.getColor(requireContext(), R.color.amber_500));
+            resultsBadgeView.setBackgroundColor(badgeColor);
+        }
+
+        if (resultsStatsView != null) {
+            String modeStr = currentMode == QuizMode.THEORY ? "Theory Quiz" : "Practical Quiz";
+            String topicStr = prettifyTechniqueId(techniqueId);
+            String statsText = "Mode: " + modeStr + "   |   Topic: " + topicStr + "\n"
+                + "✓ Solved: " + correctAnswers + " / " + QUESTION_SET_SIZE + "   •   ✗ Mistakes: " + (QUESTION_SET_SIZE - correctAnswers) + "\n"
+                + "⭐ Total Score: +" + scorePoints + " pts\n"
+                + "⏱️ Total Time: " + timeString + "   •   ⚡ Avg Time: " + avgTime + " / question";
+            resultsStatsView.setText(statsText);
+        }
+
+        populateResultsBreakdown();
+
+        if (!sessionAlreadySynced && remoteSyncManager != null) {
+            sessionAlreadySynced = true;
+            long durationMs = Math.max(1000L, SystemClock.elapsedRealtime() - sessionStartMs);
+            String modeStr = currentMode == QuizMode.THEORY ? "theory" : resolvePracticeModeApiValue();
+            remoteSyncManager.savePracticeSession(techniqueId, modeStr, scorePoints, durationMs);
+            remoteSyncManager.savePracticeProgress(techniqueId, modeStr, scorePoints, true);
+        }
     }
+
+    private void populateResultsBreakdown() {
+        if (resultsBreakdownList == null || getContext() == null) {
+            return;
+        }
+        resultsBreakdownList.removeAllViews();
+        boolean isLight = isLightTheme();
+        int textColor = resolveThemeColor(android.R.attr.textColorPrimary, R.color.text_primary_bright);
+        int strokeColor = isLight ? Color.parseColor("#E2E8F0") : ContextCompat.getColor(requireContext(), R.color.surface_stroke_muted);
+        int cardBg = isLight ? Color.parseColor("#FFFFFF") : ContextCompat.getColor(requireContext(), R.color.surface_panel_alt);
+        int greenColor = ContextCompat.getColor(requireContext(), R.color.emerald_500);
+        int redColor = ContextCompat.getColor(requireContext(), R.color.rose_500);
+        int mutedText = isLight ? Color.parseColor("#64748B") : ContextCompat.getColor(requireContext(), R.color.slate_400);
+
+        for (QuizQuestionAttempt attempt : sessionAttempts) {
+            LinearLayout card = new LinearLayout(requireContext());
+            card.setOrientation(LinearLayout.VERTICAL);
+            GradientDrawable gd = new GradientDrawable();
+            gd.setCornerRadius(dpToPx(12));
+            gd.setColor(cardBg);
+            gd.setStroke(dpToPx(1), strokeColor);
+            card.setBackground(gd);
+            card.setPadding(dpToPx(14), dpToPx(12), dpToPx(14), dpToPx(12));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dpToPx(10);
+            card.setLayoutParams(lp);
+
+            TextView statusView = new TextView(requireContext());
+            statusView.setText(attempt.correct
+                ? "Question " + attempt.questionNumber + "  •  ✓ Correct (+1 pt)"
+                : "Question " + attempt.questionNumber + "  •  ✗ Mistake");
+            statusView.setTextColor(attempt.correct ? greenColor : redColor);
+            statusView.setTextSize(13);
+            statusView.setTypeface(null, android.graphics.Typeface.BOLD);
+            card.addView(statusView);
+
+            TextView promptView = new TextView(requireContext());
+            promptView.setText(attempt.prompt);
+            promptView.setTextColor(textColor);
+            promptView.setTextSize(14);
+            promptView.setTypeface(null, android.graphics.Typeface.BOLD);
+            promptView.setPadding(0, dpToPx(6), 0, dpToPx(6));
+            card.addView(promptView);
+
+            if (!attempt.correct && !attempt.userAnswer.isEmpty()) {
+                TextView userAnsView = new TextView(requireContext());
+                userAnsView.setText("Your Choice: " + attempt.userAnswer);
+                userAnsView.setTextColor(redColor);
+                userAnsView.setTextSize(13);
+                userAnsView.setPadding(0, 0, 0, dpToPx(3));
+                card.addView(userAnsView);
+            }
+
+            if (!attempt.correctAnswer.isEmpty()) {
+                TextView correctAnsView = new TextView(requireContext());
+                correctAnsView.setText("Correct: " + attempt.correctAnswer);
+                correctAnsView.setTextColor(greenColor);
+                correctAnsView.setTextSize(13);
+                correctAnsView.setPadding(0, 0, 0, dpToPx(6));
+                card.addView(correctAnsView);
+            }
+
+            if (attempt.explanation != null && !attempt.explanation.isEmpty()) {
+                TextView explView = new TextView(requireContext());
+                explView.setText("💡 " + attempt.explanation);
+                explView.setTextColor(mutedText);
+                explView.setTextSize(12);
+                GradientDrawable explGd = new GradientDrawable();
+                explGd.setCornerRadius(dpToPx(8));
+                explGd.setColor(isLight ? Color.parseColor("#F1F5F9") : ContextCompat.getColor(requireContext(), R.color.surface_panel_muted));
+                explView.setBackground(explGd);
+                explView.setPadding(dpToPx(10), dpToPx(8), dpToPx(10), dpToPx(8));
+                card.addView(explView);
+            }
+
+            resultsBreakdownList.addView(card);
+        }
+    }
+
+    private boolean isCompleted() {
+        return currentQuestionIndex >= QUESTION_SET_SIZE;
+    }
+
+    private void startTimer() {
+        timerHandler.removeCallbacks(timerRunnable);
+        if (timerEnabled) {
+            timerHandler.postDelayed(timerRunnable, 1000L);
+        }
+    }
+
+    private void stopTimer() {
+        timerHandler.removeCallbacks(timerRunnable);
+    }
+
+    private void updateTimerDisplay() {
+        if (timerTextView == null) return;
+        if (!timerEnabled) {
+            timerTextView.setText("Timer: Paused");
+            return;
+        }
+        long minutes = sessionElapsedSeconds / 60;
+        long seconds = sessionElapsedSeconds % 60;
+        timerTextView.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
+    }
+
+    private void recordAttempt(String prompt, String userAnswer, String correctAnswer, String explanation, boolean correct) {
+        sessionAttempts.add(new QuizQuestionAttempt(
+            currentQuestionIndex + 1,
+            prompt,
+            userAnswer,
+            correctAnswer,
+            explanation,
+            correct
+        ));
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        stopTimer();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (timerEnabled && !isCompleted()) {
+            startTimer();
+        }
+    }
+
 
     private com.dsavisualizer.app.learning.DifficultyLevel resolvePracticalDifficulty() {
         return com.dsavisualizer.app.learning.DifficultyLevel.GUIDED;
@@ -717,6 +1050,29 @@ public class PracticeFragment extends Fragment {
             feedbackView.setTextColor(primary);
             ViewCompat.setBackgroundTintList(feedbackView, android.content.res.ColorStateList.valueOf(panelDeep));
         }
+        View timerBar = rootView.findViewById(R.id.practice_timer_bar);
+        if (timerBar != null) {
+            ViewCompat.setBackgroundTintList(timerBar, android.content.res.ColorStateList.valueOf(panelAlt));
+        }
+        if (timerTextView != null) {
+            timerTextView.setTextColor(primary);
+        }
+        View scorecardCard = rootView.findViewById(R.id.practice_scorecard_card);
+        if (scorecardCard != null) {
+            ViewCompat.setBackgroundTintList(scorecardCard, android.content.res.ColorStateList.valueOf(panelAlt));
+        }
+        if (resultsTitleView != null) {
+            resultsTitleView.setTextColor(primary);
+        }
+        if (resultsStatsView != null) {
+            resultsStatsView.setTextColor(secondary);
+        }
+        if (resultsReplayButton != null) {
+            resultsReplayButton.setTextColor(isLightTheme ? Color.WHITE : resultsReplayButton.getCurrentTextColor());
+        }
+        if (resultsReviewButton != null) {
+            resultsReviewButton.setTextColor(isLightTheme ? primary : resultsReviewButton.getCurrentTextColor());
+        }
         if (optionsGroup != null) {
             for (int i = 0; i < optionsGroup.getChildCount(); i++) {
                 View child = optionsGroup.getChildAt(i);
@@ -817,7 +1173,9 @@ public class PracticeFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        if (remoteSyncManager != null && questionsAnswered > 0) {
+        stopTimer();
+        if (remoteSyncManager != null && questionsAnswered > 0 && !sessionAlreadySynced) {
+            sessionAlreadySynced = true;
             long durationMs = Math.max(1000L, SystemClock.elapsedRealtime() - sessionStartMs);
             remoteSyncManager.savePracticeSession(techniqueId, currentMode == QuizMode.THEORY ? "theory" : resolvePracticeModeApiValue(), scorePoints, durationMs);
         }

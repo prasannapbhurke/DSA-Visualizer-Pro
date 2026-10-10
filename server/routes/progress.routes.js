@@ -133,18 +133,18 @@ const createProgressRouter = ({ store, logger = console, requireAuth }) => {
         createdAt: new Date().toISOString(),
         ...parsedRequest.value.session,
       };
+      const durationMs = Number(session.durationMs || session.timeTakenMs || 0);
+      const difficulty = typeof session.difficulty === 'string' ? session.difficulty : '';
       await store.query(
-        `INSERT INTO practice_sessions (id, user_id, technique_id, score, total_nodes, time_taken_ms, config, history, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz)`,
+        `INSERT INTO practice_sessions (id, user_id, technique_id, score, difficulty, duration_ms, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::timestamptz)`,
         [
           session.id,
           session.userId,
           session.techniqueId,
-          session.score,
-          session.totalNodes,
-          session.timeTakenMs,
-          JSON.stringify(session.config || {}),
-          JSON.stringify(session.history || []),
+          Number(session.score || 0),
+          difficulty,
+          durationMs,
           session.createdAt,
         ]
       );

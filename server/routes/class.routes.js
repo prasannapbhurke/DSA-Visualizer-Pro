@@ -403,7 +403,49 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
           teacherNotes,
         };
       });
-      res.json(classStudentsResponseDto({ classId: classroom.id, students }));
+
+      const topicStats = {};
+      for (const entry of allProgress) {
+        if (!entry.techniqueId) continue;
+        if (!topicStats[entry.techniqueId]) {
+          topicStats[entry.techniqueId] = {
+            techniqueId: entry.techniqueId,
+            studentCount: 0,
+            lowestBestScore: 100,
+          };
+        }
+        topicStats[entry.techniqueId].studentCount += 1;
+        const score = Number(entry.bestScore || 0);
+        if (score < topicStats[entry.techniqueId].lowestBestScore) {
+          topicStats[entry.techniqueId].lowestBestScore = score;
+        }
+      }
+
+      const weakTopicSummary = Object.values(topicStats)
+        .sort((a, b) => a.lowestBestScore - b.lowestBestScore || b.studentCount - a.studentCount)
+        .slice(0, 5)
+        .map((t) => ({
+          techniqueId: t.techniqueId,
+          studentCount: t.studentCount,
+          lowestBestScore: t.lowestBestScore === 100 && t.studentCount === 0 ? 0 : t.lowestBestScore,
+        }));
+
+      const totalQuizzes = allSessions.length;
+      const classAvgQuizScore = totalQuizzes > 0
+        ? Math.round(allSessions.reduce((acc, s) => acc + Number(s.score || 0), 0) / totalQuizzes)
+        : 0;
+
+      const classroomPayload = {
+        id: classroom.id,
+        name: classroom.name,
+        joinCode: classroom.joinCode,
+        studentCount: students.length,
+        totalQuizzes,
+        averageQuizScore: classAvgQuizScore,
+        weakTopicSummary,
+      };
+
+      res.json(classStudentsResponseDto({ classroom: classroomPayload, students }));
     } catch (error) {
       res.status(500).json(errorResponseDto('Failed to load students'));
     }
@@ -535,10 +577,15 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
       const progRes = await store.query('SELECT * FROM progress_entries WHERE user_id = $1', [student.id]);
       const sessRes = await store.query('SELECT * FROM practice_sessions WHERE user_id = $1', [student.id]);
       const notesRes = await store.query('SELECT t.*, u.name as teacher_name FROM teacher_notes t JOIN app_users u ON t.teacher_id = u.id WHERE t.class_id = $1 AND t.student_id = $2', [classroom.id, student.id]);
+      const mistakesRes = await store.query(
+        'SELECT technique_id, question, correct_answer, user_answer, created_at FROM mistakes WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10',
+        [student.id]
+      );
 
       const progressEntries = rowsToCamel(progRes.rows).map(stripSnakeOnly).sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
       const practiceSessions = rowsToCamel(sessRes.rows).map(stripSnakeOnly);
       const teacherNotes = rowsToCamel(notesRes.rows).map(stripSnakeOnly).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      const recentMistakes = rowsToCamel(mistakesRes.rows).map(stripSnakeOnly);
 
       const dashboard = buildDashboard({ user: student, progressEntries, practiceSessions });
 
@@ -550,6 +597,7 @@ const createClassRouter = ({ store, cache, uploadDir, logger = console, requireA
         summary: dashboard.summary,
         weakTopics: dashboard.weakTopics,
         recentActivity: dashboard.recentActivity.slice(0, 5),
+        recentMistakes,
         lastActiveAt: dashboard.recentActivity.length > 0 ? dashboard.recentActivity[0].createdAt : (student.lastSeenAt || ''),
         progressEntries,
         teacherNotes,

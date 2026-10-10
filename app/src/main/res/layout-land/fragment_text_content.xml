@@ -254,21 +254,16 @@
         android:fillViewport="false"
         android:scrollbars="vertical">
 
-        <HorizontalScrollView
+        <FrameLayout
             android:id="@+id/content_horizontal_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/code_surface_background"
-            android:fadingEdge="horizontal"
-            android:fadeScrollbars="false"
-            android:fillViewport="true"
-            android:padding="2dp"
-            android:scrollbarStyle="outsideInset"
-            android:scrollbars="horizontal">
+            android:padding="2dp">
 
             <TextView
                 android:id="@+id/content_text"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:breakStrategy="simple"
                 android:fontFamily="monospace"
@@ -278,11 +273,11 @@
                 android:paddingTop="14dp"
                 android:paddingEnd="18dp"
                 android:paddingBottom="18dp"
-                android:scrollHorizontally="true"
+                android:scrollHorizontally="false"
                 android:singleLine="false"
                 android:textColor="@color/text_primary_bright"
                 android:textIsSelectable="true"
                 android:textSize="15sp" />
-        </HorizontalScrollView>
+        </FrameLayout>
     </ScrollView>
 </LinearLayout>

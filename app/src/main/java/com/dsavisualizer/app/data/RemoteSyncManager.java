@@ -249,7 +249,7 @@ public class RemoteSyncManager {
     }
 
     public void savePracticeSession(@NonNull String techniqueId, @NonNull String difficulty, int score, long durationMs) {
-        if (!preferences.hasGoogleSession()) {
+        if (!preferences.hasAuthSession()) {
             return;
         }
         ensureGuestSession(ready -> {
@@ -267,6 +267,32 @@ public class RemoteSyncManager {
                     JSONObject body = new JSONObject();
                     body.put("session", session);
                     performJsonRequest("POST", "/api/sessions", preferences.getAuthToken(), body);
+                } catch (Exception ignored) {
+                    // Keep the app responsive even if the backend is unavailable.
+                }
+            });
+        });
+    }
+
+    public void saveMistake(@NonNull String techniqueId, @NonNull String question, @NonNull String correctAnswer, @NonNull String userAnswer) {
+        if (!preferences.hasAuthSession()) {
+            return;
+        }
+        ensureGuestSession(ready -> {
+            if (!ready) {
+                return;
+            }
+            executor.execute(() -> {
+                try {
+                    JSONObject mistake = new JSONObject();
+                    mistake.put("techniqueId", techniqueId);
+                    mistake.put("question", question);
+                    mistake.put("correctAnswer", correctAnswer);
+                    mistake.put("userAnswer", userAnswer);
+
+                    JSONObject body = new JSONObject();
+                    body.put("mistake", mistake);
+                    performJsonRequest("POST", "/api/mistakes", preferences.getAuthToken(), body);
                 } catch (Exception ignored) {
                     // Keep the app responsive even if the backend is unavailable.
                 }

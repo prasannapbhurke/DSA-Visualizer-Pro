@@ -63,13 +63,17 @@ public class ClassroomStudentAdapter extends RecyclerView.Adapter<ClassroomStude
         holder.emailText.setText(student.email.trim().isEmpty()
             ? holder.itemView.getContext().getString(R.string.owner_users_email_missing)
             : student.email);
-        holder.progressText.setText(holder.itemView.getContext().getString(
+        String progressStr = holder.itemView.getContext().getString(
             R.string.classroom_student_progress,
             student.totalTechniquesStarted,
             student.completedTechniques,
             student.totalPracticeSessions,
             student.streakDays
-        ));
+        );
+        if (student.totalPracticeSessions > 0) {
+            progressStr += " • Avg Quiz: " + student.averageQuizScore + "%";
+        }
+        holder.progressText.setText(progressStr);
         holder.activityText.setText(holder.itemView.getContext().getString(
             R.string.classroom_student_activity,
             student.joinedAt.trim().isEmpty()

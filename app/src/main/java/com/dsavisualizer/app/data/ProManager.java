@@ -48,9 +48,15 @@ public final class ProManager {
         "spanning_tree"
     ));
 
+    // Temporarily grant access to all topics while in-app purchase and redeem codes are prepared
+    private static final boolean TEMPORARY_ALL_ACCESS = true;
+
     private ProManager() {}
 
     public static boolean isPro(@NonNull Context context) {
+        if (TEMPORARY_ALL_ACCESS) {
+            return true;
+        }
         AppPreferences prefs = new AppPreferences(context);
         return prefs.isProUnlocked();
     }
